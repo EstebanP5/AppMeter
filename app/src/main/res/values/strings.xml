@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ========== NOMBRES Y TÍTULOS PRINCIPALES ========== -->
+    <string name="app_name">App Meter</string>
+
+    <!-- ========== TÍTULOS DE SECCIONES ========== -->
+    <string name="section_dashboard_title">Dashboard</string>
+    <string name="section_clientes_title">Clientes</string>
+    <string name="section_devices_title">Gestión de dispositivos</string>
+    <string name="section_medicion_title">Medición</string>
+    <string name="section_armonica_title">Armónicos</string>
+
+    <!-- ========== NAVEGACIÓN Y MENÚ ========== -->
+    <string name="navigation_drawer_open">Abrir menú</string>
+    <string name="navigation_drawer_close">Cerrar menú</string>
+    <string name="menu_dashboard">Dashboard</string>
+    <string name="menu_clientes">Clientes</string>
+    <string name="menu_devices">Dispositivos</string>
+    <string name="menu_medicion">Medición</string>
+    <string name="menu_armonica">Armónicos</string>
+
+    <!-- Drawer menu items -->
+    <string name="drawer_dashboard">Dashboard</string>
+    <string name="drawer_clientes">Clientes</string>
+    <string name="drawer_dispositivos">Dispositivos</string>
+
+    <!-- ========== BLUETOOTH Y DISPOSITIVOS ========== -->
+    <string name="devices_title">Dispositivos Conectados</string>
+    <string name="devices">Dispositivos Bluetooth</string>
+    <string name="devices_vincular_nuevo">Vincular un nuevo dispositivo</string>
+
+    <!-- Permisos Bluetooth -->
+    <string name="bluetooth_permission_title">Permiso Bluetooth</string>
+    <string name="bluetooth_permission_grant">Esta app necesita acceso a Bluetooth. Por favor, otorga el permiso.</string>
+    <string name="bluetooth_permission_denied">Permiso denegado permanentemente. Activa "%s" en ajustes.</string>
+
+    <!-- Estados Bluetooth -->
+    <string name="bluetooth_unsupported">Bluetooth no compatible</string>
+    <string name="bluetooth_disabled">Bluetooth desactivado</string>
+    <string name="no_devices_found">No se encontraron dispositivos</string>
+    <string name="initializing">Inicializando…</string>
+    <string name="refresh_message">Actualizando datos…</string>
+
+    <!-- Estados de dispositivos -->
+    <string name="status_critical">Crítico</string>
+    <string name="status_warning">Advertencia</string>
+    <string name="status_connected">Conectado</string>
+
+    <!-- ========== ERRORES Y VALIDACIONES ========== -->
+    <string name="error_email_required">Email requerido</string>
+    <string name="error_invalid_email">Formato de email inválido</string>
+    <string name="error_password_required">Contraseña requerida</string>
+    <string name="error_network">Error de conexión</string>
+
+    <!-- ========== AUTENTICACIÓN Y SESIÓN ========== -->
+    <string name="logout">Cerrar sesión</string>
+    <string name="logout_title">Cerrar sesión</string>
+    <string name="logout_message">¿Estás seguro de que quieres cerrar sesión?</string>
+    <string name="dialog_logout_title">Confirmar cierre</string>
+    <string name="dialog_logout_message">¿Estás seguro de salir de la app?</string>
+
+    <!-- ========== DASHBOARD ========== -->
+    <string name="dashboard_hora_placeholder">10:17</string>
+    <string name="dashboard_resumen_equipos">Resumen Equipos / Gráficas</string>
+    <string name="dashboard_energia_potencia_totales">Energía y potencia totales</string>
+    <string name="dashboard_notificaciones">Notificaciones</string>
+
+    <!-- Tabs del dashboard -->
+    <string name="tab_resumen">Resumen</string>
+    <string name="tab_equipos">Equipos</string>
+    <string name="tab_graficas">Gráficas</string>
+
+    <!-- ========== CLIENTES ========== -->
+    <string name="clientes_agregar">Agregar Cliente</string>
+    <string name="dialogo_agregar_cliente_titulo">Agregar Nuevo Cliente</string>
+    <string name="label_cliente_nombre">Nombre:</string>
+    <string name="label_cliente_email">Email:</string>
+    <string name="label_cliente_telefono">Teléfono:</string>
+    <string name="label_cliente_estado">Estado:</string>
+    <string name="prompt_select_cliente">Selecciona un cliente</string>
+
+    <!-- ========== DISPOSITIVOS Y EQUIPOS ========== -->
+    <string name="label_selector_dispositivo">Selector de dispositivo:</string>
+    <string name="label_selector_hub">Selector de Hub:</string>
+    <string name="btn_vincular">Vincular</string>
+
+    <!-- Columnas de tabla de dispositivos -->
+    <string name="col_name">Nombre</string>
+    <string name="col_nodo">Nodo</string>
+    <string name="col_ult_conexion">Última hora de conexión</string>
+    <string name="col_potencia">Potencia</string>
+
+    <!-- ========== MEDICIONES ========== -->
+    <string name="medicion_empezar">Empezar</string>
+    <string name="energy_total">Energía Total</string>
+    <string name="power">Potencia</string>
+    <string name="temperature">Temperatura</string>
+
+    <!-- ========== ARMÓNICOS ========== -->
+    <string name="armonica_tabla_titulo">Tabla Armónicos</string>
+
+    <!-- ========== COMANDOS ========== -->
+    <string name="prompt_command_type">Selecciona el tipo de comando</string>
+    <string name="prompt_command">Selecciona el comando</string>
+
+    <!-- ========== BOTONES GENERALES ========== -->
+    <string name="btn_guardar">Guardar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="dialogo_si">Sí</string>
+    <string name="dialogo_no">No</string>
+
+    <!-- ========== DIÁLOGOS GENERALES ========== -->
+    <string name="dialogo_eliminar_titulo">¿Estás seguro?</string>
+    <string name="dialogo_eliminar_mensaje">Esta acción no se puede deshacer.</string>
+
+    <!-- ========== ARRAYS DE OPCIONES ========== -->
+    <!-- Opciones para el Spinner de tipo de cableado -->
+    <string-array name="cableado_options">
+        <item>3P4W</item>
+        <item>3P4W + N</item>
+    </string-array>
+
+    <!-- Opciones para el Spinner de intervalo de tiempo (en segundos) -->
+    <string-array name="tiempo_options">
+        <item>1</item>
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
+
+    <!-- Opciones para el Spinner de amperaje -->
+    <string-array name="amperes_options">
+        <item>50 A</item>
+        <item>200 A</item>
+        <item>1000 A</item>
+        <item>3000 A</item>
+    </string-array>
+
+</resources>

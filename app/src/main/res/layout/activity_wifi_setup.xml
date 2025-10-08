@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    tools:context=".TcpClientActivity">
+
+    <ScrollView
+        android:id="@+id/mainScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔧 Configuración METER"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#FF9800"
+                android:gravity="center"
+                android:layout_marginBottom="32dp" />
+
+            <!-- ===== NUEVA SECCIÓN: PRE-VALIDACIÓN WIFI ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔍 Validación de Redes WiFi"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#424242"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Valide sus credenciales WiFi antes de conectarse al METER. Las redes validadas se guardarán para uso posterior."
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Estadísticas de redes validadas -->
+                <TextView
+                    android:id="@+id/textValidationStats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📊 Total: 0 redes | ✅ Validadas: 0 | ⏳ Pendientes: 0"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:padding="12dp"
+                    android:background="@drawable/data_field_background"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Botones de validación -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnValidateWifi"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="🔍 VALIDAR RED"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#4CAF50"
+                        app:cornerRadius="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnManageNetworks"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="📋 GESTIONAR"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#607D8B"
+                        app:cornerRadius="8dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Estado de Red -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📶 Estado de Red"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#424242"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:id="@+id/textNetworkName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Detectando red..."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:padding="12dp"
+                    android:background="@drawable/data_field_background"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textNetworkStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Verificando conexión..."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:padding="12dp"
+                    android:background="@drawable/data_field_background"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConnect"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="🔌 CONECTAR AL METER"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/primary_blue"
+                    app:cornerRadius="8dp" />
+
+            </LinearLayout>
+
+            <!-- Sección de Estado del Setup -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚙️ Estado"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#424242"
+                    android:layout_marginBottom="16dp" />
+
+                <ProgressBar
+                    android:id="@+id/progressSetup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:indeterminate="true" />
+
+                <TextView
+                    android:id="@+id/textSetupStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="⏳ Esperando conexión al dispositivo..."
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:padding="12dp"
+                    android:background="@drawable/data_field_background" />
+
+            </LinearLayout>
+
+            <!-- Sección de Información del Dispositivo -->
+            <LinearLayout
+                android:id="@+id/layoutDeviceInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📱 Información del Dispositivo"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Serial Number -->
+                    <TextView
+                        android:id="@+id/textDeviceSerial"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Serial: --"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical" />
+
+                    <!-- Fabrication Date -->
+                    <TextView
+                        android:id="@+id/textDeviceFabDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Fecha Fab.: --"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical" />
+
+                    <!-- Fabrication Hour -->
+                    <TextView
+                        android:id="@+id/textDeviceFabHour"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Hora Fab.: --"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical" />
+
+                    <!-- Activation Code -->
+                    <TextView
+                        android:id="@+id/textDeviceActCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Código Act.: --"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical" />
+
+                    <!-- Hardware Version -->
+                    <TextView
+                        android:id="@+id/textDeviceHwVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="HW Version: --"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical" />
+
+                    <!-- Firmware Version -->
+                    <TextView
+                        android:id="@+id/textDeviceFwVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="FW Version: --"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:gravity="center_vertical" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Fecha y Hora -->
+            <LinearLayout
+                android:id="@+id/layoutDateTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🕐 Fecha y Hora del Dispositivo"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceDateTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="--/--/----\n--:--:--"
+                        android:textSize="24sp"
+                        android:textColor="#424242"
+                        android:padding="20dp"
+                        android:background="@drawable/time_background"
+                        android:gravity="center"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Estado WiFi -->
+            <LinearLayout
+                android:id="@+id/layoutWifiStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📶 Estado WiFi del Dispositivo"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Red configurada -->
+                    <TextView
+                        android:id="@+id/textConfiguredNetwork"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Red: Sin configurar"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical" />
+
+                    <TextView
+                        android:id="@+id/textConfiguredPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Contraseña: No configurada"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="center_vertical"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground" />
+
+                    <!-- Estado de WiFi -->
+                    <TextView
+                        android:id="@+id/textWifiStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Estado: No verificado"
+                        android:textSize="14sp"
+                        android:textColor="#424242"
+                        android:padding="12dp"
+                        android:background="@drawable/data_field_background"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center_vertical" />
+
+                    <!-- Botones de WiFi -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnConfigWifi"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="⚙️ CONFIGURAR WIFI"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="#FF9800"
+                            app:cornerRadius="8dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnRefreshWifi"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="🔄 REFRESCAR"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="#2196F3"
+                            app:cornerRadius="8dp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Botones de Navegación -->
+            <LinearLayout
+                android:id="@+id/layoutNavigation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🧭 Navegación"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMediciones"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="📊 MEDICIONES"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="#2962FF"
+                            app:cornerRadius="8dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnBackToMenu"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="🏠 MENÚ PRINCIPAL"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="#2196F3"
+                            app:cornerRadius="8dp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</RelativeLayout>

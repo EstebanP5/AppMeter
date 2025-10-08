@@ -1,0 +1,9 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.App.NaranjaAzul" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#FF6F00</item> <!-- naranja fuerte -->
+        <item name="colorPrimaryDark">#FFA000</item> <!-- usado en AppCompat -->
+        <item name="colorAccent">#0277BD</item> <!-- azul -->
+
+        <item name="android:windowBackground">#FFFFFF</item>
+    </style>
+</resources>

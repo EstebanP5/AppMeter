@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores principales -->
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="blue">#2196F3</color>
+
+    <!-- Colores para login moderno -->
+    <color name="primary_color">#FF6B35</color>
+    <color name="primary_light">#FFB3A0</color>
+    <color name="accent_color">#1E88E5</color>
+    <color name="gradient_start">#E3F2FD</color>
+    <color name="gradient_end">#FFFFFF</color>
+    <color name="error_background">#FFEBEE</color>
+    <color name="error_border">#FFCDD2</color>
+
+    <!-- Colores de texto -->
+    <color name="colorRecieveText">#00FF00</color>
+    <color name="colorSendText">#82CAFF</color>
+    <color name="colorStatusText">#FFDB58</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="colorReceiveText">#212121</color>
+
+    <!-- Colores de estado -->
+    <color name="green_status">#4CAF50</color>
+    <color name="yellow_status">#FFC107</color>
+    <color name="red_status">#F44336</color>
+    <color name="error_red">#FF4444</color>
+    <color name="connected_green">#4CAF50</color>
+    <color name="warning_yellow">#FFC107</color>
+    <color name="critical_red">#F44336</color>
+    <color name="red">#FF0000</color>
+
+    <!-- Colores de fondo -->
+    <color name="light_gray_background">#FAFAFA</color>
+    <color name="divider_color">#E0E0E0</color>
+    <color name="app_background">#F5F5F5</color>
+    <color name="background">#F5F5F5</color>
+    <color name="card_background">#FFFFFF</color>
+
+    <!-- Colores del drawer -->
+    <color name="drawerBackground">#333333</color>
+    <color name="drawerIconTint">#FFFFFF</color>
+    <color name="drawerTextColor">#FFFFFF</color>
+    <color name="drawer_text_color">#333333</color>
+    <color name="drawer_item_background">#F5F5F5</color>
+    <color name="drawer_selected_item">#E0E0E0</color>
+    <color name="lightText">#DDDDDD</color>
+
+    <!-- Paleta Material extendida -->
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+
+    <!-- Colores estándar -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Escala de grises -->
+    <color name="gray_light">#F5F5F5</color>
+    <color name="gray_medium">#BDBDBD</color>
+    <color name="gray_dark">#616161</color>
+
+    <!-- Colores de texto -->
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- Colores de fondo -->
+    <color name="background_light">#F5F5F5</color>
+    <color name="background_white">#FFFFFF</color>
+    <color name="overlay_dark">#AA000000</color>
+
+    <!-- Colores de fases -->
+    <color name="phase_red">#E53E3E</color>
+    <color name="phase_green">#38A169</color>
+    <color name="phase_blue">#3182CE</color>
+
+    <!-- Colores de botones -->
+    <color name="button_primary">#4299E1</color>
+    <color name="button_success">#38A169</color>
+    <color name="button_danger">#E53E3E</color>
+
+    <!-- Colores de cards -->
+
+    <color name="card_shadow">#1A000000</color>
+
+
+    <color name="purple_200">#FFBB86FC</color>
+
+    <color name="green">#FF4CAF50</color>
+    <color name="orange">#FFFF9800</color>
+    <color name="blue_dark">#FFFF9800</color>
+    <!-- Colores principales -->
+
+    <color name="primary_dark">#1976D2</color>
+
+
+    <!-- Colores de fondo -->
+    <color name="background_color">#F5F5F5</color>
+
+
+    <!-- Colores de texto -->
+
+
+    <!-- Colores de estado -->
+    <color name="success_color">#4CAF50</color>
+    <color name="warning_color">#FF9800</color>
+    <color name="error_color">#F44336</color>
+
+    <!-- Otros colores -->
+
+    <color name="solar_green">#4CAF50</color>
+    <color name="solar_green_light">#E8F5E8</color>
+    <color name="cfe_red">#F44336</color>
+    <color name="cfe_red_light">#FFEBEE</color>
+    <color name="cfe_blue">#2196F3</color>
+    <color name="cfe_blue_light">#E3F2FD</color>
+    <color name="diesel_orange">#FF9800</color>
+    <color name="diesel_orange_light">#FFF3E0</color>
+    <color name="battery_green">#4CAF50</color>
+    <color name="battery_green_light">#E8F5E8</color>
+
+
+
+
+        <!-- Colores primarios -->
+
+
+
+
+
+        <color name="surface_color">#FFFFFF</color>
+
+        <!-- Colores de texto -->
+        <color name="primary_text_color">#212121</color>
+        <color name="secondary_text_color">#757575</color>
+
+
+
+    <color name="gold">#FFD700</color>
+
+    <color name="cyan">#00FFFF</color>
+
+    <color name="primary_blue">#2196F3</color>
+    <color name="secondary_blue">#64B5F6</color>
+    <color name="accent_orange">#FF9800</color>
+    <color name="success_green">#4CAF50</color>
+    <color name="danger_red">#F44336</color>
+
+
+    <!-- Colores principales -->
+
+
+    <!-- Colores de botones -->
+
+    <color name="button_secondary">#2196F3</color>
+    <color name="button_accent">#FF9800</color>
+
+    <!-- Colores informativos -->
+    <color name="info_background">#E3F2FD</color>
+    <color name="info_text">#1976D2</color>
+
+    <!-- Estados -->
+
+
+
+</resources>

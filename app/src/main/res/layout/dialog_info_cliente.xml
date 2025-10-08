@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@android:color/white">
+
+    <!-- Título del diálogo -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Información del Cliente"
+        android:textSize="20sp"
+        android:textColor="#2C3E50"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Información del cliente -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/selector_background"
+        android:padding="16dp"
+        android:layout_marginBottom="20dp">
+
+        <!-- ID del Cliente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="ID Cliente:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteId"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="1"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Nombre -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Nombre:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteNombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="Cliente Ejemplo"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Email -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Email:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteEmail"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="cliente@ejemplo.com"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Teléfono -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Teléfono:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteTelefono"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="555-1234"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Estado -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Estado:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteEstado"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="Activo"
+                android:textSize="14sp"
+                android:textColor="#27AE60" />
+        </LinearLayout>
+
+        <!-- Logo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Logo:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteLogo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="logo.png"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Configuración -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Config:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoClienteConfig"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="configuracion_json"
+                android:textSize="14sp"
+                android:textColor="#2C3E50"
+                android:maxLines="3"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Botones de acción -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnEditarClienteInfo"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="✏ Editar"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/btn_red_rounded" />
+
+        <Button
+            android:id="@+id/btnCerrarInfo"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Cerrar"
+            android:textColor="#2C3E50"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/selector_background" />
+    </LinearLayout>
+
+</LinearLayout>

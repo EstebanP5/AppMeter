@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/itemContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="8dp"
+    android:background="@android:color/white"
+    android:clickable="true"
+    android:focusable="true"
+    android:elevation="2dp">
+
+    <!-- Header con nombre e ID -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/tvClienteNombre"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nombre del Cliente"
+            android:textSize="16sp"
+            android:textColor="#2C3E50"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvClienteId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ID: 1"
+            android:textSize="12sp"
+            android:textColor="#7F8C8D"
+            android:background="#ECF0F1"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp" />
+    </LinearLayout>
+
+    <!-- Email -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📧 "
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvClienteEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="cliente@ejemplo.com"
+            android:textSize="14sp"
+            android:textColor="#34495E"
+            android:ellipsize="end"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Teléfono -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📞 "
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvClienteTelefono"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="555-1234"
+            android:textSize="14sp"
+            android:textColor="#34495E" />
+    </LinearLayout>
+
+    <!-- Estado -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📍 "
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvClienteEstado"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Estado"
+            android:textSize="14sp"
+            android:textColor="#34495E" />
+
+        <!-- Indicador de selección -->
+        <TextView
+            android:id="@+id/tvSelectionIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓"
+            android:textSize="16sp"
+            android:textColor="#27AE60"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Indicador de carga de información -->
+    <TextView
+        android:id="@+id/tvLoadingInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cargando información completa..."
+        android:textSize="12sp"
+        android:textColor="#95A5A6"
+        android:textStyle="italic"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
+</LinearLayout>

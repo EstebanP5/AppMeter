@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/gray_light"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- Cabecera de título (se podría omitir si ya el Toolbar lo pone) -->
+    <TextView
+        android:id="@+id/tvTituloClientes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/section_clientes_title"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- Botón Agregar Cliente -->
+    <Button
+        android:id="@+id/btnAgregarCliente"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/clientes_agregar"
+        android:layout_marginBottom="12dp" />
+
+    <!-- RecyclerView para la lista de clientes -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvClientes"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

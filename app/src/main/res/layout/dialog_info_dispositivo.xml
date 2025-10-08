@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Título del diálogo -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Información del Dispositivo"
+            android:textSize="20sp"
+            android:textColor="#2C3E50"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Información del dispositivo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/selector_background"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp">
+
+            <!-- ID y Serie -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="ID Dispositivo:"
+                        android:textSize="12sp"
+                        android:textColor="#7F8C8D"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvInfoDispositivoId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="1"
+                        android:textSize="14sp"
+                        android:textColor="#2C3E50" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Serie:"
+                        android:textSize="12sp"
+                        android:textColor="#7F8C8D"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvInfoDispositivoSerie"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="SSL001"
+                        android:textSize="14sp"
+                        android:textColor="#2C3E50"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Nombre -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Nombre:"
+                    android:textSize="14sp"
+                    android:textColor="#7F8C8D"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvInfoDispositivoNombre"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="LED Poste 1"
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50" />
+            </LinearLayout>
+
+            <!-- Circuito -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Circuito:"
+                    android:textSize="14sp"
+                    android:textColor="#7F8C8D"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvInfoDispositivoCircuito"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Circuito Principal"
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50" />
+            </LinearLayout>
+
+            <!-- Descripción -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Descripción:"
+                    android:textSize="14sp"
+                    android:textColor="#7F8C8D"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvInfoDispositivoDescripcion"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Luminaria LED inteligente"
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50"
+                    android:maxLines="3"
+                    android:ellipsize="end" />
+            </LinearLayout>
+
+            <!-- Ubicación -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ubicación:"
+                    android:textSize="14sp"
+                    android:textColor="#7F8C8D"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvInfoDispositivoUbicacion"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Esquina Av. Principal"
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
+            </LinearLayout>
+
+            <!-- Coordenadas -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Coordenadas:"
+                    android:textSize="14sp"
+                    android:textColor="#7F8C8D"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvInfoDispositivoLatitud"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Lat: 19.432608"
+                        android:textSize="12sp"
+                        android:textColor="#2C3E50" />
+
+                    <TextView
+                        android:id="@+id/tvInfoDispositivoLongitud"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Lng: -99.133209"
+                        android:textSize="12sp"
+                        android:textColor="#2C3E50" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Icono -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Icono:"
+                    android:textSize="14sp"
+                    android:textColor="#7F8C8D"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvInfoDispositivoIcono"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="led-icon.png"
+                    android:textSize="14sp"
+                    android:textColor="#2C3E50" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Botones de acción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnEditarDispositivoInfo"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="✏ Editar"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_red_rounded" />
+
+            <Button
+                android:id="@+id/btnEliminarDispositivoInfo"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:text="🗑 Eliminar"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_delete_background" />
+
+            <Button
+                android:id="@+id/btnCerrarInfoDispositivo"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Cerrar"
+                android:textColor="#2C3E50"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/selector_background" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

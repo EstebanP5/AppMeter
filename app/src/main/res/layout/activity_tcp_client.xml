@@ -1,0 +1,1147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    tools:context=".TcpClientActivity">
+
+    <ScrollView
+        android:id="@+id/mainScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚡ Cliente TCP Medidores"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#FF9800"
+                android:gravity="center"
+                android:layout_marginBottom="32dp" />
+
+            <!-- AGREGAR ESTA SECCIÓN DESPUÉS DE LA CONEXIÓN TCP Y ANTES DE CONTROL DE COMANDOS -->
+
+            <!-- Sección de Navegación - NUEVA -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🧭 Navegación"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#424242"
+                    android:layout_marginBottom="16dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGoToFasores"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="📊 FASORES"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#2962FF"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_timeline"
+                        app:iconGravity="textStart" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnBackToMainMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="🏠 MENÚ PRINCIPAL"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#2196F3"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_home"
+                        app:iconGravity="textStart" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Conexión TCP -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔌 Configuración de Conexión TCP"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#424242"
+                    android:layout_marginBottom="16dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:layout_marginEnd="8dp"
+                        android:hint="Dirección IP del servidor"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/primary_blue">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextIp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:text="192.168.4.1" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:hint="Puerto"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/primary_blue">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextPort"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:text="333" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConnect"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="🔌 CONECTAR"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/primary_blue"
+                    app:cornerRadius="8dp"
+                    app:icon="@drawable/ic_network_check"
+                    app:iconGravity="textStart" />
+
+            </LinearLayout>
+
+            <!-- Sección de Control de Comandos OctoNet -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Control de Comandos"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#424242"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:id="@+id/textViewCurrentTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Hora actual: --/--/---- --:--:--"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:padding="12dp"
+                    android:background="@drawable/time_background"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp"
+                    android:fontFamily="monospace" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Seleccionar Comando:"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="8dp" />
+
+                <Spinner
+                    android:id="@+id/spinnerCommand"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/spinner_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRead"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="📖 READ"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/secondary_blue"
+                        app:cornerRadius="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnWrite"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="📝 WRITE"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        app:backgroundTint="@color/accent_orange"
+                        app:cornerRadius="8dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Información del Comando -->
+            <LinearLayout
+                android:id="@+id/layoutCommandInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📋 Información del Comando"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="12dp" />
+
+                    <TextView
+                        android:id="@+id/textViewCommandDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Seleccione un comando para ver su descripción"
+                        android:textSize="14sp"
+                        android:textColor="#666666" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Datos del Dispositivo -->
+            <LinearLayout
+                android:id="@+id/layoutDeviceData"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📱 Datos del Dispositivo"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Campo para Device Time -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="Fecha y Hora (dd/MM/yyyy HH:mm:ss)"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:boxStrokeColor="@color/primary_blue">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editDeviceTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:visibility="gone" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Campos para Device ID -->
+                    <TextView
+                        android:id="@+id/textDeviceId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="ID: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceSerial"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Serial: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceFacDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Fecha Fabricación: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceFacHour"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Hora Fabricación: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceActCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Código Activación: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceHwVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Versión HW: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/textDeviceFwVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Versión FW: --"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="8dp"
+                        android:background="@drawable/data_field_background"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- SECCIÓN: Configuración de Medidores -->
+            <LinearLayout
+                android:id="@+id/layout_meter_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ Configuración de Medidor"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- REC_ON/OFF Switch -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/config_item_background"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="REC_ON/OFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#424242" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0=Pause, 1=Record"
+                            android:textSize="12sp"
+                            android:textColor="#666666"
+                            android:layout_marginEnd="8dp" />
+
+                        <Switch
+                            android:id="@+id/switch_rec_on_off"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+
+                    </LinearLayout>
+
+                    <!-- PERIOD Spinner -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/config_item_background"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="PERIOD (Período de Grabación)"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#424242"
+                            android:layout_marginBottom="8dp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_period"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/spinner_background"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp" />
+
+                    </LinearLayout>
+
+                    <!-- SENSORS Spinner -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/config_item_background"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SENSORS (Tipo de Sensor)"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#424242"
+                            android:layout_marginBottom="8dp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_sensors"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/spinner_background"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp" />
+
+                    </LinearLayout>
+
+                    <!-- METERING_TYPE Spinner -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="20dp"
+                        android:background="@drawable/config_item_background"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="METERING_TYPE (Tipo de Medición)"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#424242"
+                            android:layout_marginBottom="8dp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_metering_type"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/spinner_background"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp" />
+
+                    </LinearLayout>
+
+                    <!-- Botones de Configuración -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_read_config"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="📖 LEER CONFIG"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/secondary_blue"
+                            app:cornerRadius="8dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_write_config"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="📤 ESCRIBIR CONFIG"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/accent_orange"
+                            app:cornerRadius="8dp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- SECCIÓN: Datos ENERGY_3PHA_PAGE_STRC -->
+            <LinearLayout
+                android:id="@+id/layout_energy_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_background"
+                    android:elevation="4dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ Datos ENERGY_3PHA_PAGE_STRC"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Información General -->
+                    <TextView
+                        android:id="@+id/text_energy_datetime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="📅 --/--/---- --:--:--"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:padding="12dp"
+                        android:background="@drawable/config_item_background"
+                        android:layout_marginBottom="8dp"
+                        android:fontFamily="monospace"
+                        android:gravity="center" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:id="@+id/text_energy_flash_address"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📍 Flash: --"
+                            android:textSize="12sp"
+                            android:textColor="#666666"
+                            android:padding="8dp"
+                            android:background="@drawable/data_field_background"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/text_energy_sensor_status"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🔍 Sensor: --"
+                            android:textSize="12sp"
+                            android:textColor="#666666"
+                            android:padding="8dp"
+                            android:background="@drawable/data_field_background"
+                            android:layout_marginStart="4dp" />
+
+                    </LinearLayout>
+
+                    <!-- Datos de Energía Totales -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💡 Energía Total"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="4dp">
+
+                            <TextView
+                                android:id="@+id/text_energy_wh_wb_delta"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="⚡ WH_WB_DELTA: -- Wh"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_wh_nb_delta"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="⚡ WH_NB_DELTA: -- Wh"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_energy_wh_wb_day"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📊 WH_WB_DAY: -- Wh"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_wh_fun_day"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📊 WH_FUN_DAY: -- Wh"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- CH1 Datos -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔌 Canal 1 (CH1)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#2196F3"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="4dp">
+
+                            <TextView
+                                android:id="@+id/text_energy_w_ch1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="⚡ W: -- W"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_v_ch1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔌 V: -- V"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_a_ch1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔋 A: -- A"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_energy_hz_ch1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📊 Hz: -- Hz"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_angle_ch1"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📐 Ang: --°"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- CH2 Datos -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔌 Canal 2 (CH2)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#4CAF50"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="4dp">
+
+                            <TextView
+                                android:id="@+id/text_energy_w_ch2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="⚡ W: -- W"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_v_ch2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔌 V: -- V"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_a_ch2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔋 A: -- A"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_energy_hz_ch2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📊 Hz: -- Hz"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_angle_ch2"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📐 Ang: --°"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- CH3 Datos -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔌 Canal 3 (CH3)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#FF9800"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="4dp">
+
+                            <TextView
+                                android:id="@+id/text_energy_w_ch3"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="⚡ W: -- W"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_v_ch3"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔌 V: -- V"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_a_ch3"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="🔋 A: -- A"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/text_energy_hz_ch3"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📊 Hz: N/A"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginEnd="2dp" />
+
+                            <TextView
+                                android:id="@+id/text_energy_angle_ch3"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="📐 Ang: N/A"
+                                android:textSize="12sp"
+                                android:textColor="#424242"
+                                android:padding="8dp"
+                                android:background="@drawable/data_field_background"
+                                android:layout_marginStart="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Sección de Estado Terminal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:elevation="4dp"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="📊 Terminal de Comunicación"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#424242" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClear"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="🗑️ LIMPIAR"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:minWidth="100dp"
+                        app:backgroundTint="@color/danger_red"
+                        app:cornerRadius="6dp"
+                        app:icon="@drawable/ic_clear"
+                        app:iconSize="16dp"
+                        app:iconGravity="textStart" />
+
+                </LinearLayout>
+
+                <ScrollView
+                    android:id="@+id/scrollViewStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="320dp"
+                    android:background="@drawable/terminal_background"
+                    android:padding="16dp"
+                    android:scrollbars="vertical"
+                    android:fadeScrollbars="false">
+
+                    <TextView
+                        android:id="@+id/textViewStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#212121"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace"
+                        android:lineSpacingExtra="2dp"
+                        android:text="🔌 Cliente TCP OctoNet listo\n"
+                        android:textIsSelectable="true" />
+
+                </ScrollView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Floating Action Buttons para navegación -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnScrollTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
+        android:src="@drawable/ic_keyboard_arrow_up"
+        app:backgroundTint="@color/secondary_blue"
+        app:tint="@android:color/white"
+        android:contentDescription="Scroll to top"
+        android:enabled="true"
+        android:alpha="0.8"
+        app:elevation="6dp"
+        app:fabSize="mini" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnScrollBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_keyboard_arrow_down"
+        app:backgroundTint="@color/success_green"
+        app:tint="@android:color/white"
+        android:contentDescription="Scroll to bottom"
+        android:enabled="true"
+        android:alpha="1.0"
+        app:elevation="6dp"
+        app:fabSize="mini" />
+
+</RelativeLayout>

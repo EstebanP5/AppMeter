@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/chart_root"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+
+        <!-- ==== BLOQUE GRUPO A ==== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grupo A"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <CheckBox
+                android:id="@+id/cbA_ventas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ventas A"
+                android:checked="true"/>
+            <CheckBox
+                android:id="@+id/cbA_pron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pronóstico A"
+                android:checked="true"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
+
+        <ToggleButton
+            android:id="@+id/toggleA_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="Líneas A"
+            android:textOn="Barras A"
+            android:layout_marginBottom="4dp"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="16dp">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/lineChartA"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/barChartA"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+        </FrameLayout>
+
+        <!-- ==== BLOQUE GRUPO B ==== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grupo B"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <CheckBox
+                android:id="@+id/cbB_ventas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ventas B"
+                android:checked="true"/>
+            <CheckBox
+                android:id="@+id/cbB_pron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pronóstico B"
+                android:checked="true"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
+
+        <ToggleButton
+            android:id="@+id/toggleB_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="Líneas B"
+            android:textOn="Barras B"
+            android:layout_marginBottom="4dp"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="16dp">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/lineChartB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/barChartB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+        </FrameLayout>
+
+        <!-- ==== BLOQUE GRUPO C ==== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grupo C"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <CheckBox
+                android:id="@+id/cbC_ventas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ventas C"
+                android:checked="true"/>
+            <CheckBox
+                android:id="@+id/cbC_pron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pronóstico C"
+                android:checked="true"
+                android:layout_marginStart="16dp"/>
+        </LinearLayout>
+
+        <ToggleButton
+            android:id="@+id/toggleC_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textOff="Líneas C"
+            android:textOn="Barras C"
+            android:layout_marginBottom="4dp"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="16dp">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/lineChartC"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/barChartC"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+        </FrameLayout>
+
+    </LinearLayout>
+</ScrollView>

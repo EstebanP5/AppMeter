@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Título Agregar nuevo cliente -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Agregar nuevo cliente"
+            android:textSize="20sp"
+            android:textColor="#2C3E50"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Opción 1: Agregar cliente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/option_background"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="1dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="1"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/number_circle"
+                android:gravity="center"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Agrega un nuevo cliente"
+                android:textSize="16sp"
+                android:textColor="#2C3E50"
+                android:layout_gravity="center_vertical" />
+
+            <Button
+                android:id="@+id/btnAgregarCliente"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="+ Cliente"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_red_small"
+                android:paddingHorizontal="16dp"
+                android:minWidth="0dp"
+                android:elevation="2dp" />
+        </LinearLayout>
+
+        <!-- Título Agrega para el cliente -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Agrega para el cliente que seleccionaste"
+            android:textSize="16sp"
+            android:textColor="#7F8C8D"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Opción 2: Agregar localidad -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/option_background"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="1dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="2"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/number_circle"
+                android:gravity="center"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Agrega una localidad"
+                android:textSize="16sp"
+                android:textColor="#2C3E50"
+                android:layout_gravity="center_vertical" />
+
+            <Button
+                android:id="@+id/btnAgregarLocalidad"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="+ Localidad"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_red_small"
+                android:paddingHorizontal="16dp"
+                android:minWidth="0dp"
+                android:elevation="2dp" />
+        </LinearLayout>
+
+        <!-- Opción 3: Agregar circuito -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/option_background"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="1dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="3"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/number_circle"
+                android:gravity="center"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Agrega un circuito"
+                android:textSize="16sp"
+                android:textColor="#2C3E50"
+                android:layout_gravity="center_vertical" />
+
+            <Button
+                android:id="@+id/btnAgregarCircuito"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="+ Circuito"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_red_small"
+                android:paddingHorizontal="16dp"
+                android:minWidth="0dp"
+                android:elevation="2dp" />
+        </LinearLayout>
+
+        <!-- Opción 4: Agregar dispositivo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/option_background"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="1dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="4"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/number_circle"
+                android:gravity="center"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Agrega un dispositivo"
+                android:textSize="16sp"
+                android:textColor="#2C3E50"
+                android:layout_gravity="center_vertical" />
+
+            <Button
+                android:id="@+id/btnAgregarDispositivo"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="+ Dispositivo"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_red_small"
+                android:paddingHorizontal="16dp"
+                android:minWidth="0dp"
+                android:elevation="2dp" />
+        </LinearLayout>
+
+        <!-- Sección Lista de Clientes -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clientes Registrados"
+            android:textSize="18sp"
+            android:textColor="#2C3E50"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- RecyclerView para mostrar clientes -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvClientes"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:background="@android:color/white"
+            android:clipToPadding="false"
+            android:padding="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    </LinearLayout>
+</ScrollView>

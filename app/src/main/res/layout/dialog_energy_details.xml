@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_background">
+
+    <!-- Título del modal -->
+    <TextView
+        android:id="@+id/tvModalTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Detalles de Energía"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_text"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Icono del tipo de energía -->
+    <ImageView
+        android:id="@+id/ivModalIcon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_energy_default" />
+
+    <!-- Contenedor de detalles -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:maxHeight="400dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Valor principal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="@drawable/detail_item_background"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Valor Actual:"
+                    android:textSize="16sp"
+                    android:textColor="@color/secondary_text" />
+
+                <TextView
+                    android:id="@+id/tvModalMainValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 kW"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text" />
+
+            </LinearLayout>
+
+            <!-- Detalle 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="@drawable/detail_item_background"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvModalDetail1Label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Detalle 1:"
+                    android:textSize="14sp"
+                    android:textColor="@color/secondary_text" />
+
+                <TextView
+                    android:id="@+id/tvModalDetail1Value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_text" />
+
+            </LinearLayout>
+
+            <!-- Detalle 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="@drawable/detail_item_background"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvModalDetail2Label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Detalle 2:"
+                    android:textSize="14sp"
+                    android:textColor="@color/secondary_text" />
+
+                <TextView
+                    android:id="@+id/tvModalDetail2Value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_text" />
+
+            </LinearLayout>
+
+            <!-- Detalle 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="@drawable/detail_item_background"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvModalDetail3Label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Detalle 3:"
+                    android:textSize="14sp"
+                    android:textColor="@color/secondary_text" />
+
+                <TextView
+                    android:id="@+id/tvModalDetail3Value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_text" />
+
+            </LinearLayout>
+
+            <!-- Estado o información adicional -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="@drawable/status_background"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Estado del Sistema:"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary_text"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/tvModalStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Operando normalmente"
+                    android:textSize="14sp"
+                    android:textColor="@color/success_color" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Botones de acción -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btnModalRefresh"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Actualizar"
+            android:textColor="@color/accent_color"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnModalClose"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Cerrar"
+            android:textColor="@color/primary_color" />
+
+    </LinearLayout>
+
+</LinearLayout>
