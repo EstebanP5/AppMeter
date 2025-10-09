@@ -121,6 +121,15 @@ public class OctoNetCommandEncoder {
         public int getValue() { return value; }
     }
 
+    public static float bytesToFloat(byte b0, byte b1, byte b2, byte b3) {
+        // Convertir 4 bytes little-endian a float IEEE 754
+        int intBits = ((b3 & 0xFF) << 24) |
+                ((b2 & 0xFF) << 16) |
+                ((b1 & 0xFF) << 8) |
+                (b0 & 0xFF);
+        return Float.intBitsToFloat(intBits);
+    }
+
     // Estado del decodificador
     public static class DecodeState {
         public CmdState decodeState = CmdState.Start;

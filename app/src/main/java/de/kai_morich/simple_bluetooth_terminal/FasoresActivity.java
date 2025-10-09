@@ -7,6 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,6 +50,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -113,6 +123,10 @@ public class FasoresActivity extends AppCompatActivity {
 
     // ===== ESTADO =====
     private long tiempoInicio;
+
+    private Runnable updateCurrentDataRunnable;
+
+    private InputStream inputStream;
     private int contadorMuestras = 0;
     private boolean isWaitingResponse = false;
     private boolean configurationSynced = false;
@@ -198,12 +212,12 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void setupSpinners() {
-        String[] cableadoOptions = {"3 = Carga Trifásica"};
+        String[] cableadoOptions = {"Carga Trifásica"};
         setupSpinnerAdapter(spinnerCableado, cableadoOptions);
 
         String[] amperesOptions = {
-                "0 = Shunt-20A", "1 = CT-50A", "2 = CT-200A",
-                "3 = CT-400A", "4 = RoGo-1000A", "5 = RoGo-3000A"
+                 "50A", "200A",
+                "400A", "1000A", "3000A"
         };
         setupSpinnerAdapter(spinnerAmperes, amperesOptions);
 
@@ -302,7 +316,7 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void performAutomaticSetup() {
         if (!isConnectedToDevice) {
-            System.out.println("❌ FASORES - No hay conexión para setup automático");
+            System.out.println("❌ FASORES - No hay conexión para setup");
             return;
         }
 
@@ -310,47 +324,45 @@ public class FasoresActivity extends AppCompatActivity {
 
         executor.execute(() -> {
             try {
-                handler.post(() -> showToast("⚙️ Iniciando configuración automática..."));
-                Thread.sleep(500);
+                handler.post(() -> showToast("⚙️ Configuración automática..."));
 
-                // 1. Sincronizar hora del dispositivo
+                // 1. Sincronizar hora (SIN ESPERA LARGA)
                 System.out.println("🕐 FASORES - Paso 1: Sincronizando hora...");
                 handler.post(() -> showToast("🕐 Sincronizando hora..."));
                 sendTimeWriteCommand();
-                Thread.sleep(1500);
+                Thread.sleep(500); // ✅ SOLO 500ms
 
-                // 2. Verificar configuración WiFi del medidor
-                System.out.println("📡 FASORES - Paso 2: Verificando WiFi del medidor...");
-                handler.post(() -> showToast("📡 Verificando WiFi del medidor..."));
+                // 2. Verificar WiFi
+                System.out.println("📡 FASORES - Paso 2: Verificando WiFi...");
+                handler.post(() -> showToast("📡 Verificando WiFi..."));
                 sendWiFiReadCommand();
-                Thread.sleep(1500);
+                Thread.sleep(500); // ✅ SOLO 500ms
 
-                // 3. Leer configuración del nodo (sensores, periodo, etc.)
-                System.out.println("🔧 FASORES - Paso 3: Leyendo configuración del nodo...");
+                // 3. Leer configuración
+                System.out.println("🔧 FASORES - Paso 3: Leyendo configuración...");
                 handler.post(() -> showToast("🔧 Leyendo configuración..."));
                 readDeviceConfigurationIndependent();
-                Thread.sleep(2000);
+                Thread.sleep(500); // ✅ SOLO 500ms
 
-                // Setup completado
-                System.out.println("✅ FASORES - Setup automático completado exitosamente");
+                // ✅ MARCAR COMO SINCRONIZADO INMEDIATAMENTE
+                System.out.println("✅ FASORES - Setup completado");
                 handler.post(() -> {
-                    showToast("🎉 Setup automático completado");
+                    showToast("🎉 Setup completado");
                     configurationSynced = true;
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
                 });
 
             } catch (InterruptedException e) {
-                System.out.println("⚠️ FASORES - Setup automático interrumpido");
+                System.out.println("⚠️ FASORES - Setup interrumpido");
                 handler.post(() -> showToast("⚠️ Setup interrumpido"));
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
-                System.out.println("❌ FASORES - Error en setup automático: " + e.getMessage());
+                System.out.println("❌ FASORES - Error en setup: " + e.getMessage());
                 e.printStackTrace();
                 handler.post(() -> {
-                    showToast("❌ Error en setup automático: " + e.getMessage());
-                    // Habilitar controles de todas formas
-                    configurationSynced = true;
+                    showToast("❌ Error en setup: " + e.getMessage());
+                    configurationSynced = true; // ✅ PERMITIR USO AUNQUE FALLE
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
                 });
@@ -364,11 +376,11 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void showDeviceIdModal() {
         if (!isConnectedToDevice) {
-            showToast("❌ No hay conexión con el medidor");
+            showToast("❌ No hay conexión");
             return;
         }
 
-        // Si ya hay datos válidos, mostrar inmediatamente
+        // ✅ Si ya hay datos, mostrar inmediatamente
         if (lastReadDeviceIdInfo != null &&
                 !lastReadDeviceIdInfo.serial.equals("N/A") &&
                 !lastReadDeviceIdInfo.serial.equals("ERROR") &&
@@ -378,60 +390,19 @@ public class FasoresActivity extends AppCompatActivity {
             return;
         }
 
-        // Solicitar nuevos datos
-        System.out.println("📤 FASORES - Solicitando Device ID al medidor...");
-        showToast("📋 Solicitando información del dispositivo...");
+        // ✅ Solicitar datos
+        System.out.println("📤 FASORES - Solicitando Device ID...");
+        showToast("📋 Solicitando información...");
         sendDeviceIdReadCommand();
 
-        // Esperar respuesta con múltiples reintentos
-        final int[] attempts = {0};
-        final int MAX_ATTEMPTS = 5;
-        final int RETRY_DELAY = 1000; // 1 segundo entre intentos
-        final Handler checkHandler = new Handler(Looper.getMainLooper());
-
-        Runnable checkDataRunnable = new Runnable() {
-            @Override
-            public void run() {
-                attempts[0]++;
-                System.out.println("🔄 FASORES - Verificando Device ID... intento " +
-                        attempts[0] + "/" + MAX_ATTEMPTS);
-
-                // Verificar si se recibieron datos válidos
-                if (lastReadDeviceIdInfo != null &&
-                        !lastReadDeviceIdInfo.serial.equals("N/A") &&
-                        !lastReadDeviceIdInfo.serial.equals("ERROR") &&
-                        !lastReadDeviceIdInfo.serial.equals("DESCONOCIDO")) {
-                    System.out.println("✅ FASORES - Device ID recibido, mostrando modal");
-                    displayDeviceIdModal();
-                }
-                // Si no hay datos y aún hay intentos, reintentar
-                else if (attempts[0] < MAX_ATTEMPTS) {
-                    System.out.println("⏳ FASORES - Esperando respuesta... reintentando");
-
-                    // Reenviar comando cada 2 intentos
-                    if (attempts[0] % 2 == 0) {
-                        System.out.println("📤 FASORES - Reenviando solicitud Device ID");
-                        sendDeviceIdReadCommand();
-                    }
-
-                    checkHandler.postDelayed(this, RETRY_DELAY);
-                }
-                // Timeout final
-                else {
-                    System.out.println("❌ FASORES - Timeout esperando Device ID después de " +
-                            MAX_ATTEMPTS + " intentos");
-                    showToast("⏰ Timeout: No se pudo obtener la información del dispositivo");
-
-                    // Mostrar modal con datos parciales si existen
-                    if (lastReadDeviceIdInfo != null) {
-                        displayDeviceIdModal();
-                    }
-                }
+        // ✅ ESPERAR SOLO 2 SEGUNDOS Y MOSTRAR LO QUE HAYA
+        handler.postDelayed(() -> {
+            if (lastReadDeviceIdInfo != null) {
+                displayDeviceIdModal();
+            } else {
+                showToast("⏰ Sin respuesta del dispositivo");
             }
-        };
-
-        // Iniciar verificación después de 1 segundo
-        checkHandler.postDelayed(checkDataRunnable, RETRY_DELAY);
+        }, 2000); // ✅ SOLO 2 SEGUNDOS
     }
 
     private void displayDeviceIdModal() {
@@ -913,78 +884,191 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void connectToDeviceIndependent() {
-        if (isConnectedToDevice || executor == null) return;
+        if (isConnectedToDevice) {
+            System.out.println("⚠️ FASORES - Ya hay una conexión activa");
+            return;
+        }
 
-        showToast("🔗 Estableciendo conexión...");
+        String ip = deviceIp;
+        int port = devicePort;
+
+        System.out.println("🔄 FASORES - Iniciando conexión a " + ip + ":" + port);
+        showToast("🔄 Conectando a " + ip + ":" + port + "...");
+
         executor.execute(() -> {
             try {
+                // ✅ PASO 1: Crear socket
                 socket = new Socket();
-                socket.connect(new java.net.InetSocketAddress(deviceIp, devicePort), 10000);
-                outputStream = socket.getOutputStream();
-                isConnectedToDevice = true;
+                System.out.println("   Socket creado");
 
+                // ✅ PASO 2: Conectar con timeout de 15 segundos
+                socket.connect(new java.net.InetSocketAddress(ip, port), 15000);
+                System.out.println("   Socket conectado");
+
+                // ✅ PASO 3: Configurar socket (IGUAL A WiFiSetupActivity)
+                socket.setSoTimeout(30000); // 30 segundos timeout de lectura
+                socket.setReceiveBufferSize(8192);
+                socket.setSendBufferSize(4096);
+                socket.setTcpNoDelay(true);
+                socket.setKeepAlive(true);
+                System.out.println("   Socket configurado");
+
+                // ✅ PASO 4: Obtener streams
+                outputStream = socket.getOutputStream();
+                inputStream = socket.getInputStream();
+                System.out.println("   Streams obtenidos");
+
+                // ✅ PASO 5: Marcar como conectado
+                isConnectedToDevice = true;
+                System.out.println("✅ FASORES - Conexión establecida exitosamente");
+
+                // ✅ PASO 6: Actualizar UI
                 handler.post(() -> {
-                    showToast("✅ Conectado al dispositivo");
-                    performAutomaticSetup();
+                    showToast("✅ Conectado a " + ip + ":" + port);
+                    setControlsEnabled(false); // Deshabilitado hasta sincronizar
+                    configurationSynced = false;
                 });
 
+                // ✅ PASO 7: Iniciar thread de recepción
+                System.out.println("🔄 FASORES - Iniciando thread de recepción...");
                 startIndependentReceiveThreadImproved();
+
+                // ✅ PASO 8: Esperar 500ms y hacer setup
+                Thread.sleep(500);
+                handler.post(() -> performAutomaticSetup());
+
+            } catch (java.net.SocketTimeoutException e) {
+                System.out.println("⏰ FASORES - Timeout al conectar: " + e.getMessage());
+                handler.post(() -> {
+                    showToast("⏰ Timeout de conexión");
+                    isConnectedToDevice = false;
+                });
+            } catch (java.net.ConnectException e) {
+                System.out.println("❌ FASORES - Error de conexión: " + e.getMessage());
+                handler.post(() -> {
+                    showToast("❌ No se pudo conectar al dispositivo");
+                    isConnectedToDevice = false;
+                });
+            } catch (IOException e) {
+                System.out.println("❌ FASORES - Error I/O: " + e.getMessage());
+                handler.post(() -> {
+                    showToast("❌ Error de conexión: " + e.getMessage());
+                    isConnectedToDevice = false;
+                });
             } catch (Exception e) {
-                handler.post(() -> showToast("❌ Error de conexión: " + e.getMessage()));
+                System.out.println("❌ FASORES - Error inesperado: " + e.getMessage());
+                e.printStackTrace();
+                handler.post(() -> {
+                    showToast("❌ Error: " + e.getMessage());
+                    isConnectedToDevice = false;
+                });
             }
         });
     }
 
+    // ✅ AGREGAR ESTE MÉTODO NUEVO (IGUAL A WiFiSetupActivity):
+    private void closeSocketSafely() {
+        executor.execute(() -> {
+            try {
+                System.out.println("🔌 FASORES - Cerrando socket...");
+
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                        System.out.println("   OutputStream cerrado");
+                    } catch (IOException e) {
+                        System.out.println("   Error cerrando OutputStream: " + e.getMessage());
+                    }
+                    outputStream = null;
+                }
+
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                        System.out.println("   InputStream cerrado");
+                    } catch (IOException e) {
+                        System.out.println("   Error cerrando InputStream: " + e.getMessage());
+                    }
+                    inputStream = null;
+                }
+
+                if (socket != null && !socket.isClosed()) {
+                    try {
+                        socket.close();
+                        System.out.println("   Socket cerrado");
+                    } catch (IOException e) {
+                        System.out.println("   Error cerrando Socket: " + e.getMessage());
+                    }
+                    socket = null;
+                }
+
+                System.out.println("✅ FASORES - Socket cerrado correctamente");
+
+            } catch (Exception e) {
+                System.out.println("❌ FASORES - Error cerrando socket: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    // ✅ REEMPLAZAR startIndependentReceiveThreadImproved() COMPLETO:
     private void startIndependentReceiveThreadImproved() {
         executor.execute(() -> {
             byte[] buffer = new byte[2048];
 
+            System.out.println("🔄 FASORES - Thread de recepción iniciado");
+
             try {
                 while (isConnectedToDevice && !Thread.currentThread().isInterrupted()) {
                     try {
-                        if (socket == null || socket.isClosed() || !socket.isConnected()) {
-                            break;
-                        }
-
+                        // ✅ IGUAL QUE WiFiSetupActivity - SIMPLE Y DIRECTO
                         int bytesRead = socket.getInputStream().read(buffer);
 
                         if (bytesRead > 0) {
                             byte[] data = new byte[bytesRead];
                             System.arraycopy(buffer, 0, data, 0, bytesRead);
+
+                            System.out.println("📨 FASORES - Recibidos " + bytesRead + " bytes");
+                            System.out.println("📊 FASORES - Hex: " + OctoNetCommandEncoder.bytesToHexString(data));
+
+                            // ✅ PROCESAR EN HANDLER (IGUAL QUE WiFiSetupActivity)
                             handler.post(() -> processReceivedDataIndependent(data));
-                        } else {
+
+                        } else if (bytesRead == -1) {
+                            System.out.println("🔌 FASORES - Conexión cerrada por servidor");
                             break;
                         }
 
                     } catch (java.net.SocketTimeoutException e) {
+                        // Timeout esperado, continuar
                         continue;
-                    } catch (java.net.SocketException e) {
-                        if (isConnectedToDevice) {
-                            break;
-                        }
-                    } catch (IOException e) {
-                        if (isConnectedToDevice) {
-                            break;
-                        }
                     }
                 }
+            } catch (IOException e) {
+                if (isConnectedToDevice) {
+                    System.out.println("❌ FASORES - IOException: " + e.getMessage());
+                    handler.post(() -> {
+                        showToast("❌ Error en conexión");
+                        disconnectFromDevice();
+                    });
+                }
             } catch (Exception e) {
-                // Error general
+                System.out.println("❌ FASORES - Error general: " + e.getMessage());
+                e.printStackTrace();
             }
 
-            if (isConnectedToDevice) {
-                handler.post(() -> {
+            System.out.println("🔚 FASORES - Thread de recepción terminado");
+
+            // ✅ CERRAR SOCKET Y ACTUALIZAR UI
+            handler.post(() -> {
+                if (isConnectedToDevice) {
                     isConnectedToDevice = false;
                     configurationSynced = false;
                     setControlsEnabled(false);
                     showToast("🔌 Conexión perdida");
-
-                    handler.postDelayed(() -> {
-                        showToast("🔄 Intentando reconectar...");
-                        connectToDeviceIndependent();
-                    }, 3000);
-                });
-            }
+                    closeSocketSafely();
+                }
+            });
         });
     }
 
@@ -1111,11 +1195,21 @@ public class FasoresActivity extends AppCompatActivity {
         if (command.length >= 3) {
             int cmd = command[2] & 0xFF;
             switch (cmd) {
-                case 0x00: commandName = "DEVICE_ID_READ"; break;
-                case 0x02: commandName = "DEVICE_TIME_WRITE"; break;
-                case 0x20: commandName = "NODE_SETTINGS"; break;
-                case 0x21: commandName = "NODE_CURRENT_READ"; break;
-                case 0xE3: commandName = "WIFI_SETTINGS"; break;
+                case 0x00:
+                    commandName = "DEVICE_ID_READ";
+                    break;
+                case 0x02:
+                    commandName = "DEVICE_TIME_WRITE";
+                    break;
+                case 0x20:
+                    commandName = "NODE_SETTINGS";
+                    break;
+                case 0x21:
+                    commandName = "NODE_CURRENT_READ";
+                    break;
+                case 0xE3:
+                    commandName = "WIFI_SETTINGS";
+                    break;
             }
         }
 
@@ -1151,84 +1245,126 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void processReceivedDataIndependent(byte[] data) {
-        isWaitingResponse = false;
+        try {
+            // ✅ IMPORTANTE: Marcar que YA NO estamos esperando respuesta
+            isWaitingResponse = false;
 
-        if (data == null || data.length < 4) {
-            return;
-        }
-
-        if (!OctoNetCommandEncoder.validateCommandStructure(data)) {
-            return;
-        }
-
-        if (!OctoNetCommandEncoder.verifyChecksum(data)) {
-            return;
-        }
-
-        int responseType = data[1] & 0xFF;
-        int command = data[2] & 0xFF;
-        int dataSize = data[3] & 0xFF;
-
-        System.out.println("📥 FASORES - Respuesta recibida: Type=0x" +
-                Integer.toHexString(responseType) + " Cmd=0x" +
-                Integer.toHexString(command) + " Size=" + dataSize);
-
-        if (responseType == 0x45) {
-            showToast("❌ Error del dispositivo");
-            return;
-        }
-
-        if (responseType == 0x43) {
-            try {
-                // ✅ DEVICE_ID: Comando 0x00
-                if (command == 0x00) {
-                    System.out.println("📱 FASORES - Procesando DEVICE_ID (0x00)");
-                    processDeviceIdResponse(data);
-                }
-                // ✅ NODE_SETTINGS: Comando 0x20
-                else if (command == 0x20) {
-                    if (dataSize > 0) {
-                        processConfigurationResponseIndependent(data);
-                    } else {
-                        showToast("✅ Configuración aplicada correctamente");
-                        handler.postDelayed(() -> {
-                            if (!isWaitingResponse) {
-                                readDeviceConfigurationIndependent();
-                            }
-                        }, 1000);
-                    }
-                }
-                // ✅ NODE_CURRENT: Comando 0x21
-                else if (command == 0x21) {
-                    if (dataSize > 0) {
-                        processCurrentDataResponseIndependent(data);
-                    } else {
-                        showToast("❌ NODE_CURRENT sin datos disponibles");
-                    }
-                }
-                // ✅ DEVICE_TIME: Comando 0x02
-                else if (command == 0x02) {
-                    System.out.println("🕐 FASORES - Hora sincronizada correctamente");
-                    showToast("✅ Hora sincronizada");
-                }
-                // ✅ WIFI_SETTINGS: Comando 0xE3
-                else if (command == 0xE3) {
-                    System.out.println("📡 FASORES - Procesando WIFI_SETTINGS (0xE3)");
-                    processWiFiSettingsResponse(data);
-                }
-                else {
-                    System.out.println("⚠️ FASORES - Comando no reconocido: 0x" +
-                            Integer.toHexString(command));
-                }
-            } catch (Exception e) {
-                System.out.println("❌ FASORES - Error procesando respuesta: " + e.getMessage());
-                e.printStackTrace();
-                showToast("❌ Error procesando respuesta");
+            if (data == null || data.length < 4) {
+                System.out.println("❌ FASORES - Datos insuficientes: " +
+                        (data != null ? data.length : "null") + " bytes");
+                return;
             }
+
+            String hexData = OctoNetCommandEncoder.bytesToHexString(data);
+            System.out.println("🔍 FASORES - Procesando respuesta: " + data.length + " bytes");
+            System.out.println("   Hex: " + hexData);
+
+            // ✅ VALIDAR ESTRUCTURA
+            if (!OctoNetCommandEncoder.validateCommandStructure(data)) {
+                System.out.println("❌ FASORES - Estructura inválida");
+                return;
+            }
+
+            // ✅ VALIDAR CHECKSUM
+            if (!OctoNetCommandEncoder.verifyChecksum(data)) {
+                System.out.println("❌ FASORES - Checksum incorrecto");
+                return;
+            }
+
+            int responseType = data[1] & 0xFF;
+            int command = data[2] & 0xFF;
+            int dataSize = data[3] & 0xFF;
+
+            System.out.println("📋 FASORES - Respuesta válida:");
+            System.out.println("   Type: 0x" + Integer.toHexString(responseType));
+            System.out.println("   Command: 0x" + Integer.toHexString(command));
+            System.out.println("   Size: " + dataSize);
+
+            // ✅ MANEJAR ERROR DEL DISPOSITIVO
+            if (responseType == 0x45) { // ERROR
+                System.out.println("❌ FASORES - Error del dispositivo (0x45)");
+                showToast("❌ Error del dispositivo");
+                return;
+            }
+
+            // ✅ PROCESAR CONFIRMACIÓN
+            if (responseType == 0x43) { // CONFIRMATION
+                try {
+                    switch (command) {
+                        case 0x00: // DEVICE_ID
+                            System.out.println("📱 FASORES - Procesando DEVICE_ID");
+                            processDeviceIdResponse(data);
+                            break;
+
+                        case 0x02: // DEVICE_TIME
+                            System.out.println("🕐 FASORES - DEVICE_TIME confirmado");
+                            showToast("✅ Hora sincronizada");
+                            break;
+
+                        case 0x20: // NODE_SETTINGS
+                            System.out.println("🔧 FASORES - Procesando NODE_SETTINGS");
+                            if (dataSize > 0) {
+                                // Respuesta READ con datos
+                                processConfigurationResponseIndependent(data);
+                            } else {
+                                // Confirmación WRITE sin datos
+                                showToast("✅ Configuración aplicada");
+                                // Leer configuración después de escribir
+                                handler.postDelayed(() -> {
+                                    if (!isWaitingResponse) {
+                                        readDeviceConfigurationIndependent();
+                                    }
+                                }, 1000);
+                            }
+                            break;
+
+                        case 0x21: // NODE_CURRENT
+                            System.out.println("📊 FASORES - Procesando NODE_CURRENT");
+                            if (dataSize > 0) {
+                                processCurrentDataResponseIndependent(data);
+                            } else {
+                                System.out.println("⚠️ FASORES - NODE_CURRENT sin datos");
+                                showToast("❌ Sin datos disponibles");
+                            }
+                            break;
+
+                        case 0xE3: // WIFI_SETTINGS
+                            System.out.println("📡 FASORES - Procesando WIFI_SETTINGS");
+                            if (dataSize > 0) {
+                                // Respuesta READ
+                                processWiFiSettingsResponse(data);
+                            } else {
+                                // Confirmación WRITE
+                                showToast("✅ Credenciales WiFi enviadas");
+                            }
+                            break;
+
+                        default:
+                            System.out.println("⚠️ FASORES - Comando no reconocido: 0x" +
+                                    Integer.toHexString(command));
+                            break;
+                    }
+                } catch (Exception e) {
+                    System.out.println("❌ FASORES - Error procesando comando: " + e.getMessage());
+                    e.printStackTrace();
+                    showToast("❌ Error procesando respuesta");
+                }
+            } else {
+                System.out.println("⚠️ FASORES - Tipo de respuesta desconocido: 0x" +
+                        Integer.toHexString(responseType));
+            }
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error crítico: " + e.getMessage());
+            e.printStackTrace();
+            showToast("❌ Error procesando datos");
+        } finally {
+            // ✅ ASEGURAR QUE isWaitingResponse SIEMPRE SE RESETEA
+            isWaitingResponse = false;
         }
     }
 
-    // ✅ PROCESAMIENTO DEVICE ID CORREGIDO PARA FASORES ACTIVITY
+    // ✅ PROCESAMIENTO DEVICE ID CORREGIDO
     private void processDeviceIdResponse(byte[] response) {
         try {
             System.out.println("🔍 FASORES - Procesando respuesta Device ID...");
@@ -1237,23 +1373,23 @@ public class FasoresActivity extends AppCompatActivity {
 
             byte[] deviceData = OctoNetCommandEncoder.extractCommandData(response);
 
-            System.out.println("📊 FASORES - Datos extraídos: " + deviceData.length + " bytes");
-            System.out.println("📊 FASORES - Datos hex: " +
-                    OctoNetCommandEncoder.bytesToHexString(deviceData));
-
             if (deviceData == null || deviceData.length == 0) {
-                System.out.println("❌ FASORES - Datos vacíos");
+                System.out.println("❌ FASORES - Datos Device ID vacíos");
                 showToast("❌ Sin datos de Device ID");
                 return;
             }
 
+            System.out.println("📊 FASORES - Datos extraídos: " + deviceData.length + " bytes");
+            System.out.println("📊 FASORES - Datos hex: " +
+                    OctoNetCommandEncoder.bytesToHexString(deviceData));
+
             lastReadDeviceIdInfo = new DeviceIdInfo();
 
-            // ✅ MÉTODO 1: Intentar formato string completo primero
+            // ✅ MÉTODO 1: Intentar formato string completo
             String deviceInfoString = new String(deviceData, "UTF-8").trim();
             System.out.println("📄 FASORES - Datos como string: '" + deviceInfoString + "'");
 
-            // Formato concatenado: 140423000046090224112325LVTXER4WW4B0D028
+            // Formato concatenado típico: 140423000046090224112325LVTXER4WW4B0D028
             if (deviceInfoString.length() >= 30 && !deviceInfoString.contains("\n")) {
                 System.out.println("🔍 FASORES - Formato concatenado detectado (" +
                         deviceInfoString.length() + " chars)");
@@ -1301,15 +1437,14 @@ public class FasoresActivity extends AppCompatActivity {
                         System.out.println("   ✓ FW Version: " + lastReadDeviceIdInfo.fwVersion);
                     }
 
-                    System.out.println("✅ FASORES - Device ID parseado correctamente (formato concatenado)");
+                    System.out.println("✅ FASORES - Device ID parseado (formato concatenado)");
                     showToast("✅ Información del dispositivo recibida");
                     return;
 
                 } catch (Exception parseError) {
-                    System.out.println("⚠️ FASORES - Error en parseo concatenado: " +
+                    System.out.println("⚠️ FASORES - Error parseo concatenado: " +
                             parseError.getMessage());
                     parseError.printStackTrace();
-                    // Continuar con el método binario
                 }
             }
 
@@ -1322,10 +1457,10 @@ public class FasoresActivity extends AppCompatActivity {
                     // Serial (10 bytes) - bytes 0-9
                     byte[] serialBytes = new byte[10];
                     System.arraycopy(deviceData, 0, serialBytes, 0, 10);
-                    lastReadDeviceIdInfo.serial = new String(serialBytes, "UTF-8").trim();
+                    lastReadDeviceIdInfo.serial = new String(deviceData, "UTF-8").trim();
                     System.out.println("   ✓ Serial: " + lastReadDeviceIdInfo.serial);
 
-                    // Fecha y hora de fabricación - bytes 10-15
+                    // Fecha y hora - bytes 10-15
                     if (deviceData.length >= 16) {
                         int year = 2000 + (deviceData[10] & 0xFF);
                         int month = deviceData[11] & 0xFF;
@@ -1342,11 +1477,11 @@ public class FasoresActivity extends AppCompatActivity {
                         System.out.println("   ✓ Hora Fab: " + lastReadDeviceIdInfo.facHour);
                     }
 
-                    // Código de activación (10 bytes) - bytes 16-25
+                    // Código activación (10 bytes) - bytes 16-25
                     if (deviceData.length >= 26) {
                         byte[] actCodeBytes = new byte[10];
                         System.arraycopy(deviceData, 16, actCodeBytes, 0, 10);
-                        lastReadDeviceIdInfo.actCode = new String(actCodeBytes, "UTF-8").trim();
+                        lastReadDeviceIdInfo.actCode = new String(deviceData, "UTF-8").trim();
                         System.out.println("   ✓ Código Act: " + lastReadDeviceIdInfo.actCode);
                     }
 
@@ -1354,29 +1489,28 @@ public class FasoresActivity extends AppCompatActivity {
                     if (deviceData.length >= 32) {
                         byte[] hwBytes = new byte[3];
                         System.arraycopy(deviceData, 26, hwBytes, 0, 3);
-                        lastReadDeviceIdInfo.hwVersion = new String(hwBytes, "UTF-8").trim();
+                        lastReadDeviceIdInfo.hwVersion = new String(deviceData, "UTF-8").trim();
                         System.out.println("   ✓ HW Version: " + lastReadDeviceIdInfo.hwVersion);
 
                         byte[] fwBytes = new byte[3];
                         System.arraycopy(deviceData, 29, fwBytes, 0, 3);
-                        lastReadDeviceIdInfo.fwVersion = new String(fwBytes, "UTF-8").trim();
+                        lastReadDeviceIdInfo.fwVersion = new String(deviceData, "UTF-8").trim();
                         System.out.println("   ✓ FW Version: " + lastReadDeviceIdInfo.fwVersion);
                     }
 
-                    System.out.println("✅ FASORES - Device ID parseado correctamente (formato binario)");
+                    System.out.println("✅ FASORES - Device ID parseado (formato binario)");
                     showToast("✅ Información del dispositivo recibida");
                     return;
 
                 } catch (Exception binaryError) {
-                    System.out.println("⚠️ FASORES - Error en parseo binario: " +
+                    System.out.println("⚠️ FASORES - Error parseo binario: " +
                             binaryError.getMessage());
                     binaryError.printStackTrace();
-                    // Continuar con fallback
                 }
             }
 
-            // ✅ MÉTODO 3: Fallback - usar toda la cadena como serial
-            System.out.println("⚠️ FASORES - Usando fallback (datos insuficientes o formato desconocido)");
+            // ✅ MÉTODO 3: Fallback - usar string completo como serial
+            System.out.println("⚠️ FASORES - Usando fallback");
             lastReadDeviceIdInfo.serial = deviceInfoString.isEmpty() ? "DESCONOCIDO" : deviceInfoString;
             lastReadDeviceIdInfo.facDate = "N/A";
             lastReadDeviceIdInfo.facHour = "N/A";
@@ -1388,12 +1522,10 @@ public class FasoresActivity extends AppCompatActivity {
             showToast("⚠️ Información parcial recibida");
 
         } catch (Exception e) {
-            System.out.println("❌ FASORES - Error crítico procesando Device ID: " +
-                    e.getMessage());
+            System.out.println("❌ FASORES - Error crítico Device ID: " + e.getMessage());
             e.printStackTrace();
             showToast("❌ Error procesando Device ID");
 
-            // Crear objeto vacío para evitar null
             lastReadDeviceIdInfo = new DeviceIdInfo();
             lastReadDeviceIdInfo.serial = "ERROR";
             lastReadDeviceIdInfo.facDate = "N/A";
@@ -1406,231 +1538,336 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void processWiFiSettingsResponse(byte[] response) {
         try {
-            System.out.println("🔍 FASORES - Procesando respuesta WiFi Settings...");
-            System.out.println("📊 FASORES - Respuesta completa hex: " +
+            System.out.println("🔍 FASORES - Procesando WiFi Settings...");
+            System.out.println("📊 FASORES - Respuesta hex: " +
                     OctoNetCommandEncoder.bytesToHexString(response));
 
             byte[] wifiData = OctoNetCommandEncoder.extractCommandData(response);
 
-            System.out.println("📊 FASORES - Datos WiFi extraídos: " +
+            System.out.println("📊 FASORES - WiFi datos: " +
                     (wifiData != null ? wifiData.length : 0) + " bytes");
 
             if (wifiData == null || wifiData.length < 64) {
                 System.out.println("❌ FASORES - Datos WiFi insuficientes");
                 showToast("❌ Datos WiFi incompletos");
-
-                // Crear objeto vacío para evitar null
                 lastReadWifiSettings = new OctoNetCommandEncoder.WiFiSettings();
                 return;
             }
 
-            // ✅ USAR EL MÉTODO DEL ENCODER
             lastReadWifiSettings = OctoNetCommandEncoder.processWiFiSettingsResponse(wifiData);
 
             if (lastReadWifiSettings != null) {
-                System.out.println("✅ FASORES - WiFi Settings guardado:");
+                System.out.println("✅ FASORES - WiFi guardado:");
                 System.out.println("   SSID: '" + lastReadWifiSettings.ssid + "'");
                 System.out.println("   IP: '" + lastReadWifiSettings.ip + "'");
                 System.out.println("   MAC: '" + lastReadWifiSettings.mac + "'");
 
                 if (lastReadWifiSettings.ssid.isEmpty()) {
-                    showToast("📡 WiFi del medidor: Sin configurar");
+                    showToast("📡 WiFi: Sin configurar");
                 } else {
-                    showToast("📡 WiFi del medidor: " + lastReadWifiSettings.ssid);
+                    showToast("📡 WiFi: " + lastReadWifiSettings.ssid);
                 }
             } else {
-                System.out.println("❌ FASORES - Error procesando WiFi settings");
-                showToast("❌ Error procesando WiFi Settings");
+                System.out.println("❌ FASORES - Error procesando WiFi");
+                showToast("❌ Error procesando WiFi");
             }
 
         } catch (Exception e) {
-            System.out.println("❌ FASORES - Excepción procesando WiFi Settings: " + e.getMessage());
+            System.out.println("❌ FASORES - Excepción WiFi: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error procesando WiFi Settings");
-
-            // Crear objeto vacío en caso de error
+            showToast("❌ Error procesando WiFi");
             lastReadWifiSettings = new OctoNetCommandEncoder.WiFiSettings();
         }
     }
 
+    // =========================================================================
+    // ===== PROCESAMIENTO DE CONFIGURACIÓN ===================================
+    // =========================================================================
+
     private void processConfigurationResponseIndependent(byte[] response) {
         try {
+            System.out.println("🔍 FASORES - Procesando NODE_SETTINGS...");
+            System.out.println("📊 FASORES - Respuesta hex: " +
+                    OctoNetCommandEncoder.bytesToHexString(response));
+
             byte[] configData = OctoNetCommandEncoder.extractCommandData(response);
 
-            if (configData.length == 0) {
+            if (configData == null || configData.length < 4) {
+                System.out.println("❌ FASORES - Datos de configuración insuficientes");
+                showToast("❌ Datos de configuración incompletos");
+                configurationSynced = true;
+                setControlsEnabled(true);
+                setSpinnersEnabled(true);
                 return;
             }
 
+            System.out.println("📊 FASORES - Config datos: " + configData.length + " bytes");
+            System.out.println("   Byte 0 (recording): 0x" + Integer.toHexString(configData[0] & 0xFF));
+            System.out.println("   Byte 1 (period): 0x" + Integer.toHexString(configData[1] & 0xFF));
+            System.out.println("   Byte 2 (sensors): 0x" + Integer.toHexString(configData[2] & 0xFF));
+            System.out.println("   Byte 3 (metering): 0x" + Integer.toHexString(configData[3] & 0xFF));
+
+            // Extraer valores
+            recordingConfig = (configData[0] & 0xFF) == 1;
+            periodConfig = configData[1] & 0xFF;
+            sensorsConfig = configData[2] & 0xFF;
+            meteringTypeConfig = configData[3] & 0xFF;
+
+            System.out.println("✅ FASORES - Configuración leída:");
+            System.out.println("   Recording: " + recordingConfig);
+            System.out.println("   Period: " + periodConfig);
+            System.out.println("   Sensors: " + sensorsConfig);
+            System.out.println("   Metering Type: " + meteringTypeConfig);
+
+            // Actualizar UI
             skipSpinnerEvents = true;
 
-            try {
-                if (configData.length >= 4) {
-                    recordingConfig = (configData[0] & 0xFF) == 1;
-
-                    int period = configData[1] & 0xFF;
-                    periodConfig = 0; // SIEMPRE 1 MINUTO
-
-                    int sensors = configData[2] & 0xFF;
-                    if (sensors >= 0 && sensors <= 5 && spinnerAmperes != null) {
-                        sensorsConfig = sensors;
-                        updateAmperesRange(sensors);
-                        spinnerAmperes.setSelection(sensors);
-                    }
-
-                    meteringTypeConfig = 3;
-                    tipoCableado = 3;
-                    if (spinnerCableado != null) {
-                        spinnerCableado.setSelection(0);
-                    }
-                    updateDiagram();
-
-                    configurationSynced = true;
-                    setControlsEnabled(true);
-                    setSpinnersEnabled(true);
-
-                    showToast("✅ Configuración sincronizada");
-                }
-            } catch (Exception e) {
-                // Ignorar
+            if (sensorsConfig >= 0 && sensorsConfig <= 5) {
+                spinnerAmperes.setSelection(sensorsConfig);
+                updateAmperesRange(sensorsConfig);
+                System.out.println("   ✓ Spinner Amperes actualizado a posición: " + sensorsConfig);
             }
 
-        } catch (Exception e) {
-            // Ignorar
-        } finally {
+            // Tipo de cableado siempre trifásico
+            meteringTypeConfig = 3;
+            tipoCableado = 3;
+            spinnerCableado.setSelection(0);
+
             skipSpinnerEvents = false;
+
+            configurationSynced = true;
+            setControlsEnabled(true);
+            setSpinnersEnabled(true);
+
+            updateDiagram();
+            showToast("✅ Configuración sincronizada");
+
+            System.out.println("✅ FASORES - Sincronización completa");
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error procesando configuración: " + e.getMessage());
+            e.printStackTrace();
+            showToast("❌ Error procesando configuración");
+
+            configurationSynced = true;
+            setControlsEnabled(true);
+            setSpinnersEnabled(true);
         }
     }
+
+    // =========================================================================
+    // ===== PROCESAMIENTO DE DATOS ACTUALES ==================================
+    // =========================================================================
 
     private void processCurrentDataResponseIndependent(byte[] response) {
         try {
-            int sizeFromDevice = response[3] & 0xFF;
+            byte[] currentData = OctoNetCommandEncoder.extractCommandData(response);
 
-            if (sizeFromDevice > 0) {
-                int realDataSize = sizeFromDevice + 1;
+            if (currentData == null || currentData.length < 48) {
+                System.out.println("❌ FASORES - Datos NODE_CURRENT insuficientes: " +
+                        (currentData != null ? currentData.length : "null") + " bytes");
+                return;
+            }
 
-                if (response.length < 4 + realDataSize) {
-                    return;
+            System.out.println("📊 FASORES - Procesando NODE_CURRENT: " + currentData.length + " bytes");
+
+            // Extraer datos de las 3 fases (16 bytes por fase)
+            float[] newVoltajes = new float[3];
+            float[] newCorrientes = new float[3];
+            float[] newPotencias = new float[3];
+            float[] newFrecuencias = new float[3];
+
+            for (int fase = 0; fase < 3; fase++) {
+                int offset = fase * 16;
+
+                // Voltaje RMS (4 bytes float, little-endian)
+                newVoltajes[fase] = OctoNetCommandEncoder.bytesToFloat(
+                        currentData[offset],
+                        currentData[offset + 1],
+                        currentData[offset + 2],
+                        currentData[offset + 3]
+                );
+
+                // Corriente RMS (4 bytes float, little-endian)
+                newCorrientes[fase] = OctoNetCommandEncoder.bytesToFloat(
+                        currentData[offset + 4],
+                        currentData[offset + 5],
+                        currentData[offset + 6],
+                        currentData[offset + 7]
+                );
+
+                // Potencia Activa (4 bytes float, little-endian)
+                newPotencias[fase] = OctoNetCommandEncoder.bytesToFloat(
+                        currentData[offset + 8],
+                        currentData[offset + 9],
+                        currentData[offset + 10],
+                        currentData[offset + 11]
+                );
+
+                // Frecuencia (4 bytes float, little-endian)
+                newFrecuencias[fase] = OctoNetCommandEncoder.bytesToFloat(
+                        currentData[offset + 12],
+                        currentData[offset + 13],
+                        currentData[offset + 14],
+                        currentData[offset + 15]
+                );
+            }
+
+            // Validar datos
+            boolean dataValid = true;
+            for (int i = 0; i < 3; i++) {
+                if (Float.isNaN(newVoltajes[i]) || Float.isInfinite(newVoltajes[i]) ||
+                        Float.isNaN(newCorrientes[i]) || Float.isInfinite(newCorrientes[i]) ||
+                        Float.isNaN(newPotencias[i]) || Float.isInfinite(newPotencias[i]) ||
+                        Float.isNaN(newFrecuencias[i]) || Float.isInfinite(newFrecuencias[i])) {
+                    dataValid = false;
+                    break;
                 }
+            }
 
-                byte[] energyData = new byte[realDataSize];
-                System.arraycopy(response, 4, energyData, 0, realDataSize);
+            if (!dataValid) {
+                System.out.println("❌ FASORES - Datos inválidos (NaN o Infinito)");
+                return;
+            }
 
-                if (energyData.length >= 64) {
-                    // CH1: Bytes 28-39
-                    if (energyData.length >= 40) {
-                        processChannel64TcpStyle(energyData, 28, 0, "CH1");
-                    }
+            // Actualizar arrays
+            System.arraycopy(newVoltajes, 0, voltajes, 0, 3);
+            System.arraycopy(newCorrientes, 0, corrientes, 0, 3);
+            System.arraycopy(newPotencias, 0, potencias, 0, 3);
+            System.arraycopy(newFrecuencias, 0, frecuencias, 0, 3);
 
-                    // CH2: Bytes 40-51
-                    if (energyData.length >= 52) {
-                        processChannel64TcpStyle(energyData, 40, 1, "CH2");
-                    }
+            contadorMuestras++;
 
-                    // CH3: Bytes 52-63
-                    if (energyData.length >= 64) {
-                        processChannel64TcpStyle(energyData, 52, 2, "CH3");
-                    }
+            System.out.println("✅ FASORES - Datos actualizados (#" + contadorMuestras + "):");
+            for (int i = 0; i < 3; i++) {
+                System.out.println(String.format("   Fase %d: V=%.2f V, I=%.3f A, P=%.2f W, Hz=%.2f Hz",
+                        i + 1, voltajes[i], corrientes[i], potencias[i], frecuencias[i]));
+            }
 
-                } else {
-                    for (int i = 0; i < 3; i++) {
-                        voltajes[i] = 0.0f;
-                        corrientes[i] = 0.0f;
-                        potencias[i] = 0.0f;
-                        frecuencias[i] = 50.0f;
-                        angulos[i] = i * 120.0f;
-                    }
-                }
-
-                boolean hasValidData = false;
-                for (int i = 0; i < 3; i++) {
-                    if (voltajes[i] > 0.1f || corrientes[i] > 0.01f || potencias[i] > 0.1f) {
-                        hasValidData = true;
-                        break;
-                    }
-                }
-
-                if (!hasValidData) {
-                    for (int i = 0; i < 3; i++) {
-                        if (angulos[i] == 0.0f && i > 0) {
-                            angulos[i] = i * 120.0f;
-                        }
-                        frecuencias[i] = 50.0f;
-                    }
-                }
-
-                updateDisplayWithRealData();
+            // Actualizar UI
+            handler.post(() -> {
+                updateTextViews();
                 updateFasores();
+            });
 
-                contadorMuestras++;
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error procesando NODE_CURRENT: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
-                if (contadorMuestras % 10 == 0) {
-                    long tiempoTranscurrido = (System.currentTimeMillis() - tiempoInicio) / 1000;
-                    showToast(String.format("📊 %d muestras (%ds)", contadorMuestras, tiempoTranscurrido));
+    // =========================================================================
+    // ===== ACTUALIZACIÓN DE UI ==============================================
+    // =========================================================================
+
+    private void updateTextViews() {
+        try {
+            // Voltajes
+            if (tvV1 != null) tvV1.setText(String.format("%.2f V", voltajes[0]));
+            if (tvV2 != null) tvV2.setText(String.format("%.2f V", voltajes[1]));
+            if (tvV3 != null) tvV3.setText(String.format("%.2f V", voltajes[2]));
+
+            // Corrientes
+            if (tvA1 != null) tvA1.setText(String.format("%.3f A", corrientes[0]));
+            if (tvA2 != null) tvA2.setText(String.format("%.3f A", corrientes[1]));
+            if (tvA3 != null) tvA3.setText(String.format("%.3f A", corrientes[2]));
+
+            // Potencias
+            if (tvW1 != null) tvW1.setText(String.format("%.2f W", potencias[0]));
+            if (tvW2 != null) tvW2.setText(String.format("%.2f W", potencias[1]));
+            if (tvW3 != null) tvW3.setText(String.format("%.2f W", potencias[2]));
+
+            // Frecuencias
+            if (tvHz1 != null) tvHz1.setText(String.format("%.2f Hz", frecuencias[0]));
+            if (tvHz2 != null) tvHz2.setText(String.format("%.2f Hz", frecuencias[1]));
+            if (tvHz3 != null) tvHz3.setText(String.format("%.2f Hz", frecuencias[2]));
+
+            // Factor de potencia (calculado)
+            for (int i = 0; i < 3; i++) {
+                float pf = 0.0f;
+                if (voltajes[i] > 0 && corrientes[i] > 0) {
+                    float potenciaAparente = voltajes[i] * corrientes[i];
+                    if (potenciaAparente > 0) {
+                        pf = potencias[i] / potenciaAparente;
+                        pf = Math.max(-1.0f, Math.min(1.0f, pf)); // Limitar entre -1 y 1
+                    }
                 }
 
-            } else {
-                showToast("❌ Sin datos de energía disponibles");
+                String pfText = String.format("%.3f", pf);
+                if (i == 0 && tvpF1 != null) tvpF1.setText(pfText);
+                if (i == 1 && tvpF2 != null) tvpF2.setText(pfText);
+                if (i == 2 && tvpF3 != null) tvpF3.setText(pfText);
             }
 
+            // Actualizar etiquetas de canal
+            updateChannelLabels();
+
         } catch (Exception e) {
-            showToast("❌ Error procesando datos de energía");
+            System.out.println("❌ FASORES - Error actualizando TextViews: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void processChannel64TcpStyle(byte[] data, int offset, int channelIndex, String channelName) {
+    private void updateChannelLabels() {
         try {
-            // W_CHx (Int32) - 4 bytes
-            if (data.length >= offset + 4) {
-                long powerRaw = readInt32(data, offset);
-                float powerW = (int) powerRaw * 0.1f;
-                potencias[channelIndex] = powerW;
-            }
+            String[] labels = {"CH1", "CH2", "CH3"};
 
-            // V_CHx (UInt16) - 2 bytes
-            if (data.length >= offset + 6) {
-                int voltageRaw = readUInt16(data, offset + 4);
-                float voltageV = voltageRaw * 0.1f;
-                voltajes[channelIndex] = voltageV;
-            }
+            // Para Carga Trifásica (3P4W-N)
+            labels[0] = "L1-N";
+            labels[1] = "L2-N";
+            labels[2] = "L3-N";
 
-            // A_CHx (UInt16) - 2 bytes
-            if (data.length >= offset + 8) {
-                int currentRaw = readUInt16(data, offset + 6);
-                float currentA = currentRaw * 0.1f;
-                corrientes[channelIndex] = currentA;
-            }
-
-            // HZ_CHx (UInt16) - 2 bytes
-            if (data.length >= offset + 10) {
-                int frequencyRaw = readUInt16(data, offset + 8);
-                float freqHz = frequencyRaw * 0.1f;
-                frecuencias[channelIndex] = freqHz;
-            }
-
-            // ANGLE_CHx (UInt16) - 2 bytes
-            if (data.length >= offset + 12) {
-                int angleRaw = readUInt16(data, offset + 10);
-                float angleDeg = angleRaw * 0.1f;
-                angulos[channelIndex] = angleDeg;
-            } else {
-                angulos[channelIndex] = channelIndex * 120.0f;
-            }
+            if (tvCH1 != null) tvCH1.setText(labels[0]);
+            if (tvCH2 != null) tvCH2.setText(labels[1]);
+            if (tvCH3 != null) tvCH3.setText(labels[2]);
 
         } catch (Exception e) {
-            // Ignorar
+            System.out.println("❌ FASORES - Error actualizando etiquetas: " + e.getMessage());
         }
     }
 
-    private long readInt32(byte[] data, int offset) {
-        return ((data[offset] & 0xFFL)) |
-                ((data[offset + 1] & 0xFFL) << 8) |
-                ((data[offset + 2] & 0xFFL) << 16) |
-                ((data[offset + 3] & 0xFFL) << 24);
+    private void updateFasores() {
+        if (fasorVoltaje == null || fasorCorriente == null) return;
+
+        try {
+            // Actualizar fasores de voltaje
+            fasorVoltaje.setMagnitudes(voltajes[0], voltajes[1], voltajes[2]);
+            fasorVoltaje.setAngles(0.0f, 120.0f, 240.0f); // Ángulos teóricos trifásicos
+
+            // Actualizar fasores de corriente
+            fasorCorriente.setMagnitudes(corrientes[0], corrientes[1], corrientes[2]);
+            fasorCorriente.setAngles(0.0f, 120.0f, 240.0f); // Ángulos teóricos trifásicos
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error actualizando fasores: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    private int readUInt16(byte[] data, int offset) {
-        return ((data[offset] & 0xFF)) |
-                ((data[offset + 1] & 0xFF) << 8);
+    private void initializeDisplayValues() {
+        if (tvV1 != null) tvV1.setText("0.00 V");
+        if (tvV2 != null) tvV2.setText("0.00 V");
+        if (tvV3 != null) tvV3.setText("0.00 V");
+
+        if (tvA1 != null) tvA1.setText("0.000 A");
+        if (tvA2 != null) tvA2.setText("0.000 A");
+        if (tvA3 != null) tvA3.setText("0.000 A");
+
+        if (tvW1 != null) tvW1.setText("0.00 W");
+        if (tvW2 != null) tvW2.setText("0.00 W");
+        if (tvW3 != null) tvW3.setText("0.00 W");
+
+        if (tvHz1 != null) tvHz1.setText("0.00 Hz");
+        if (tvHz2 != null) tvHz2.setText("0.00 Hz");
+        if (tvHz3 != null) tvHz3.setText("0.00 Hz");
+
+        if (tvpF1 != null) tvpF1.setText("0.000");
+        if (tvpF2 != null) tvpF2.setText("0.000");
+        if (tvpF3 != null) tvpF3.setText("0.000");
+
+        if (tvCH1 != null) tvCH1.setText("L1-N");
+        if (tvCH2 != null) tvCH2.setText("L2-N");
+        if (tvCH3 != null) tvCH3.setText("L3-N");
     }
 
     // =========================================================================
@@ -1638,241 +1875,156 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void startDataAcquisition() {
-        if (!isConnectedToDevice || autoReadEnabled) {
+        if (!isConnectedToDevice) {
+            showToast("❌ No hay conexión con el dispositivo");
             return;
         }
 
-        try {
-            autoReadEnabled = true;
-            tiempoInicio = System.currentTimeMillis();
-            contadorMuestras = 0;
-
-            btnPlay.setImageResource(android.R.drawable.ic_media_pause);
-            showToast("🚀 Iniciando lectura cada 5 segundos");
-
-            requestCurrentData();
-            autoReadHandler.postDelayed(autoReadTask, AUTO_READ_INTERVAL);
-
-        } catch (Exception e) {
-            autoReadEnabled = false;
-            btnPlay.setImageResource(android.R.drawable.ic_media_play);
-            showToast("❌ Error al iniciar adquisición");
+        if (!configurationSynced) {
+            showToast("⏳ Esperando sincronización de configuración...");
+            return;
         }
+
+        System.out.println("▶️ FASORES - Iniciando adquisición de datos");
+
+        autoReadEnabled = true;
+        tiempoInicio = System.currentTimeMillis();
+        contadorMuestras = 0;
+
+        btnPlay.setImageResource(R.drawable.ic_pause);
+        showToast("▶️ Adquisición iniciada (cada 5s)");
+
+        // Iniciar lectura automática
+        autoReadHandler.post(autoReadTask);
     }
 
     private void stopDataAcquisition() {
-        if (autoReadEnabled) {
-            autoReadEnabled = false;
-            autoReadHandler.removeCallbacks(autoReadTask);
-            setSpinnersEnabled(true);
-            btnPlay.setImageResource(android.R.drawable.ic_media_play);
+        if (!autoReadEnabled) return;
 
-            long tiempoTotal = (System.currentTimeMillis() - tiempoInicio) / 1000;
-            showToast(String.format("⏹️ Detenido: %d muestras en %ds", contadorMuestras, tiempoTotal));
-        }
+        System.out.println("⏹️ FASORES - Deteniendo adquisición de datos");
+
+        autoReadEnabled = false;
+        autoReadHandler.removeCallbacks(autoReadTask);
+
+        btnPlay.setImageResource(R.drawable.ic_play);
+
+        long tiempoTotal = (System.currentTimeMillis() - tiempoInicio) / 1000;
+        System.out.println("📊 FASORES - Estadísticas de adquisición:");
+        System.out.println("   Tiempo total: " + tiempoTotal + " segundos");
+        System.out.println("   Muestras: " + contadorMuestras);
+        System.out.println("   Promedio: " + (contadorMuestras > 0 ? (tiempoTotal / contadorMuestras) : 0) + " s/muestra");
+
+        showToast("⏹️ Adquisición detenida");
     }
 
     // =========================================================================
-    // ===== VISUALIZACIÓN ====================================================
+    // ===== DIAGRAMA =========================================================
     // =========================================================================
-
-    private void updateDisplayWithRealData() {
-        updatePhaseDisplay(0, voltajes[0], corrientes[0], potencias[0], frecuencias[0]);
-        updatePhaseDisplay(1, voltajes[1], corrientes[1], potencias[1], frecuencias[1]);
-        updatePhaseDisplay(2, voltajes[2], corrientes[2], potencias[2], frecuencias[2]);
-
-        if (tvCH1 != null) {
-            String timestamp = new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-                    .format(new java.util.Date());
-            tvCH1.setText("CH1 - " + timestamp);
-        }
-    }
-
-    private void updateFasores() {
-        try {
-            if (fasorVoltaje != null) {
-                fasorVoltaje.setPhasorValues(voltajes, angulos);
-            }
-
-            if (fasorCorriente != null) {
-                fasorCorriente.setPhasorValues(corrientes, angulos);
-            }
-        } catch (Exception e) {
-            // Ignorar
-        }
-    }
-
-    private void updatePhaseDisplay(int phase, float volt, float corr, float power, float freq) {
-        TextView tvV, tvA, tvW, tvHz, tvPF;
-
-        switch (phase) {
-            case 1:
-                tvV = tvV2;
-                tvA = tvA2;
-                tvW = tvW2;
-                tvHz = tvHz2;
-                tvPF = tvpF2;
-                break;
-            case 2:
-                tvV = tvV3;
-                tvA = tvA3;
-                tvW = tvW3;
-                tvHz = tvHz3;
-                tvPF = tvpF3;
-                break;
-            default:
-                tvV = tvV1;
-                tvA = tvA1;
-                tvW = tvW1;
-                tvHz = tvHz1;
-                tvPF = tvpF1;
-                break;
-        }
-
-        if (tvV != null) tvV.setText(String.format("%.1f V", volt));
-        if (tvA != null) tvA.setText(String.format("%.2f A", corr));
-        if (tvW != null) tvW.setText(String.format("%.1f W", power));
-        if (tvHz != null) tvHz.setText(String.format("%.1f Hz", freq));
-
-        if (tvPF != null) {
-            if (phase >= 0 && phase < angulos.length) {
-                float deviceAngle = angulos[phase];
-
-                while (deviceAngle > 180f) deviceAngle -= 360f;
-                while (deviceAngle < -180f) deviceAngle += 360f;
-
-                tvPF.setText(String.format("%.0f°", deviceAngle));
-            } else {
-                tvPF.setText("--");
-            }
-        }
-    }
 
     private void updateDiagram() {
-        if (imageDiagram != null) {
-            imageDiagram.setImageResource(R.drawable.diagram_3p4w_n);
-        }
-
-        if (isModalVisible && modalDiagramImage != null) {
-            updateModalDiagram();
-        }
+        if (imageDiagram == null) return;
+        // Siempre mostrar diagrama 3P4W-N (Carga Trifásica)
+        imageDiagram.setImageResource(R.drawable.diagram_3p4w_n);
     }
 
     // =========================================================================
-    // ===== CONTROL UI =======================================================
+    // ===== UTILIDADES =======================================================
     // =========================================================================
-
-    private void setSpinnersEnabled(boolean enabled) {
-        if (spinnerCableado != null) {
-            spinnerCableado.setEnabled(enabled);
-            spinnerCableado.setAlpha(enabled ? 1.0f : 0.4f);
-        }
-        if (spinnerAmperes != null) {
-            spinnerAmperes.setEnabled(enabled);
-            spinnerAmperes.setAlpha(enabled ? 1.0f : 0.4f);
-        }
-    }
 
     private void setControlsEnabled(boolean enabled) {
-        if (btnPlay != null) {
-            btnPlay.setEnabled(enabled);
-            btnPlay.setAlpha(enabled ? 1.0f : 0.4f);
-        }
-    }
-    private void initializeDisplayValues() {
-        for (int i = 0; i < 3; i++) {
-            updatePhaseDisplay(i, 0.0f, 0.0f, 0.0f, 0.0f);
-            voltajes[i] = 0.0f;
-            corrientes[i] = 0.0f;
-            potencias[i] = 0.0f;
-            frecuencias[i] = 50.0f;
-            angulos[i] = i * 120.0f;
-        }
-
-        if (fasorVoltaje != null) {
-            fasorVoltaje.setThreeAxisMode(true);
-            fasorVoltaje.setPhasorValues(voltajes, angulos);
-        }
-        if (fasorCorriente != null) {
-            fasorCorriente.setThreeAxisMode(true);
-            fasorCorriente.setPhasorValues(corrientes, angulos);
-        }
+        handler.post(() -> {
+            if (btnPlay != null) btnPlay.setEnabled(enabled);
+            if (btnDeviceId != null) btnDeviceId.setEnabled(enabled);
+            if (btnConfigWifi != null) btnConfigWifi.setEnabled(enabled);
+        });
     }
 
-    // =========================================================================
-    // ===== MÉTODOS AUXILIARES ===============================================
-    // =========================================================================
+    private void setSpinnersEnabled(boolean enabled) {
+        handler.post(() -> {
+            if (spinnerCableado != null) spinnerCableado.setEnabled(false); // Siempre deshabilitado
+            if (spinnerAmperes != null) spinnerAmperes.setEnabled(enabled);
+        });
+    }
 
     private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isModalVisible) {
-            hideDiagramModal();
-            return;
-        }
-
-        if (autoReadEnabled) {
-            stopDataAcquisition();
-        }
-        super.onBackPressed();
+        handler.post(() -> {
+            try {
+                Toast.makeText(FasoresActivity.this, message, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                System.out.println("❌ FASORES - Error mostrando toast: " + e.getMessage());
+            }
+        });
     }
 
     // =========================================================================
-    // ===== LIFECYCLE METHODS ================================================
+    // ===== LIFECYCLE ========================================================
     // =========================================================================
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (wifiReceiver != null) {
-            unregisterReceiver(wifiReceiver);
-        }
-        stopDataAcquisition();
-        disconnectFromDevice();
-        if (executor != null && !executor.isShutdown()) {
-            executor.shutdownNow();
-        }
-        handler.removeCallbacksAndMessages(null);
-        autoReadHandler.removeCallbacksAndMessages(null);
-    }
 
     @Override
     protected void onPause() {
         super.onPause();
+        System.out.println("⏸️ FASORES - Activity pausada");
+
         if (autoReadEnabled) {
-            autoReadHandler.removeCallbacks(autoReadTask);
+            stopDataAcquisition();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        System.out.println("▶️ FASORES - Activity resumida");
 
+        // Reconectar si es necesario
         if (!isConnectedToDevice) {
             handler.postDelayed(() -> connectToDeviceIndependent(), 500);
         }
+    }
 
-        if (autoReadEnabled && isConnectedToDevice && configurationSynced) {
-            autoReadHandler.postDelayed(autoReadTask, AUTO_READ_INTERVAL);
+
+
+    private void stopCurrentDataUpdates() {
+        try {
+            // Detener el handler que actualiza datos periódicamente
+            if (handler != null) {
+                handler.removeCallbacksAndMessages(null);
+                System.out.println("✅ FASORES - Handler limpiado");
+            }
+
+            // Si hay un Runnable de actualización continua, detenerlo
+            if (updateCurrentDataRunnable != null) {
+                handler.removeCallbacks(updateCurrentDataRunnable);
+                System.out.println("✅ FASORES - Actualizaciones de datos detenidas");
+            }
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error deteniendo actualizaciones: " + e.getMessage());
         }
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        if (autoReadEnabled) {
-            autoReadHandler.removeCallbacks(autoReadTask);
-        }
-    }
+    protected void onDestroy() {
+        super.onDestroy();
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (!isConnectedToDevice) {
-            connectToDeviceIndependent();
+        System.out.println("🔚 FASORES - onDestroy llamado");
+
+        // ✅ DETENER ACTUALIZACIONES
+        stopCurrentDataUpdates();
+
+        // ✅ MARCAR COMO DESCONECTADO
+        isConnectedToDevice = false;
+        isWaitingResponse = false;
+        configurationSynced = false;
+
+        // ✅ CERRAR SOCKET
+        closeSocketSafely();
+
+        // ✅ CERRAR EXECUTOR
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdownNow();
+            System.out.println("   Executor cerrado");
         }
     }
 }
+
+

@@ -108,6 +108,28 @@ public class FasorView extends View {
         }
     }
 
+    // ===== ✅ MÉTODOS REQUERIDOS POR FasoresActivity =====
+
+    /**
+     * Establece las magnitudes de los 3 fasores
+     */
+    public void setMagnitudes(float mag1, float mag2, float mag3) {
+        this.individualMagnitudes[0] = mag1;
+        this.individualMagnitudes[1] = mag2;
+        this.individualMagnitudes[2] = mag3;
+        invalidate(); // Redibujar
+    }
+
+    /**
+     * Establece los ángulos de los 3 fasores
+     */
+    public void setAngles(float ang1, float ang2, float ang3) {
+        this.individualAngles[0] = ang1;
+        this.individualAngles[1] = ang2;
+        this.individualAngles[2] = ang3;
+        invalidate(); // Redibujar
+    }
+
     // ===== NUEVOS MÉTODOS PÚBLICOS PARA 3 EJES =====
 
     /**
