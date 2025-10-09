@@ -32,6 +32,8 @@ public class OctoNetCommandEncoder {
     private static final int ENERGY_3PHA_PAGE_SIZE = 64;
     private static final int WIFI_SETTINGS_SIZE = 247; // ✅ AGREGADO según Tabla 28
 
+
+
     // =================================================================
     // MÁQUINA DE ESTADOS PARA DECODIFICACIÓN
     // =================================================================
