@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#FFFFFF">
+
+    <!-- Título -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📱 Información del Dispositivo"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:gravity="center"
+        android:paddingBottom="16dp"/>
+
+    <!-- Divisor -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Serial -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#F5F5F5"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Serial"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tvDeviceSerial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="1404230000046"
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <!-- Fecha Fabricación -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#F5F5F5"
+            android:padding="12dp"
+            android:layout_marginEnd="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha Fab."
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvDeviceFacDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="09/02/24"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#F5F5F5"
+            android:padding="12dp"
+            android:layout_marginStart="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hora Fab."
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvDeviceFacHour"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="11:23:25"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Código Activación -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#F5F5F5"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Código Activación"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tvDeviceActCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LVTX"
+            android:textSize="14sp"
+            android:textColor="#000000"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <!-- Versiones -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#F5F5F5"
+            android:padding="12dp"
+            android:layout_marginEnd="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HW Version"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvDeviceHwVersion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ER4WW4"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="#F5F5F5"
+            android:padding="12dp"
+            android:layout_marginStart="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FW Version"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tvDeviceFwVersion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="B0D028"
+                android:textSize="14sp"
+                android:textColor="#000000"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Botón Cerrar -->
+    <Button
+        android:id="@+id/btnCloseDeviceId"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Cerrar"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/button_play"/>
+
+</LinearLayout>

@@ -58,7 +58,7 @@ public class FasoresActivity extends AppCompatActivity {
     private List<ScanResult> availableNetworks = new ArrayList<>();
     private OctoNetCommandEncoder.WiFiSettings lastReadWifiSettings;
     private DeviceIdInfo lastReadDeviceIdInfo;
-    private boolean userRequestedWifiScan = false;
+    private boolean userRequestedWifiScan = false; // ✅ FLAG PARA SABER SI EL USUARIO SOLICITÓ EL ESCANEO
 
     // ===== UI ELEMENTS =====
     private Spinner spinnerCableado, spinnerAmperes;
@@ -67,8 +67,6 @@ public class FasoresActivity extends AppCompatActivity {
     private LinearLayout btnBackToMenu;
     private Button btnDeviceId, btnConfigWifi;
     private Handler handler = new Handler(Looper.getMainLooper());
-    private Handler deviceIdCheckHandler = new Handler(Looper.getMainLooper());
-    private Runnable deviceIdCheckRunnable = null;
 
     // ===== FASORES =====
     private FasorView fasorVoltaje, fasorCorriente;
@@ -92,18 +90,18 @@ public class FasoresActivity extends AppCompatActivity {
     private boolean isConnectedToDevice = false;
 
     // ===== CONFIGURACIÓN DEL MEDIDOR =====
-    private int periodConfig = 0;
-    private int sensorsConfig = 1;
-    private int meteringTypeConfig = 3;
+    private int periodConfig = 0; // FIJO EN 1 MINUTO
+    private int sensorsConfig = 1; // 0=20A, 1=50A, 2=200A, 3=400A, 4=1000A, 5=3000A
+    private int meteringTypeConfig = 3; // FORZAR Carga Trifásica
     private boolean recordingConfig = true;
 
     // Configuración de interfaz
     private int rangoAmperes = 50;
-    private int tipoCableado = 3;
+    private int tipoCableado = 3; // Carga Trifásica
 
     // ===== AUTO-LECTURA =====
     private boolean autoReadEnabled = false;
-    private static final int AUTO_READ_INTERVAL = 5000;
+    private static final int AUTO_READ_INTERVAL = 5000; // 5 segundos FIJO
     private Runnable autoReadTask;
     private Handler autoReadHandler = new Handler(Looper.getMainLooper());
 
@@ -140,19 +138,23 @@ public class FasoresActivity extends AppCompatActivity {
         setupButtons();
         setupAutoReadTask();
 
+        // ✅ CONECTAR DIRECTAMENTE SIN VALIDACIÓN DE RED
         handler.postDelayed(() -> connectToDeviceIndependent(), 500);
     }
 
     private void initializeViews() {
+        // Spinners y controles
         spinnerCableado = findViewById(R.id.spinnerCableado);
         spinnerAmperes = findViewById(R.id.spinnerAmperes);
         imageDiagram = findViewById(R.id.imageDiagram);
         btnPlay = findViewById(R.id.btnPlay);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
 
+        // ✅ NUEVOS BOTONES
         btnDeviceId = findViewById(R.id.btnDeviceId);
         btnConfigWifi = findViewById(R.id.btnConfigWifi);
 
+        // ✅ FASORES CON MODO 3 EJES
         fasorVoltaje = findViewById(R.id.fasorVoltaje);
         fasorCorriente = findViewById(R.id.fasorCorriente);
 
@@ -170,6 +172,7 @@ public class FasoresActivity extends AppCompatActivity {
             fasorCorriente.setAutoScale(true);
         }
 
+        // TextViews para mediciones
         tvV1 = findViewById(R.id.tvV1);
         tvV2 = findViewById(R.id.tvV2);
         tvV3 = findViewById(R.id.tvV3);
@@ -192,6 +195,7 @@ public class FasoresActivity extends AppCompatActivity {
         initializeDisplayValues();
     }
 
+    // ✅ SETUP SPINNERS SIN TIEMPO
     private void setupSpinners() {
         String[] cableadoOptions = {"3 = Carga Trifásica"};
         setupSpinnerAdapter(spinnerCableado, cableadoOptions);
@@ -229,8 +233,9 @@ public class FasoresActivity extends AppCompatActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(intent.getAction())) {
+                    // ✅ SOLO PROCESAR SI EL USUARIO SOLICITÓ EL ESCANEO
                     if (userRequestedWifiScan) {
-                        userRequestedWifiScan = false;
+                        userRequestedWifiScan = false; // ✅ RESETEAR FLAG
                         updateAvailableNetworks();
                         displayNetworkSelectionForValidation();
                     }
@@ -241,7 +246,7 @@ public class FasoresActivity extends AppCompatActivity {
         registerReceiver(wifiReceiver, filter);
     }
 
-    // ✅ SETUP AUTOMÁTICO MEJORADO CON REINTENTOS Y TIEMPOS CORRECTOS
+    // ✅ SECUENCIA AUTOMÁTICA DE SETUP OPTIMIZADA
     private void performAutomaticSetup() {
         if (!isConnectedToDevice) return;
 
@@ -255,32 +260,21 @@ public class FasoresActivity extends AppCompatActivity {
                 sendTimeWriteCommand();
                 Thread.sleep(1500);
 
-                // 2. Leer Device ID CON REINTENTOS
-                handler.post(() -> showToast("📋 Obteniendo ID del dispositivo..."));
+                // ❌ QUITAR ESTO - NO PEDIR DEVICE ID EN SETUP
+            /*
+            handler.post(() -> showToast("📋 Obteniendo ID del dispositivo..."));
+            boolean deviceIdReceived = false;
+            for (int attempt = 0; attempt < 3 && !deviceIdReceived; attempt++) {
+                ...
+            }
+            */
 
-                boolean deviceIdReceived = false;
-                for (int attempt = 0; attempt < 3 && !deviceIdReceived; attempt++) {
-                    System.out.println("🔄 FASORES - Intento " + (attempt + 1) + " de leer Device ID");
-                    sendDeviceIdReadCommand();
-                    Thread.sleep(2000);
-
-                    if (lastReadDeviceIdInfo != null) {
-                        deviceIdReceived = true;
-                        System.out.println("✅ FASORES - Device ID recibido en intento " + (attempt + 1));
-                    }
-                }
-
-                if (!deviceIdReceived) {
-                    System.out.println("⚠️ FASORES - No se pudo obtener Device ID después de 3 intentos");
-                    handler.post(() -> showToast("⚠️ No se pudo obtener Device ID"));
-                }
-
-                // 3. Verificar WiFi
+                // 2. Verificar WiFi
                 handler.post(() -> showToast("📡 Verificando WiFi del medidor..."));
                 sendWiFiReadCommand();
                 Thread.sleep(1500);
 
-                // 4. Leer configuración
+                // 3. Leer configuración
                 handler.post(() -> showToast("🔧 Leyendo configuración..."));
                 readDeviceConfigurationIndependent();
                 Thread.sleep(2000);
@@ -298,57 +292,53 @@ public class FasoresActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ MODAL DE DEVICE ID MEJORADO CON CANCELACIÓN DE HANDLERS PREVIOS
+    // ✅ MODAL DE DEVICE ID MEJORADO
     private void showDeviceIdModal() {
+        // ✅ VERIFICAR CONEXIÓN PRIMERO
         if (!isConnectedToDevice) {
             showToast("❌ No hay conexión con el medidor");
             return;
         }
 
-        // ✅ CANCELAR VERIFICACIONES ANTERIORES
-        if (deviceIdCheckRunnable != null) {
-            deviceIdCheckHandler.removeCallbacks(deviceIdCheckRunnable);
-            deviceIdCheckRunnable = null;
-        }
-
+        // ✅ SI YA HAY DATOS, MOSTRAR INMEDIATAMENTE
         if (lastReadDeviceIdInfo != null) {
             displayDeviceIdModal();
             return;
         }
 
+        // ✅ SI NO HAY DATOS, SOLICITARLOS
         showToast("📋 Solicitando información del dispositivo...");
         sendDeviceIdReadCommand();
 
+        // ✅ ESPERAR RESPUESTA CON MÚLTIPLES INTENTOS
         final int[] attempts = {0};
+        final Handler checkHandler = new Handler(Looper.getMainLooper());
 
-        deviceIdCheckRunnable = new Runnable() {
+        Runnable checkDataRunnable = new Runnable() {
             @Override
             public void run() {
                 attempts[0]++;
 
                 if (lastReadDeviceIdInfo != null) {
+                    // ✅ DATOS RECIBIDOS - MOSTRAR MODAL
                     displayDeviceIdModal();
-                    deviceIdCheckRunnable = null;
                 } else if (attempts[0] < 5) {
+                    // ✅ REINTENTAR (máximo 5 intentos = 5 segundos)
+                    checkHandler.postDelayed(this, 1000);
                     System.out.println("🔄 FASORES - Esperando Device ID... intento " + attempts[0]);
-
-                    // ✅ REENVIAR COMANDO CADA 2 INTENTOS
-                    if (attempts[0] % 2 == 0) {
-                        sendDeviceIdReadCommand();
-                    }
-
-                    deviceIdCheckHandler.postDelayed(this, 1000);
                 } else {
-                    showToast("⏰ Timeout: No se pudo obtener la información");
-                    System.out.println("❌ FASORES - Timeout después de 5 intentos");
-                    deviceIdCheckRunnable = null;
+                    // ✅ TIMEOUT - MOSTRAR ERROR
+                    showToast("⏰ Timeout: No se pudo obtener la información del dispositivo");
+                    System.out.println("❌ FASORES - Timeout esperando Device ID después de 5 intentos");
                 }
             }
         };
 
-        deviceIdCheckHandler.postDelayed(deviceIdCheckRunnable, 1000);
+        // Iniciar verificación después de 1 segundo
+        checkHandler.postDelayed(checkDataRunnable, 1000);
     }
 
+    // ✅ MÉTODO SEPARADO PARA MOSTRAR EL MODAL
     private void displayDeviceIdModal() {
         if (lastReadDeviceIdInfo == null) {
             showToast("❌ No hay información disponible");
@@ -372,12 +362,14 @@ public class FasoresActivity extends AppCompatActivity {
         System.out.println("✅ FASORES - Modal Device ID mostrado correctamente");
     }
 
+    // ✅ ESCANEO DE REDES WIFI - SOLO CUANDO EL USUARIO LO SOLICITE
     private void showNetworkScanForValidation() {
         if (!isConnectedToDevice) {
             showToast("❌ Debes estar conectado al medidor para configurar el WiFi.");
             return;
         }
 
+        // ✅ VERIFICAR RED ESP SOLO AQUÍ
         if (wifiManager != null && wifiManager.isWifiEnabled()) {
             @SuppressLint("MissingPermission")
             String currentSsid = wifiManager.getConnectionInfo().getSSID().replace("\"", "");
@@ -390,7 +382,7 @@ public class FasoresActivity extends AppCompatActivity {
                                 "¿Deseas continuar de todas formas?")
                         .setPositiveButton("Continuar", (dialog, which) -> {
                             showToast("🔍 Escaneando redes WiFi...");
-                            userRequestedWifiScan = true;
+                            userRequestedWifiScan = true; // ✅ MARCAR QUE EL USUARIO SOLICITÓ EL ESCANEO
                             wifiManager.startScan();
                         })
                         .setNegativeButton("Cancelar", null)
@@ -400,7 +392,7 @@ public class FasoresActivity extends AppCompatActivity {
         }
 
         showToast("🔍 Escaneando redes WiFi...");
-        userRequestedWifiScan = true;
+        userRequestedWifiScan = true; // ✅ MARCAR QUE EL USUARIO SOLICITÓ EL ESCANEO
         wifiManager.startScan();
     }
 
@@ -483,6 +475,7 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
+    // ✅ COMANDOS DE CONFIGURACIÓN
     private void sendTimeWriteCommand() {
         Calendar cal = Calendar.getInstance();
         byte[] command = OctoNetCommandEncoder.createDeviceTimeWriteCommand(
@@ -512,6 +505,7 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void setupSpinnerListeners() {
+        // ✅ CABLEADO FIJO EN TRIFÁSICO - NO CAMBIA
         spinnerCableado.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -527,6 +521,7 @@ public class FasoresActivity extends AppCompatActivity {
             }
         });
 
+        // ✅ AMPERES - ESCRIBE AUTOMÁTICAMENTE
         spinnerAmperes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -552,9 +547,9 @@ public class FasoresActivity extends AppCompatActivity {
         }
 
         try {
-            int periodValue = 0;
+            int periodValue = 0; // FIJO EN 1 MINUTO
             int sensorsValue = spinnerAmperes.getSelectedItemPosition();
-            int meteringTypeValue = 3;
+            int meteringTypeValue = 3; // TRIFÁSICO
             boolean recordingValue = true;
 
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
@@ -622,6 +617,7 @@ public class FasoresActivity extends AppCompatActivity {
             finish();
         });
 
+        // ✅ NUEVOS BOTONES
         btnDeviceId.setOnClickListener(v -> showDeviceIdModal());
         btnConfigWifi.setOnClickListener(v -> showNetworkScanForValidation());
     }
@@ -984,8 +980,6 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void processReceivedDataIndependent(byte[] data) {
-        System.out.println("📨 FASORES - Respuesta recibida: " + OctoNetCommandEncoder.bytesToHexString(data));
-
         isWaitingResponse = false;
 
         if (data == null || data.length < 4) {
@@ -1004,14 +998,14 @@ public class FasoresActivity extends AppCompatActivity {
         int command = data[2] & 0xFF;
         int dataSize = data[3] & 0xFF;
 
+        OctoNetCommandEncoder.CmdSet commandType = OctoNetCommandEncoder.getCommandType(data);
+
         if (responseType == 0x45) {
             showToast("❌ Error del dispositivo");
             return;
         }
 
         if (responseType == 0x43) {
-            System.out.println("✅ FASORES - Respuesta de confirmación, comando: 0x" + Integer.toHexString(command));
-
             try {
                 if (command == 0x20) {
                     if (dataSize > 0) {
@@ -1031,8 +1025,10 @@ public class FasoresActivity extends AppCompatActivity {
                         showToast("❌ NODE_CURRENT sin datos disponibles");
                     }
                 } else if (command == 0x30) {
+                    // Device ID Response
                     processDeviceIdResponse(data);
                 } else if (command == 0x40) {
+                    // WiFi Settings Response
                     processWiFiSettingsResponse(data);
                 }
             } catch (Exception e) {
@@ -1041,7 +1037,7 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ PROCESAMIENTO DEVICE ID MEJORADO - IGUAL QUE WiFiSetupActivity
+    // ✅ PROCESAMIENTO DEVICE ID CORREGIDO PARA FASORES ACTIVITY
     private void processDeviceIdResponse(byte[] response) {
         try {
             System.out.println("🔍 FASORES - Procesando respuesta Device ID...");
@@ -1059,11 +1055,11 @@ public class FasoresActivity extends AppCompatActivity {
 
             lastReadDeviceIdInfo = new DeviceIdInfo();
 
-            // ✅ INTENTAR PARSEO COMO STRING PRIMERO (igual que WiFiSetupActivity)
+            // ✅ INTENTAR PARSEO COMO STRING PRIMERO
             String deviceInfoString = new String(deviceData, "UTF-8").trim();
             System.out.println("📄 FASORES - Datos como string: " + deviceInfoString);
 
-            // Si es formato concatenado (como en WiFiSetupActivity)
+            // Si es formato concatenado (como: 140423000046090224112325LVTXER4WW4B0D028)
             if (deviceInfoString.length() >= 30 && !deviceInfoString.contains("\n")) {
                 System.out.println("🔍 FASORES - Formato concatenado detectado");
 
@@ -1120,42 +1116,48 @@ public class FasoresActivity extends AppCompatActivity {
                 }
             }
 
-            // ✅ MÉTODO BINARIO (código original)
+            // ✅ MÉTODO BINARIO (formato de 32+ bytes)
             if (deviceData.length >= 32) {
-                // Serial (10 bytes)
+                // Serial (10 bytes) - bytes 0-9
                 byte[] serialBytes = new byte[10];
                 System.arraycopy(deviceData, 0, serialBytes, 0, 10);
                 lastReadDeviceIdInfo.serial = new String(serialBytes).trim();
+                System.out.println("   Serial: " + lastReadDeviceIdInfo.serial);
 
-                // Fecha y hora
+                // Fecha y hora de fabricación - bytes 10-15
                 if (deviceData.length >= 16) {
                     int year = 2000 + (deviceData[10] & 0xFF);
                     int month = deviceData[11] & 0xFF;
                     int day = deviceData[12] & 0xFF;
                     lastReadDeviceIdInfo.facDate = String.format("%02d/%02d/%04d", day, month, year);
+                    System.out.println("   Fecha Fab: " + lastReadDeviceIdInfo.facDate);
 
                     int hour = deviceData[13] & 0xFF;
                     int minute = deviceData[14] & 0xFF;
                     int second = deviceData[15] & 0xFF;
                     lastReadDeviceIdInfo.facHour = String.format("%02d:%02d:%02d", hour, minute, second);
+                    System.out.println("   Hora Fab: " + lastReadDeviceIdInfo.facHour);
                 }
 
-                // Código de activación
+                // Código de activación (10 bytes) - bytes 16-25
                 if (deviceData.length >= 26) {
                     byte[] actCodeBytes = new byte[10];
                     System.arraycopy(deviceData, 16, actCodeBytes, 0, 10);
                     lastReadDeviceIdInfo.actCode = new String(actCodeBytes).trim();
+                    System.out.println("   Código Act: " + lastReadDeviceIdInfo.actCode);
                 }
 
-                // Versiones
+                // Versiones HW y FW - bytes 26-31
                 if (deviceData.length >= 32) {
                     byte[] hwBytes = new byte[3];
                     System.arraycopy(deviceData, 26, hwBytes, 0, 3);
                     lastReadDeviceIdInfo.hwVersion = new String(hwBytes).trim();
+                    System.out.println("   HW Version: " + lastReadDeviceIdInfo.hwVersion);
 
                     byte[] fwBytes = new byte[3];
                     System.arraycopy(deviceData, 29, fwBytes, 0, 3);
                     lastReadDeviceIdInfo.fwVersion = new String(fwBytes).trim();
+                    System.out.println("   FW Version: " + lastReadDeviceIdInfo.fwVersion);
                 }
 
                 System.out.println("✅ FASORES - Device ID parseado (formato binario)");
@@ -1220,7 +1222,7 @@ public class FasoresActivity extends AppCompatActivity {
                     recordingConfig = (configData[0] & 0xFF) == 1;
 
                     int period = configData[1] & 0xFF;
-                    periodConfig = 0;
+                    periodConfig = 0; // SIEMPRE 1 MINUTO
 
                     int sensors = configData[2] & 0xFF;
                     if (sensors >= 0 && sensors <= 5 && spinnerAmperes != null) {
@@ -1327,56 +1329,6 @@ public class FasoresActivity extends AppCompatActivity {
         } catch (Exception e) {
             showToast("❌ Error procesando datos de energía");
         }
-    }
-
-    private void initializeWiFiValidationModule() {
-        wifiValidationModule = new WiFiValidationModule(this, new WiFiValidationModule.ValidationListener() {
-            @Override
-            public void onValidationStarted(String ssid) {
-                showToast("🔍 Validando red: " + ssid);
-            }
-
-            @Override
-            public void onValidationProgress(String ssid, String progress) {
-                showToast(progress);
-            }
-
-            @Override
-            public void onValidationSuccess(WiFiValidationModule.ValidatedNetwork network) {
-                showToast("✅ Red " + network.ssid + " validada");
-                showValidatedNetworkConfirmation(network);
-            }
-
-            @Override
-            public void onValidationFailed(String ssid, String error) {
-                showToast("❌ " + error);
-            }
-
-            @Override
-            public void onValidationTimeout(String ssid) {
-                showToast("⏰ Timeout validando " + ssid);
-            }
-
-            @Override
-            public void onDeviceConnectionStarted(String ssid) {
-            }
-
-            @Override
-            public void onDeviceConnectionSuccess(String ssid) {
-            }
-
-            @Override
-            public void onDeviceConnectionTimeout(String ssid) {
-            }
-
-            @Override
-            public void onDeviceConnectionFailed(String ssid, String error) {
-            }
-
-            @Override
-            public void onOriginalNetworkRestored() {
-            }
-        });
     }
 
     private void processChannel64TcpStyle(byte[] data, int offset, int channelIndex, String channelName) {
@@ -1582,6 +1534,56 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
+    private void initializeWiFiValidationModule() {
+        wifiValidationModule = new WiFiValidationModule(this, new WiFiValidationModule.ValidationListener() {
+            @Override
+            public void onValidationStarted(String ssid) {
+                showToast("🔍 Validando red: " + ssid);
+            }
+
+            @Override
+            public void onValidationProgress(String ssid, String progress) {
+                showToast(progress);
+            }
+
+            @Override
+            public void onValidationSuccess(WiFiValidationModule.ValidatedNetwork network) {
+                showToast("✅ Red " + network.ssid + " validada");
+                showValidatedNetworkConfirmation(network);
+            }
+
+            @Override
+            public void onValidationFailed(String ssid, String error) {
+                showToast("❌ " + error);
+            }
+
+            @Override
+            public void onValidationTimeout(String ssid) {
+                showToast("⏰ Timeout validando " + ssid);
+            }
+
+            @Override
+            public void onDeviceConnectionStarted(String ssid) {
+            }
+
+            @Override
+            public void onDeviceConnectionSuccess(String ssid) {
+            }
+
+            @Override
+            public void onDeviceConnectionTimeout(String ssid) {
+            }
+
+            @Override
+            public void onDeviceConnectionFailed(String ssid, String error) {
+            }
+
+            @Override
+            public void onOriginalNetworkRestored() {
+            }
+        });
+    }
+
     private void initializeDisplayValues() {
         for (int i = 0; i < 3; i++) {
             updatePhaseDisplay(i, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -1630,31 +1632,16 @@ public class FasoresActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        // ✅ CANCELAR HANDLERS
-        if (deviceIdCheckRunnable != null) {
-            deviceIdCheckHandler.removeCallbacks(deviceIdCheckRunnable);
-            deviceIdCheckRunnable = null;
-        }
-
         if (wifiReceiver != null) {
-            try {
-                unregisterReceiver(wifiReceiver);
-            } catch (Exception e) {
-                // Ignorar si ya fue desregistrado
-            }
+            unregisterReceiver(wifiReceiver);
         }
-
         stopDataAcquisition();
         disconnectFromDevice();
-
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
         }
-
         handler.removeCallbacksAndMessages(null);
         autoReadHandler.removeCallbacksAndMessages(null);
-        deviceIdCheckHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
