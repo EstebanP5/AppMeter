@@ -159,6 +159,7 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
+
         // Spinners y controles
         spinnerCableado = findViewById(R.id.spinnerCableado);
         spinnerAmperes = findViewById(R.id.spinnerAmperes);
@@ -173,6 +174,16 @@ public class FasoresActivity extends AppCompatActivity {
         // Fasores con modo 3 ejes
         fasorVoltaje = findViewById(R.id.fasorVoltaje);
         fasorCorriente = findViewById(R.id.fasorCorriente);
+        btnPlay = findViewById(R.id.btnPlay);
+
+
+        if (btnPlay == null) {
+            System.out.println("❌ FASORES - btnPlay es NULL - verificar R.id.btnPlay en XML");
+        } else {
+            System.out.println("✅ FASORES - btnPlay inicializado correctamente");
+
+            btnPlay.setImageResource(R.drawable.ic_play);
+        }
 
         if (fasorVoltaje != null) {
             fasorVoltaje.setThreeAxisMode(true);
@@ -210,6 +221,33 @@ public class FasoresActivity extends AppCompatActivity {
 
         initializeDisplayValues();
     }
+
+    private void processIntentDataAndConnect() {
+        Intent intent = getIntent();
+
+        // Obtener IP y puerto del intent o usar valores por defecto
+        String ip = intent.getStringExtra("device_ip");
+        String port = intent.getStringExtra("device_port");
+
+        if (ip != null && !ip.isEmpty()) {
+            deviceIp = ip;
+        }
+
+        if (port != null && !port.isEmpty()) {
+            try {
+                devicePort = Integer.parseInt(port);
+            } catch (NumberFormatException e) {
+                devicePort = 333;
+            }
+        }
+
+        showToast("📡 Conectando a " + deviceIp + ":" + devicePort);
+
+        // Conectar inmediatamente con nuestra propia conexión
+        handler.postDelayed(() -> connectToDeviceIndependent(), 1000);
+    }
+
+
 
     private void setupSpinners() {
         String[] cableadoOptions = {"Carga Trifásica"};
@@ -316,7 +354,7 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void performAutomaticSetup() {
         if (!isConnectedToDevice) {
-            System.out.println("❌ FASORES - No hay conexión para setup");
+            System.out.println("❌ FASORES - No conectado para setup");
             return;
         }
 
@@ -324,30 +362,27 @@ public class FasoresActivity extends AppCompatActivity {
 
         executor.execute(() -> {
             try {
-                handler.post(() -> showToast("⚙️ Configuración automática..."));
+                handler.post(() -> showToast("⚙️ Setup automático..."));
 
-                // 1. Sincronizar hora (SIN ESPERA LARGA)
-                System.out.println("🕐 FASORES - Paso 1: Sincronizando hora...");
-                handler.post(() -> showToast("🕐 Sincronizando hora..."));
+                // ✅ 1. Sincronizar hora
+                System.out.println("🕐 FASORES - Enviando hora del sistema...");
                 sendTimeWriteCommand();
-                Thread.sleep(500); // ✅ SOLO 500ms
+                Thread.sleep(500);
 
-                // 2. Verificar WiFi
-                System.out.println("📡 FASORES - Paso 2: Verificando WiFi...");
-                handler.post(() -> showToast("📡 Verificando WiFi..."));
+                // ✅ 2. Leer configuración WiFi
+                System.out.println("📡 FASORES - Leyendo configuración WiFi...");
                 sendWiFiReadCommand();
-                Thread.sleep(500); // ✅ SOLO 500ms
+                Thread.sleep(500);
 
-                // 3. Leer configuración
-                System.out.println("🔧 FASORES - Paso 3: Leyendo configuración...");
-                handler.post(() -> showToast("🔧 Leyendo configuración..."));
+                // ✅ 3. Leer configuración del dispositivo
+                System.out.println("🔧 FASORES - Leyendo configuración...");
                 readDeviceConfigurationIndependent();
-                Thread.sleep(500); // ✅ SOLO 500ms
+                Thread.sleep(500);
 
-                // ✅ MARCAR COMO SINCRONIZADO INMEDIATAMENTE
+                // ✅ MARCAR COMO SINCRONIZADO
                 System.out.println("✅ FASORES - Setup completado");
                 handler.post(() -> {
-                    showToast("🎉 Setup completado");
+                    showToast("✅ Setup completado");
                     configurationSynced = true;
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
@@ -355,14 +390,13 @@ public class FasoresActivity extends AppCompatActivity {
 
             } catch (InterruptedException e) {
                 System.out.println("⚠️ FASORES - Setup interrumpido");
-                handler.post(() -> showToast("⚠️ Setup interrumpido"));
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
                 System.out.println("❌ FASORES - Error en setup: " + e.getMessage());
                 e.printStackTrace();
                 handler.post(() -> {
-                    showToast("❌ Error en setup: " + e.getMessage());
-                    configurationSynced = true; // ✅ PERMITIR USO AUNQUE FALLE
+                    showToast("❌ Error en setup");
+                    configurationSynced = true; // Permitir uso manual
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
                 });
@@ -867,15 +901,42 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void setupAutoReadTask() {
+        // ✅ ASEGURAR QUE autoReadHandler EXISTA
+        if (autoReadHandler == null) {
+            autoReadHandler = new Handler(Looper.getMainLooper());
+            System.out.println("✅ FASORES - autoReadHandler creado");
+        }
+
+        // ✅ CREAR RUNNABLE DE AUTO-LECTURA
         autoReadTask = new Runnable() {
             @Override
             public void run() {
+                System.out.println("🔄 FASORES - Auto-read tick");
+                System.out.println("   autoReadEnabled: " + autoReadEnabled);
+                System.out.println("   isConnectedToDevice: " + isConnectedToDevice);
+                System.out.println("   configurationSynced: " + configurationSynced);
+
                 if (autoReadEnabled && isConnectedToDevice && configurationSynced) {
+                    // ✅ SOLICITAR DATOS
                     requestCurrentData();
+
+                    // ✅ PROGRAMAR SIGUIENTE LECTURA
                     autoReadHandler.postDelayed(this, AUTO_READ_INTERVAL);
+                    System.out.println("   ✓ Próxima lectura en " + AUTO_READ_INTERVAL + "ms");
+                } else {
+                    System.out.println("   ⚠️ Auto-read detenido (condiciones no cumplidas)");
+
+                    // ✅ ASEGURAR QUE EL BOTÓN VUELVA A PLAY
+                    if (btnPlay != null && !autoReadEnabled) {
+                        handler.post(() -> btnPlay.setImageResource(R.drawable.ic_play));
+                    }
                 }
             }
         };
+
+        System.out.println("✅ FASORES - autoReadTask configurado");
+
+        // ✅ ACTUALIZAR DIAGRAMA
         updateDiagram();
     }
 
@@ -884,191 +945,152 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void connectToDeviceIndependent() {
+        // ✅ EVITAR CONEXIONES DUPLICADAS
         if (isConnectedToDevice) {
-            System.out.println("⚠️ FASORES - Ya hay una conexión activa");
+            System.out.println("⚠️ FASORES - Ya hay conexión activa, evitando duplicado");
             return;
         }
 
-        String ip = deviceIp;
-        int port = devicePort;
-
-        System.out.println("🔄 FASORES - Iniciando conexión a " + ip + ":" + port);
-        showToast("🔄 Conectando a " + ip + ":" + port + "...");
+        showToast("🔗 Estableciendo conexión independiente...");
 
         executor.execute(() -> {
             try {
-                // ✅ PASO 1: Crear socket
+                // ✅ CERRAR RECURSOS ANTERIORES CORRECTAMENTE
+                disconnectFromDeviceInternal();
+
+                System.out.println("🔗 FASORES - Iniciando nueva conexión a " + deviceIp + ":" + devicePort);
+
+                // ✅ NUEVA CONEXIÓN CON CONFIGURACIÓN MEJORADA
                 socket = new Socket();
-                System.out.println("   Socket creado");
-
-                // ✅ PASO 2: Conectar con timeout de 15 segundos
-                socket.connect(new java.net.InetSocketAddress(ip, port), 15000);
-                System.out.println("   Socket conectado");
-
-                // ✅ PASO 3: Configurar socket (IGUAL A WiFiSetupActivity)
-                socket.setSoTimeout(30000); // 30 segundos timeout de lectura
-                socket.setReceiveBufferSize(8192);
-                socket.setSendBufferSize(4096);
+                socket.connect(new java.net.InetSocketAddress(deviceIp, devicePort), 10000); // 10s timeout
+                socket.setSoTimeout(15000); // 15 segundos timeout para lectura
                 socket.setTcpNoDelay(true);
                 socket.setKeepAlive(true);
-                System.out.println("   Socket configurado");
+                socket.setReuseAddress(true);
 
-                // ✅ PASO 4: Obtener streams
+                // ✅ OBTENER AMBOS STREAMS CORRECTAMENTE
                 outputStream = socket.getOutputStream();
-                inputStream = socket.getInputStream();
-                System.out.println("   Streams obtenidos");
+                inputStream = socket.getInputStream(); // ✅ ESTA LÍNEA FALTABA
 
-                // ✅ PASO 5: Marcar como conectado
-                isConnectedToDevice = true;
-                System.out.println("✅ FASORES - Conexión establecida exitosamente");
+                System.out.println("✅ FASORES - Streams obtenidos (InputStream + OutputStream)");
 
-                // ✅ PASO 6: Actualizar UI
                 handler.post(() -> {
-                    showToast("✅ Conectado a " + ip + ":" + port);
-                    setControlsEnabled(false); // Deshabilitado hasta sincronizar
-                    configurationSynced = false;
+                    isConnectedToDevice = true;
+                    showToast("✅ Conectado independientemente a " + deviceIp);
+                    System.out.println("✅ FASORES - Conexión independiente establecida");
+
+                    // Iniciar hilo de recepción mejorado
+                    startIndependentReceiveThreadImproved();
+
+                    // ✅ INICIAR SETUP AUTOMÁTICO
+                    handler.postDelayed(() -> performAutomaticSetup(), 500);
                 });
 
-                // ✅ PASO 7: Iniciar thread de recepción
-                System.out.println("🔄 FASORES - Iniciando thread de recepción...");
-                startIndependentReceiveThreadImproved();
-
-                // ✅ PASO 8: Esperar 500ms y hacer setup
-                Thread.sleep(500);
-                handler.post(() -> performAutomaticSetup());
-
-            } catch (java.net.SocketTimeoutException e) {
-                System.out.println("⏰ FASORES - Timeout al conectar: " + e.getMessage());
-                handler.post(() -> {
-                    showToast("⏰ Timeout de conexión");
-                    isConnectedToDevice = false;
-                });
             } catch (java.net.ConnectException e) {
+                System.out.println("❌ FASORES - No se pudo conectar: " + e.getMessage());
+                handler.post(() -> {
+                    isConnectedToDevice = false;
+                    setControlsEnabled(false);
+                    showToast("❌ Dispositivo no responde en " + deviceIp + ":" + devicePort);
+                });
+            } catch (java.net.SocketTimeoutException e) {
+                System.out.println("❌ FASORES - Timeout de conexión: " + e.getMessage());
+                handler.post(() -> {
+                    isConnectedToDevice = false;
+                    setControlsEnabled(false);
+                    showToast("❌ Timeout de conexión");
+                });
+            } catch (Exception e) {
                 System.out.println("❌ FASORES - Error de conexión: " + e.getMessage());
-                handler.post(() -> {
-                    showToast("❌ No se pudo conectar al dispositivo");
-                    isConnectedToDevice = false;
-                });
-            } catch (IOException e) {
-                System.out.println("❌ FASORES - Error I/O: " + e.getMessage());
-                handler.post(() -> {
-                    showToast("❌ Error de conexión: " + e.getMessage());
-                    isConnectedToDevice = false;
-                });
-            } catch (Exception e) {
-                System.out.println("❌ FASORES - Error inesperado: " + e.getMessage());
                 e.printStackTrace();
                 handler.post(() -> {
-                    showToast("❌ Error: " + e.getMessage());
                     isConnectedToDevice = false;
+                    setControlsEnabled(false);
+
                 });
             }
         });
     }
 
-    // ✅ AGREGAR ESTE MÉTODO NUEVO (IGUAL A WiFiSetupActivity):
-    private void closeSocketSafely() {
-        executor.execute(() -> {
-            try {
-                System.out.println("🔌 FASORES - Cerrando socket...");
 
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                        System.out.println("   OutputStream cerrado");
-                    } catch (IOException e) {
-                        System.out.println("   Error cerrando OutputStream: " + e.getMessage());
-                    }
-                    outputStream = null;
-                }
 
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                        System.out.println("   InputStream cerrado");
-                    } catch (IOException e) {
-                        System.out.println("   Error cerrando InputStream: " + e.getMessage());
-                    }
-                    inputStream = null;
-                }
 
-                if (socket != null && !socket.isClosed()) {
-                    try {
-                        socket.close();
-                        System.out.println("   Socket cerrado");
-                    } catch (IOException e) {
-                        System.out.println("   Error cerrando Socket: " + e.getMessage());
-                    }
-                    socket = null;
-                }
-
-                System.out.println("✅ FASORES - Socket cerrado correctamente");
-
-            } catch (Exception e) {
-                System.out.println("❌ FASORES - Error cerrando socket: " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-
-    // ✅ REEMPLAZAR startIndependentReceiveThreadImproved() COMPLETO:
     private void startIndependentReceiveThreadImproved() {
         executor.execute(() -> {
             byte[] buffer = new byte[2048];
-
-            System.out.println("🔄 FASORES - Thread de recepción iniciado");
+            System.out.println("🔄 FASORES - Hilo de recepción mejorado iniciado");
 
             try {
                 while (isConnectedToDevice && !Thread.currentThread().isInterrupted()) {
                     try {
-                        // ✅ IGUAL QUE WiFiSetupActivity - SIMPLE Y DIRECTO
-                        int bytesRead = socket.getInputStream().read(buffer);
+                        // ✅ VERIFICAR QUE EL SOCKET Y STREAMS SIGAN VÁLIDOS
+                        if (socket == null || socket.isClosed() || !socket.isConnected()) {
+                            System.out.println("❌ FASORES - Socket desconectado");
+                            break;
+                        }
+
+                        if (inputStream == null) {
+                            System.out.println("❌ FASORES - InputStream es null");
+                            break;
+                        }
+
+                        // ✅ LECTURA BLOQUEANTE CON TIMEOUT
+                        int bytesRead = inputStream.read(buffer);
 
                         if (bytesRead > 0) {
                             byte[] data = new byte[bytesRead];
                             System.arraycopy(buffer, 0, data, 0, bytesRead);
 
-                            System.out.println("📨 FASORES - Recibidos " + bytesRead + " bytes");
-                            System.out.println("📊 FASORES - Hex: " + OctoNetCommandEncoder.bytesToHexString(data));
+                            String hexString = OctoNetCommandEncoder.bytesToHexString(data);
+                            System.out.println("📨 FASORES - Datos recibidos (" + bytesRead + " bytes): " + hexString);
 
-                            // ✅ PROCESAR EN HANDLER (IGUAL QUE WiFiSetupActivity)
                             handler.post(() -> processReceivedDataIndependent(data));
 
                         } else if (bytesRead == -1) {
-                            System.out.println("🔌 FASORES - Conexión cerrada por servidor");
+                            System.out.println("❌ FASORES - Socket cerrado por el servidor (EOF)");
                             break;
                         }
 
                     } catch (java.net.SocketTimeoutException e) {
-                        // Timeout esperado, continuar
+                        // ✅ TIMEOUT NORMAL - NO ES ERROR
+                        System.out.println("⏰ FASORES - Timeout de lectura (normal, reintentando...)");
                         continue;
+
+                    } catch (java.net.SocketException e) {
+                        if (isConnectedToDevice) {
+                            System.out.println("🔌 FASORES - Socket desconectado: " + e.getMessage());
+                            break;
+                        }
+                    } catch (IOException e) {
+                        if (isConnectedToDevice) {
+                            System.out.println("❌ FASORES - Error en recepción: " + e.getMessage());
+                            e.printStackTrace();
+                            break;
+                        }
                     }
                 }
-            } catch (IOException e) {
-                if (isConnectedToDevice) {
-                    System.out.println("❌ FASORES - IOException: " + e.getMessage());
-                    handler.post(() -> {
-                        showToast("❌ Error en conexión");
-                        disconnectFromDevice();
-                    });
-                }
             } catch (Exception e) {
-                System.out.println("❌ FASORES - Error general: " + e.getMessage());
+                System.out.println("❌ FASORES - Error general en recepción: " + e.getMessage());
                 e.printStackTrace();
             }
 
-            System.out.println("🔚 FASORES - Thread de recepción terminado");
+            // ✅ MANEJO CORRECTO DE DESCONEXIÓN
+            System.out.println("🔚 FASORES - Hilo de recepción terminado");
 
-            // ✅ CERRAR SOCKET Y ACTUALIZAR UI
-            handler.post(() -> {
-                if (isConnectedToDevice) {
+            if (isConnectedToDevice) {
+                handler.post(() -> {
                     isConnectedToDevice = false;
                     configurationSynced = false;
                     setControlsEnabled(false);
                     showToast("🔌 Conexión perdida");
-                    closeSocketSafely();
-                }
-            });
+
+                    // ✅ RECONECTAR AUTOMÁTICAMENTE DESPUÉS DE 3 SEGUNDOS
+                    handler.postDelayed(() -> {
+                        showToast("🔄 Intentando reconectar...");
+                        connectToDeviceIndependent();
+                    }, 3000);
+                });
+            }
         });
     }
 
@@ -1082,30 +1104,49 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void disconnectFromDeviceInternal() {
         try {
+            // ✅ 1. CERRAR INPUTSTREAM PRIMERO
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                    System.out.println("✅ FASORES - InputStream cerrado");
+                } catch (IOException e) {
+                    System.out.println("⚠️ FASORES - Error cerrando InputStream: " + e.getMessage());
+                } finally {
+                    inputStream = null;
+                }
+            }
+
+            // ✅ 2. CERRAR OUTPUTSTREAM
             if (outputStream != null) {
                 try {
                     outputStream.flush();
                     outputStream.close();
+                    System.out.println("✅ FASORES - OutputStream cerrado");
                 } catch (IOException e) {
-                    // Ignorar
+                    System.out.println("⚠️ FASORES - Error cerrando OutputStream: " + e.getMessage());
                 } finally {
                     outputStream = null;
                 }
             }
 
+            // ✅ 3. CERRAR SOCKET
             if (socket != null) {
                 try {
                     if (!socket.isClosed()) {
                         socket.close();
+                        System.out.println("✅ FASORES - Socket cerrado");
                     }
                 } catch (IOException e) {
-                    // Ignorar
+                    System.out.println("⚠️ FASORES - Error cerrando Socket: " + e.getMessage());
                 } finally {
                     socket = null;
                 }
             }
+
+            System.out.println("✅ FASORES - Recursos liberados correctamente");
+
         } catch (Exception e) {
-            // Ignorar
+            System.out.println("❌ FASORES - Error en desconexión: " + e.getMessage());
         }
     }
 
@@ -1145,35 +1186,52 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void requestCurrentData() {
         if (!isConnectedToDevice) {
+            System.out.println("❌ FASORES - No conectado, omitiendo lectura");
             return;
         }
 
         if (socket == null || socket.isClosed() || !socket.isConnected()) {
+            System.out.println("❌ FASORES - Socket inválido, reconectando...");
             connectToDeviceIndependent();
             return;
         }
 
+        // ✅ NO ESPERAR SI YA HAY UNA RESPUESTA PENDIENTE
         if (isWaitingResponse) {
-            isWaitingResponse = false;
+            System.out.println("⏳ FASORES - Comando anterior aún en espera, omitiendo...");
+            // ✅ RESETEAR DESPUÉS DE 2 SEGUNDOS PARA NO QUEDARSE BLOQUEADO
+            handler.postDelayed(() -> {
+                if (isWaitingResponse) {
+                    System.out.println("⚠️ FASORES - Forzando reset de isWaitingResponse");
+                    isWaitingResponse = false;
+                }
+            }, 2000);
+            return;
         }
 
         try {
             byte[] command = OctoNetCommandEncoder.createNodeCurrentReadCommand();
 
             if (!OctoNetCommandEncoder.verifyChecksum(command)) {
+                System.out.println("❌ FASORES - Checksum inválido en comando NODE_CURRENT");
                 return;
             }
 
+            System.out.println("📤 FASORES - Solicitando NODE_CURRENT_READ");
             sendTcpCommandIndependent(command);
             isWaitingResponse = true;
 
+            // ✅ TIMEOUT DE 3 SEGUNDOS
             handler.postDelayed(() -> {
                 if (isWaitingResponse) {
+                    System.out.println("⏰ FASORES - Timeout esperando NODE_CURRENT");
                     isWaitingResponse = false;
                 }
             }, 3000);
 
         } catch (Exception e) {
+            System.out.println("❌ FASORES - Error solicitando NODE_CURRENT: " + e.getMessage());
+            e.printStackTrace();
             isWaitingResponse = false;
         }
     }
@@ -1899,22 +1957,61 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void stopDataAcquisition() {
-        if (!autoReadEnabled) return;
-
         System.out.println("⏹️ FASORES - Deteniendo adquisición de datos");
 
+        // ✅ 1. MARCAR COMO DETENIDO
         autoReadEnabled = false;
-        autoReadHandler.removeCallbacks(autoReadTask);
 
-        btnPlay.setImageResource(R.drawable.ic_play);
+        try {
+            // ✅ 2. DETENER AUTO-READ TASK
+            if (autoReadHandler != null && autoReadTask != null) {
+                autoReadHandler.removeCallbacks(autoReadTask);
+                System.out.println("   ✓ Auto-read task detenido");
+            }
 
-        long tiempoTotal = (System.currentTimeMillis() - tiempoInicio) / 1000;
-        System.out.println("📊 FASORES - Estadísticas de adquisición:");
-        System.out.println("   Tiempo total: " + tiempoTotal + " segundos");
-        System.out.println("   Muestras: " + contadorMuestras);
-        System.out.println("   Promedio: " + (contadorMuestras > 0 ? (tiempoTotal / contadorMuestras) : 0) + " s/muestra");
+            // ✅ 3. LIMPIAR HANDLER PRINCIPAL
+            if (handler != null) {
+                handler.removeCallbacksAndMessages(null);
+                System.out.println("   ✓ Handler principal limpiado");
+            }
 
-        showToast("⏹️ Adquisición detenida");
+            // ✅ 4. DETENER RUNNABLE DE ACTUALIZACIÓN
+            if (updateCurrentDataRunnable != null) {
+                handler.removeCallbacks(updateCurrentDataRunnable);
+                updateCurrentDataRunnable = null;
+                System.out.println("   ✓ Runnable de datos detenido");
+            }
+
+            // ✅ 5. CAMBIAR ICONO DEL BOTÓN A PLAY
+            if (btnPlay != null) {
+                handler.post(() -> {
+                    btnPlay.setImageResource(R.drawable.ic_play);
+                    System.out.println("   ✓ Icono cambiado a PLAY");
+                });
+            }
+
+            // ✅ 6. RESETEAR isWaitingResponse
+            isWaitingResponse = false;
+
+            // ✅ 7. MOSTRAR TOAST
+            long tiempoTotal = System.currentTimeMillis() - tiempoInicio;
+            long segundos = tiempoTotal / 1000;
+            showToast(String.format("⏹️ Detenido - %d muestras en %d segundos",
+                    contadorMuestras, segundos));
+
+            System.out.println("✅ FASORES - Adquisición detenida correctamente");
+            System.out.println("   Muestras capturadas: " + contadorMuestras);
+            System.out.println("   Tiempo total: " + segundos + " segundos");
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error deteniendo adquisición: " + e.getMessage());
+            e.printStackTrace();
+
+            // ✅ ASEGURAR QUE EL BOTÓN SE CAMBIE AUNQUE HAYA ERROR
+            if (btnPlay != null) {
+                handler.post(() -> btnPlay.setImageResource(R.drawable.ic_play));
+            }
+        }
     }
 
     // =========================================================================
@@ -2016,8 +2113,6 @@ public class FasoresActivity extends AppCompatActivity {
         isWaitingResponse = false;
         configurationSynced = false;
 
-        // ✅ CERRAR SOCKET
-        closeSocketSafely();
 
         // ✅ CERRAR EXECUTOR
         if (executor != null && !executor.isShutdown()) {
