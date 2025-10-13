@@ -291,7 +291,7 @@ public class TcpClientActivity extends AppCompatActivity {
 
     private void readMeterConfiguration() {
         if (!isConnected) {
-            showToast("❌ No hay conexión TCP activa");
+
             return;
         }
         if (isWaitingResponse) {

@@ -32,6 +32,8 @@ public class OctoNetCommandEncoder {
     private static final int ENERGY_3PHA_PAGE_SIZE = 64;
     private static final int WIFI_SETTINGS_SIZE = 247; // ✅ AGREGADO según Tabla 28
 
+
+
     // =================================================================
     // MÁQUINA DE ESTADOS PARA DECODIFICACIÓN
     // =================================================================
@@ -117,6 +119,15 @@ public class OctoNetCommandEncoder {
         private final int value;
         CmdSet(int value) { this.value = value; }
         public int getValue() { return value; }
+    }
+
+    public static float bytesToFloat(byte b0, byte b1, byte b2, byte b3) {
+        // Convertir 4 bytes little-endian a float IEEE 754
+        int intBits = ((b3 & 0xFF) << 24) |
+                ((b2 & 0xFF) << 16) |
+                ((b1 & 0xFF) << 8) |
+                (b0 & 0xFF);
+        return Float.intBitsToFloat(intBits);
     }
 
     // Estado del decodificador

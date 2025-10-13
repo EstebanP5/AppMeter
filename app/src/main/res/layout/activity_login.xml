@@ -8,101 +8,55 @@
     android:gravity="center"
     android:padding="24dp">
 
-    <!-- Botones de navegación superior -->
-    <LinearLayout
+    <!-- ✅ TEXTO "METER" CON MISMO ESTILO QUE "NUBE" -->
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="32dp"
-        android:gravity="center"
-        android:layout_marginTop="16dp">
+        android:text="METER"
+        android:textColor="#64748B"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.15"
+        android:gravity="start"
+        android:layout_marginBottom="8dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTcpClient"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:text="Meter"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            app:backgroundTint="#3B82F6"
-            app:cornerRadius="8dp"
-            app:icon="@drawable/ic_wifi"
-            app:iconGravity="textStart"
-            app:iconSize="20dp"
-            app:iconTint="@android:color/white"
-            style="@style/Widget.MaterialComponents.Button.Icon" />
+    <!-- ✅ IMAGEN ERGOMETER COMO BOTÓN (ANCHO COMPLETO) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvErgometer"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_marginBottom="40dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="12dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFasores"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Fasores"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            app:backgroundTint="#10B981"
-            app:cornerRadius="8dp"
-            app:icon="@drawable/ic_analytics"
-            app:iconGravity="textStart"
-            app:iconSize="20dp"
-            app:iconTint="@android:color/white"
-            style="@style/Widget.MaterialComponents.Button.Icon" />
+        <ImageView
+            android:id="@+id/ivErgometer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="ErgoMeter - Ir a Fasores"
+            android:padding="20dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ergometer" />
 
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
-    <!-- Header Section -->
-    <LinearLayout
+    <!-- ✅ TEXTO "NUBE" -->
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:text="NUBE"
+        android:textColor="#64748B"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.15"
+        android:gravity="start"
+        android:layout_marginBottom="8dp" />
 
-        <!-- Logo Container -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="280dp"
-            android:layout_height="120dp"
-            android:layout_marginBottom="40dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="@android:color/white">
-
-            <ImageView
-                android:id="@+id/ivLogo"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="20dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/logo_ergosolar"
-                android:contentDescription="ErgoSolar Logo" />
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Título -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bienvenido"
-            android:textSize="15sp"
-            android:textColor="#1E293B"
-            android:fontFamily="sans-serif-light"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Inicia sesión en tu cuenta"
-            android:textSize="13sp"
-            android:textColor="#64748B"
-            android:layout_marginBottom="32dp" />
-
-    </LinearLayout>
-
-    <!-- Login Card -->
+    <!-- ✅ LOGIN CARD -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -113,7 +67,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="336dp"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="32dp">
 
@@ -259,35 +213,5 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
-
-    <!-- Footer -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="24dp">
-
-        <View
-            android:layout_width="60dp"
-            android:layout_height="2dp"
-            android:background="#E2E8F0"
-            android:layout_marginEnd="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ErgoSolar"
-            android:textSize="12sp"
-            android:textColor="#94A3B8"
-            android:fontFamily="sans-serif-medium" />
-
-        <View
-            android:layout_width="60dp"
-            android:layout_height="2dp"
-            android:background="#E2E8F0"
-            android:layout_marginStart="16dp" />
-
-    </LinearLayout>
 
 </LinearLayout>

@@ -1,4 +1,3 @@
-// File: LoginActivity.java
 package de.kai_morich.simple_bluetooth_terminal.activities;
 
 import android.content.Intent;
@@ -13,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -34,7 +34,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
     private Button btnLogin;
-    private MaterialButton btnTcpClient, btnFasores;
+    private CardView cvErgometer; // ✅ NUEVO: CardView de la imagen
     private ProgressBar progressBar;
     private LoginViewModel loginViewModel;
 
@@ -55,8 +55,7 @@ public class LoginActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnTcpClient = findViewById(R.id.btnTcpClient);
-        btnFasores = findViewById(R.id.btnFasores);
+        cvErgometer = findViewById(R.id.cvErgometer); // ✅ NUEVO
         progressBar = findViewById(R.id.progressBar);
 
         loginViewModel = new ViewModelProvider(this).get(LoginViewModel.class);
@@ -111,7 +110,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        // Listener del botón Login
+        // ✅ Listener del botón Login
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -119,19 +118,11 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        // Listener del botón TCP Client
-        btnTcpClient.setOnClickListener(new View.OnClickListener() {
+        // ✅ NUEVO: Listener de la imagen ErgoMeter
+        cvErgometer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LoginActivity.this, WiFiSetupActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        // Listener del botón Fasores
-        btnFasores.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+                // Ir directamente a FasoresActivity
                 Intent intent = new Intent(LoginActivity.this, FasoresActivity.class);
                 startActivity(intent);
             }
