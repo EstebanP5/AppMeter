@@ -13,16 +13,7 @@
             android:icon="@android:drawable/ic_menu_myplaces"
             android:title="@string/menu_clientes" />
 
-        <!-- ✅ REEMPLAZADO: WiFi Setup en lugar de Dispositivos -->
-        <item
-            android:id="@+id/nav_wifi_setup"
-            android:icon="@drawable/ic_wifi"
-            android:title="Ajustes" />
 
-        <item
-            android:id="@+id/nav_medicion"
-            android:icon="@android:drawable/ic_menu_manage"
-            android:title="@string/menu_medicion" />
 
 
     </group>
