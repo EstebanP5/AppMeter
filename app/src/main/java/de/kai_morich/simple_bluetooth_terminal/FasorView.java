@@ -27,11 +27,20 @@ public class FasorView extends View {
             Color.rgb(120, 120, 120), // CH2 - Gris medio
             Color.rgb(100, 100, 100)  // CH3 - Gris oscuro
     };
-    private static final int[] PHASOR_COLORS = {
+
+    private static final int[] VOLTAGE_COLORS = {
+            Color.WHITE,  // L1 (0°)   → BLANCO
+            Color.BLUE,    // L3 (240°) → AZUL
+            Color.RED     // L2 (120°) → ROJO
+
+    };
+    private static final int[] CURRENT_COLORS = {
             Color.WHITE,              // CH1 - Blanco (con contorno oscuro)
             Color.rgb(255, 60, 60),   // CH2 - Rojo
             Color.rgb(30, 100, 255)   // CH3 - Azul fuerte
     };
+
+
 
     // Arrays para datos independientes
     private float[] individualMagnitudes = {0.0f, 0.0f, 0.0f};
@@ -40,6 +49,7 @@ public class FasorView extends View {
     private String title = "Fasores";
     private float maxMagnitude = 100.0f; // Escala automática
     private boolean autoScale = true;
+    private boolean isVoltage = false;
 
     // ✅ NUEVAS VARIABLES PARA AUTO-ESCALADO MEJORADO
     private static final float MIN_SCALE = 0.1f;  // Escala mínima (0.1V o 0.1A)
@@ -110,6 +120,11 @@ public class FasorView extends View {
             System.arraycopy(angs, 0, this.angles, 0, 3);
             invalidate();
         }
+    }
+
+    public void setVoltageMode(boolean voltage) {
+        this.isVoltage = voltage;
+        invalidate();
     }
 
     // ===== ✅ MÉTODOS REQUERIDOS POR FasoresActivity =====
@@ -371,51 +386,45 @@ public class FasorView extends View {
         canvas.drawCircle(centerX, centerY, 8f, centerPaint);
     }
 
-    // ✅ FASORES CON ÁNGULOS RELATIVOS A SU BASE (0°, 120°, 240°) Y COLORES ACTUALIZADOS
+    // ✅ FASORES CON ÁNGULOS RELATIVOS A SU BASE (0°, 120°, 240°) Y COLORES ACTUALIZADOS - CORREGIDO
     private void drawPhasorsOnAxesCorrected(Canvas canvas, float centerX, float centerY, float radius) {
+        // ✅ SELECCIONAR ARRAY DE COLORES SEGÚN EL TIPO DE FASOR
+        int[] colors = isVoltage ? VOLTAGE_COLORS : CURRENT_COLORS;
+
         for (int i = 0; i < 3; i++) {
-            // ✅ MOSTRAR INCLUSO MAGNITUDES PEQUEÑAS (>=0.001)
-            if (individualMagnitudes[i] < 0.001f) continue; // Solo omitir si es prácticamente cero
+            float rawMagnitude = individualMagnitudes[i];
+            boolean isNegative = rawMagnitude < 0;
+            float absMagnitude = Math.abs(rawMagnitude);
 
-            // ✅ CALCULAR ÁNGULO RELATIVO A LA BASE DEL CANAL
-            float baseAngle = AXIS_ANGLES[i];  // Base: 0°, 120°, 240°
-            float deviceAngle = individualAngles[i];  // Ángulo del dispositivo
+            if (absMagnitude < 0.001f) continue;
 
-            // ✅ NORMALIZAR EL ÁNGULO DEL DISPOSITIVO (0-360°)
+            float baseAngle = AXIS_ANGLES[i];
+            float deviceAngle = individualAngles[i];
+            float angleOffset = isNegative ? 180f : 0f;
             float normalizedDeviceAngle = deviceAngle % 360f;
             if (normalizedDeviceAngle < 0) normalizedDeviceAngle += 360f;
+            float finalAngle = baseAngle + normalizedDeviceAngle + angleOffset;
 
-            // ✅ CALCULAR ÁNGULO FINAL = BASE + ÁNGULO_RELATIVO
-            float relativeAngle = normalizedDeviceAngle;
-            float finalAngle = baseAngle + relativeAngle;
-
-            // ✅ DIBUJAR FASOR EN SU POSICIÓN FINAL
-            float phasorAngleRad = (float) Math.toRadians(finalAngle - 90); // -90 para que 0° esté arriba
-
-            // ✅ CALCULAR LONGITUD NORMALIZADA - SIEMPRE VISIBLE
-            float normalizedMagnitude = individualMagnitudes[i] / maxMagnitude;
-            // Asegurar longitud mínima visible (5% del radio)
+            float phasorAngleRad = (float) Math.toRadians(finalAngle - 90);
+            float normalizedMagnitude = absMagnitude / maxMagnitude;
             if (normalizedMagnitude < 0.05f && normalizedMagnitude > 0) {
                 normalizedMagnitude = 0.05f;
             }
             float phasorLength = radius * normalizedMagnitude;
 
-            // Calcular posición final del fasor
             float phasorX = centerX + phasorLength * (float) Math.cos(phasorAngleRad);
             float phasorY = centerY + phasorLength * (float) Math.sin(phasorAngleRad);
 
-            // ✅ APLICAR COLORES SEGÚN ESPECIFICACIONES
-            if (i == 0) { // Canal 1 - Blanco con contorno oscuro y línea central negra
-                // Primero dibujar contorno oscuro (más grueso)
+            // ✅ USAR COLOR DEL ARRAY CORRECTO
+            if (i == 0) { // Canal 1 - Blanco con contorno
                 Paint outlinePaint = new Paint();
-                outlinePaint.setColor(Color.rgb(50, 50, 50)); // Gris muy oscuro
-                outlinePaint.setStrokeWidth(12f); // Más grueso que el fasor principal
+                outlinePaint.setColor(Color.rgb(50, 50, 50));
+                outlinePaint.setStrokeWidth(12f);
                 outlinePaint.setStyle(Paint.Style.STROKE);
                 outlinePaint.setAntiAlias(true);
                 outlinePaint.setStrokeCap(Paint.Cap.ROUND);
                 canvas.drawLine(centerX, centerY, phasorX, phasorY, outlinePaint);
 
-                // Luego dibujar línea blanca encima
                 Paint phasorPaint = new Paint();
                 phasorPaint.setColor(Color.WHITE);
                 phasorPaint.setStrokeWidth(8f);
@@ -424,16 +433,14 @@ public class FasorView extends View {
                 phasorPaint.setStrokeCap(Paint.Cap.ROUND);
                 canvas.drawLine(centerX, centerY, phasorX, phasorY, phasorPaint);
 
-                // ✅ AGREGAR LÍNEA NEGRA CENTRAL DELGADA PARA IDENTIFICACIÓN
                 Paint centerLinePaint = new Paint();
                 centerLinePaint.setColor(Color.BLACK);
-                centerLinePaint.setStrokeWidth(2f); // Línea delgada en el centro
+                centerLinePaint.setStrokeWidth(2f);
                 centerLinePaint.setStyle(Paint.Style.STROKE);
                 centerLinePaint.setAntiAlias(true);
                 centerLinePaint.setStrokeCap(Paint.Cap.ROUND);
                 canvas.drawLine(centerX, centerY, phasorX, phasorY, centerLinePaint);
 
-                // Punta con contorno oscuro
                 Paint outlineDotPaint = new Paint();
                 outlineDotPaint.setColor(Color.rgb(50, 50, 50));
                 outlineDotPaint.setStyle(Paint.Style.FILL);
@@ -446,34 +453,29 @@ public class FasorView extends View {
                 dotPaint.setAntiAlias(true);
                 canvas.drawCircle(phasorX, phasorY, 10f, dotPaint);
 
-                // Círculo interior negro para identificación
                 Paint innerDotPaint = new Paint();
                 innerDotPaint.setColor(Color.BLACK);
                 innerDotPaint.setStyle(Paint.Style.FILL);
                 innerDotPaint.setAntiAlias(true);
                 canvas.drawCircle(phasorX, phasorY, 3f, innerDotPaint);
 
-            } else { // Canal 2 (rojo) y Canal 3 (azul fuerte)
-                // Paint para el fasor
+            } else { // Canal 2 y 3 - Usar color del array correcto
                 Paint phasorPaint = new Paint();
-                phasorPaint.setColor(PHASOR_COLORS[i]);
+                phasorPaint.setColor(colors[i]); // ✅ USAR ARRAY CORRECTO
                 phasorPaint.setStrokeWidth(8f);
                 phasorPaint.setStyle(Paint.Style.STROKE);
                 phasorPaint.setAntiAlias(true);
                 phasorPaint.setStrokeCap(Paint.Cap.ROUND);
-                phasorPaint.setShadowLayer(4f, 0f, 0f, PHASOR_COLORS[i]);
+                phasorPaint.setShadowLayer(4f, 0f, 0f, colors[i]);
 
-                // Dibujar fasor
                 canvas.drawLine(centerX, centerY, phasorX, phasorY, phasorPaint);
 
-                // Dibujar punta del fasor (círculo con glow)
                 Paint dotPaint = new Paint();
-                dotPaint.setColor(PHASOR_COLORS[i]);
+                dotPaint.setColor(colors[i]); // ✅ USAR ARRAY CORRECTO
                 dotPaint.setStyle(Paint.Style.FILL);
-                dotPaint.setShadowLayer(6f, 0f, 0f, PHASOR_COLORS[i]);
+                dotPaint.setShadowLayer(6f, 0f, 0f, colors[i]);
                 canvas.drawCircle(phasorX, phasorY, 10f, dotPaint);
 
-                // Círculo interior blanco para contraste
                 Paint innerDotPaint = new Paint();
                 innerDotPaint.setColor(Color.WHITE);
                 innerDotPaint.setStyle(Paint.Style.FILL);
@@ -481,12 +483,12 @@ public class FasorView extends View {
                 canvas.drawCircle(phasorX, phasorY, 4f, innerDotPaint);
             }
 
-            // ✅ LÍNEA PUNTEADA DESDE EL FASOR HACIA SU EJE BASE
             drawProjectionLineToBase(canvas, centerX, centerY, phasorX, phasorY, i, radius);
 
-            // ✅ DEBUG: Mostrar ángulos calculados
-            System.out.printf("Canal %d: Base=%.0f°, Dispositivo=%.1f°, Relativo=%.1f°, Final=%.1f°, Mag=%.3f%n",
-                    i+1, baseAngle, deviceAngle, relativeAngle, finalAngle, individualMagnitudes[i]);
+            System.out.printf("Canal %d: Base=%.0f°, Dispositivo=%.1f°, Inversión=%s, Final=%.1f°, Mag=%.3f%s, Color=%s%n",
+                    i+1, baseAngle, deviceAngle, isNegative ? "SÍ(+180°)" : "NO",
+                    finalAngle, rawMagnitude, unit,
+                    (i == 0 ? "BLANCO" : (colors[i] == Color.RED ? "ROJO" : "AZUL")));
         }
     }
 
@@ -499,7 +501,7 @@ public class FasorView extends View {
         float baseY = centerY + radius * 0.9f * (float) Math.sin(baseAngleRad);
 
         Paint projectionPaint = new Paint();
-        projectionPaint.setColor(PHASOR_COLORS[channelIndex]);
+        projectionPaint.setColor(CURRENT_COLORS[channelIndex]);
         projectionPaint.setStrokeWidth(2f);
         projectionPaint.setStyle(Paint.Style.STROKE);
         projectionPaint.setAntiAlias(true);
@@ -524,7 +526,7 @@ public class FasorView extends View {
 
             // Color del texto igual al fasor
             Paint labelPaint = new Paint();
-            labelPaint.setColor(PHASOR_COLORS[i]);
+            labelPaint.setColor(CURRENT_COLORS[i]);
             labelPaint.setTextSize(14f);
             labelPaint.setAntiAlias(true);
             labelPaint.setFakeBoldText(true);
@@ -576,57 +578,46 @@ public class FasorView extends View {
 
     // ===== ✅ MÉTODO DE AUTO-ESCALADO MEJORADO =====
     private void updateScaleImproved() {
-        // Encontrar la magnitud máxima
+        // ✅ Encontrar la magnitud máxima ABSOLUTA
         float max = 0;
         for (float mag : individualMagnitudes) {
-            if (mag > max) max = mag;
+            float absMag = Math.abs(mag);
+            if (absMag > max) max = absMag;
         }
 
         if (max < 0.001f) {
-            // Si todos los valores son prácticamente cero
             maxMagnitude = MIN_SCALE;
             return;
         }
 
-        // ✅ APLICAR MARGEN
+        // ...existing code...
         float targetScale = max * SCALE_MARGIN;
 
-        // ✅ ESCALAS ADAPTATIVAS SEGÚN EL RANGO
+        // ...existing code... (resto del método igual)
         if (targetScale < 0.1f) {
-            // Rango muy pequeño (miliamperes, milivoltios)
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{0.01f, 0.02f, 0.05f, 0.1f});
         } else if (targetScale < 1.0f) {
-            // Rango pequeño (décimas)
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{0.1f, 0.2f, 0.5f, 1.0f});
         } else if (targetScale < 10f) {
-            // Rango medio-bajo (unidades)
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{1f, 2f, 5f, 10f});
         } else if (targetScale < 50f) {
-            // Rango medio
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{10f, 20f, 50f});
         } else if (targetScale < 100f) {
-            // Rango medio-alto
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{50f, 100f});
         } else if (targetScale < 250f) {
-            // Rango alto
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{100f, 150f, 200f, 250f});
         } else if (targetScale < 500f) {
-            // Rango muy alto
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{250f, 300f, 400f, 500f});
         } else if (targetScale < 1000f) {
-            // Rango extra alto
             maxMagnitude = roundToNiceNumber(targetScale, new float[]{500f, 750f, 1000f});
         } else {
-            // Rango extremo - redondear a centenas
             maxMagnitude = (float)(Math.ceil(targetScale / 100) * 100);
         }
 
-        // ✅ Asegurar escala mínima
         if (maxMagnitude < MIN_SCALE) {
             maxMagnitude = MIN_SCALE;
         }
 
-        // ✅ DEBUG: Mostrar escala calculada
         System.out.printf("AUTO-SCALE: max=%.3f, target=%.3f, final=%.3f %s%n",
                 max, targetScale, maxMagnitude, unit);
     }

@@ -19,7 +19,7 @@ public class ApiClient {
     private static final String TAG = "ApiClient";
 
     // URL base para ErgoSolar API
-    private static final String BASE_URL = "https://ergoems.ddns.net/";
+    private static final String BASE_URL = "https://ergometer.ddns.net/";
 
     private static Retrofit retrofit = null;
     private static TokenManager tokenManager = null;

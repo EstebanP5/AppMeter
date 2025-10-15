@@ -41,6 +41,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -75,6 +77,8 @@ public class FasoresActivity extends AppCompatActivity {
     private LinearLayout btnBackToMenu;
     private Button btnDeviceId, btnConfigWifi;
     private Handler handler = new Handler(Looper.getMainLooper());
+    private ImageButton btnRec;
+    private boolean isRecording = false;
 
     // ===== FASORES =====
     private FasorView fasorVoltaje, fasorCorriente;
@@ -178,6 +182,7 @@ public class FasoresActivity extends AppCompatActivity {
         spinnerCableado = findViewById(R.id.spinnerCableado);
         spinnerAmperes = findViewById(R.id.spinnerAmperes);
         imageDiagram = findViewById(R.id.imageDiagram);
+        btnRec = findViewById(R.id.btnRec);
         btnPlay = findViewById(R.id.btnPlay);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
 
@@ -204,6 +209,7 @@ public class FasoresActivity extends AppCompatActivity {
             fasorVoltaje.setTitle("Voltajes Trifásicos");
             fasorVoltaje.setUnit("V");
             fasorVoltaje.setAutoScale(true);
+            fasorVoltaje.setVoltageMode(true);
         }
 
         if (fasorCorriente != null) {
@@ -211,6 +217,7 @@ public class FasoresActivity extends AppCompatActivity {
             fasorCorriente.setTitle("Corrientes Trifásicas");
             fasorCorriente.setUnit("A");
             fasorCorriente.setAutoScale(true);
+            fasorCorriente.setVoltageMode(false);
         }
 
         // TextViews para mediciones
@@ -265,16 +272,16 @@ public class FasoresActivity extends AppCompatActivity {
         String[] cableadoOptions = {"Carga Trifásica"};
         setupSpinnerAdapter(spinnerCableado, cableadoOptions);
 
+        // ✅ SOLO QUITAR 400A
         String[] amperesOptions = {
-                "50A", "200A",
-                "400A", "1000A", "3000A"
+                "50A", "200A", "1000A", "3000A"
         };
         setupSpinnerAdapter(spinnerAmperes, amperesOptions);
 
         setupSpinnerListeners();
 
         skipSpinnerEvents = true;
-        spinnerAmperes.setSelection(1);
+        spinnerAmperes.setSelection(0);
         spinnerCableado.setSelection(0);
         skipSpinnerEvents = false;
 
@@ -504,29 +511,109 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void displayNetworkSelectionForValidation() {
         if (availableNetworks.isEmpty()) {
+            showToast("❌ No se encontraron redes WiFi");
             return;
         }
 
         List<String> networkNames = new ArrayList<>();
+        List<String> networkSSIDs = new ArrayList<>();
+
+        // ✅ FILTRAR SOLO REDES DE 2.4GHz
+        int total5GHz = 0;
         for (ScanResult result : availableNetworks) {
             if (result.SSID != null && !result.SSID.isEmpty() && !result.SSID.startsWith("ESP")) {
-                networkNames.add(result.SSID);
+                if (is24GHzNetwork(result)) {
+                    // ✅ Agregar red 2.4GHz
+                    String displayName = result.SSID + " (2.4GHz - " + result.frequency + " MHz)";
+                    networkNames.add(displayName);
+                    networkSSIDs.add(result.SSID);
+
+                    System.out.println("✅ Red 2.4GHz: " + result.SSID + " (" + result.frequency + " MHz)");
+                } else {
+                    total5GHz++;
+                    System.out.println("⚠️ Red 5GHz filtrada: " + result.SSID + " (" + result.frequency + " MHz)");
+                }
             }
         }
 
         if (networkNames.isEmpty()) {
+            String mensaje = "❌ No se encontraron redes de 2.4GHz compatibles";
+            if (total5GHz > 0) {
+                mensaje += "\n\n⚠️ Se encontraron " + total5GHz + " redes de 5GHz que fueron filtradas.\n\n" +
+                        "El medidor solo es compatible con redes de 2.4GHz.";
+            }
+
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Sin redes compatibles")
+                    .setMessage(mensaje)
+                    .setPositiveButton("Entendido", null)
+                    .show();
             return;
         }
 
+        String titulo = "📡 Redes WiFi 2.4GHz Disponibles (" + networkNames.size() + ")";
+        if (total5GHz > 0) {
+            titulo += "\n⚠️ " + total5GHz + " redes 5GHz filtradas";
+        }
+
         new MaterialAlertDialogBuilder(this)
-                .setTitle("📡 Selecciona una Red WiFi para el Medidor")
+                .setTitle(titulo)
                 .setItems(networkNames.toArray(new String[0]), (dialog, which) -> {
-                    String selectedSsid = networkNames.get(which);
+                    String selectedSsid = networkSSIDs.get(which);
                     showPasswordDialogForValidation(selectedSsid);
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
+
+    private boolean is24GHzNetwork(ScanResult result) {
+        try {
+            int frequency = result.frequency;
+
+            // ✅ Verificar rango de frecuencia 2.4GHz
+            if (frequency >= 2400 && frequency <= 2500) {
+                return true;
+            }
+
+            // ✅ Excluir rango 5GHz
+            if (frequency >= 5000 && frequency <= 6000) {
+                return false;
+            }
+
+            // ✅ Verificar por nombre como fallback
+            return verify24GHzBySSID(result.SSID);
+
+        } catch (Exception e) {
+            System.out.println("⚠️ Error verificando frecuencia: " + e.getMessage());
+            return verify24GHzBySSID(result.SSID);
+        }
+    }
+
+    private boolean verify24GHzBySSID(String ssid) {
+        if (ssid == null || ssid.isEmpty()) return false;
+
+        String ssidLower = ssid.toLowerCase();
+
+        // ✅ Patrones de 5GHz (EXCLUIR)
+        String[] fiveGHzPatterns = {
+                "_5g", "-5g", " 5g", "(5g)", "[5g]",
+                "_5ghz", "-5ghz", " 5ghz",
+                "_ac", "-ac", " ac",
+                "_ax", "-ax", " ax",
+                "5.0", "5ghz", "5g"
+        };
+
+        for (String pattern : fiveGHzPatterns) {
+            if (ssidLower.contains(pattern)) {
+                return false;
+            }
+        }
+
+        // ✅ Si no tiene marcadores de 5GHz, asumir 2.4GHz
+        return true;
+    }
+
+
 
     private void showPasswordDialogForValidation(String ssid) {
         // ✅ CREAR LAYOUT PRINCIPAL
@@ -624,12 +711,10 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void showValidatedNetworkConfirmation(WiFiValidationModule.ValidatedNetwork network) {
-        // ✅ VALIDAR PRIMERO
         if (network == null || network.ssid == null) {
             return;
         }
 
-        // ✅ CREAR REFERENCIA FINAL
         final WiFiValidationModule.ValidatedNetwork finalNetwork = network;
 
         new MaterialAlertDialogBuilder(this)
@@ -637,10 +722,111 @@ public class FasoresActivity extends AppCompatActivity {
                 .setMessage("La red \"" + network.ssid +
                         "\" fue validada correctamente.\n\n¿Deseas enviar estas credenciales al medidor ahora?")
                 .setPositiveButton("✅ Enviar", (dialog, which) ->
-                        sendWiFiCredentialsToDevice(finalNetwork))
+                        sendWiFiCredentialsToDeviceWithModal(finalNetwork))
                 .setNegativeButton("❌ Cancelar", null)
                 .show();
     }
+
+
+    private void sendWiFiCredentialsToDeviceWithModal(WiFiValidationModule.ValidatedNetwork network) {
+        try {
+            if (network == null || network.ssid == null || network.password == null) {
+                System.out.println("❌ FASORES - Network inválido");
+                return;
+            }
+
+            final String finalSsid = network.ssid;
+            final String finalPassword = network.password;
+
+            // ✅ CREAR MODAL SIN ICONO
+            LinearLayout modalLayout = new LinearLayout(this);
+            modalLayout.setOrientation(LinearLayout.VERTICAL);
+            modalLayout.setPadding(60, 50, 60, 50);
+            modalLayout.setGravity(Gravity.CENTER);
+
+            // ✅ TÍTULO
+            TextView titleView = new TextView(this);
+            titleView.setText("📡 Conectando al METER");
+            titleView.setTextSize(24f);
+            titleView.setTypeface(null, Typeface.BOLD);
+            titleView.setTextColor(Color.rgb(33, 150, 243));
+            titleView.setGravity(Gravity.CENTER);
+            titleView.setPadding(0, 0, 0, 30);
+            modalLayout.addView(titleView);
+
+            // ✅ MENSAJE PRINCIPAL
+            TextView messageView = new TextView(this);
+            messageView.setText("✅ Credenciales enviadas al METER\n\n" +
+                    "⏳Espera un momento hasta que el METER\n\n" +
+                    " parpadee lentamente en color AZUL");
+            messageView.setTextSize(16f);
+            messageView.setTextColor(Color.rgb(66, 66, 66));
+            messageView.setGravity(Gravity.CENTER);
+            messageView.setLineSpacing(10f, 1.0f);
+            messageView.setPadding(20, 0, 20, 40);
+            modalLayout.addView(messageView);
+
+            // ✅ PROGRESS BAR
+            android.widget.ProgressBar progressBar = new android.widget.ProgressBar(this);
+            LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            progressParams.gravity = Gravity.CENTER;
+            progressBar.setLayoutParams(progressParams);
+            modalLayout.addView(progressBar);
+
+            // ✅ CREAR DIALOG
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+            builder.setView(modalLayout);
+            builder.setCancelable(false);
+
+            AlertDialog waitDialog = builder.create();
+
+            // ✅ ENVIAR COMANDO
+            byte[] command = OctoNetCommandEncoder.createWiFiSettingsWriteCommand(
+                    finalSsid,
+                    finalPassword
+            );
+
+            if (command == null || command.length == 0) {
+                System.out.println("❌ FASORES - Comando WiFi vacío");
+                return;
+            }
+
+            waitDialog.show();
+
+            handler.postDelayed(() -> {
+                sendTcpCommandIndependent(command);
+
+                System.out.println("📡 FASORES - Credenciales WiFi enviadas:");
+                System.out.println("   SSID: " + finalSsid);
+
+                handler.postDelayed(() -> {
+                    if (waitDialog.isShowing()) {
+                        waitDialog.dismiss();
+
+                        new MaterialAlertDialogBuilder(FasoresActivity.this)
+                                .setTitle("✅ Proceso Completado")
+                                .setMessage("Las credenciales fueron enviadas correctamente.\n\n" +
+                                        "Verifica que el LED del METER\n" +
+                                        "💙 parpadee lentamente en color AZUL\n\n" +
+                                        "Esto indica que el METER está conectándose a tu red WiFi.")
+                                .setPositiveButton("Entendido", null)
+                                .show();
+                    }
+                }, 12000);
+
+            }, 500);
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error enviando WiFi: " + e.getMessage());
+            e.printStackTrace();
+            showToast("❌ Error enviando credenciales");
+        }
+    }
+
+
 
     private void sendWiFiCredentialsToDevice(WiFiValidationModule.ValidatedNetwork network) {
         try {
@@ -714,13 +900,16 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void setupSpinnerListeners() {
-        spinnerCableado.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        spinnerAmperes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (!skipSpinnerEvents) {
-                    meteringTypeConfig = 3;
-                    tipoCableado = 3;
-                    updateDiagram();
+                if (!skipSpinnerEvents && configurationSynced) {
+                    updateAmperesRange(position);
+                    handler.postDelayed(() -> {
+                        if (!isWaitingResponse) {
+                            writeDeviceConfigurationFromSpinners();
+                        }
+                    }, 500);
                 }
             }
 
@@ -729,13 +918,15 @@ public class FasoresActivity extends AppCompatActivity {
             }
         });
 
-        spinnerAmperes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        // ✅ SIMPLIFICAR LISTENER DE CABLEADO (solo tiene 1 opción)
+        spinnerCableado.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!skipSpinnerEvents && configurationSynced) {
-                    updateAmperesRange(position);
+                    // Como solo hay "Carga Trifásica", siempre es tipoCableado = 3
+                    tipoCableado = 3;
                     handler.postDelayed(() -> {
-                        if (!isWaitingResponse && validateConfigurationBeforeWrite()) {
+                        if (!isWaitingResponse) {
                             writeDeviceConfigurationFromSpinners();
                         }
                     }, 500);
@@ -748,16 +939,44 @@ public class FasoresActivity extends AppCompatActivity {
         });
     }
 
+
+
     private void writeDeviceConfigurationFromSpinners() {
         if (!isConnectedToDevice || isWaitingResponse) {
             return;
         }
 
         try {
-            int periodValue = 0; // FIJO EN 1 MINUTO
-            int sensorsValue = spinnerAmperes.getSelectedItemPosition();
-            int meteringTypeValue = 3; // TRIFÁSICO
+            int periodValue = 0;
+
+            int spinnerPosition = spinnerAmperes.getSelectedItemPosition();
+            int sensorsValue;
+
+            switch (spinnerPosition) {
+                case 0:
+                    sensorsValue = 1; // 50A
+                    break;
+                case 1:
+                    sensorsValue = 2; // 200A
+                    break;
+                case 2:
+                    sensorsValue = 4; // 1000A
+                    break;
+                case 3:
+                    sensorsValue = 5; // 3000A
+                    break;
+                default:
+                    sensorsValue = 1;
+                    break;
+            }
+
+            int meteringTypeValue = 3;
             boolean recordingValue = true;
+
+            System.out.println("📤 FASORES - Enviando configuración:");
+            System.out.println("   Posición spinner: " + spinnerPosition);
+            System.out.println("   Código sensor: 0x0" + sensorsValue);
+            System.out.println("   Rango: " + rangoAmperes + "A");
 
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
                     recordingValue, periodValue, sensorsValue, meteringTypeValue);
@@ -777,19 +996,26 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
-    private boolean validateConfigurationBeforeWrite() {
-        try {
-            int sensors = spinnerAmperes.getSelectedItemPosition();
-            return sensors >= 0 && sensors <= 5;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     private void updateAmperesRange(int sensorIndex) {
-        int[] amperesValues = {20, 50, 200, 400, 1000, 3000};
+        // 0 -> 0x01 -> 50A
+        // 1 -> 0x02 -> 200A
+        // 2 -> 0x04 -> 1000A
+        // 3 -> 0x05 -> 3000A
+
+        int[] amperesValues = {50, 200, 1000, 3000};
+
         if (sensorIndex >= 0 && sensorIndex < amperesValues.length) {
             rangoAmperes = amperesValues[sensorIndex];
+            System.out.println("⚡ FASORES - Rango amperes actualizado:");
+            System.out.println("   Índice spinner: " + sensorIndex);
+            System.out.println("   Valor real: " + rangoAmperes + "A");
+
+            updateDiagram();
+
+        } else {
+            System.out.println("❌ FASORES - Índice de sensor inválido: " + sensorIndex);
+            rangoAmperes = 50;
+            updateDiagram();
         }
     }
 
@@ -798,6 +1024,19 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
 
     private void setupButtons() {
+
+        btnRec.setOnClickListener(v -> {
+            if (!isConnectedToDevice) {
+                showToast("❌ No hay conexión");
+                return;
+            }
+            if (!configurationSynced) {
+                showToast("⏳ Esperando sincronización...");
+                return;
+            }
+
+            toggleRecording();
+        });
         btnPlay.setOnClickListener(v -> {
             if (!isConnectedToDevice) {
                 showToast("❌ No hay conexión");
@@ -838,7 +1077,9 @@ public class FasoresActivity extends AppCompatActivity {
         modalContent.setPadding(40, 40, 40, 40);
 
         TextView modalTitle = new TextView(this);
-        modalTitle.setText("📐 Diagrama de Conexión");
+        // ✅ TÍTULO DINÁMICO SEGÚN RANGO
+        String tituloModal = "Diagrama de Conexión Trifásico - " + rangoAmperes + "A";
+        modalTitle.setText(tituloModal);
         modalTitle.setTextColor(Color.WHITE);
         modalTitle.setTextSize(24f);
         modalTitle.setGravity(Gravity.CENTER);
@@ -899,6 +1140,114 @@ public class FasoresActivity extends AppCompatActivity {
         diagramModal = modalFrame;
     }
 
+    private void toggleRecording() {
+        isRecording = !isRecording;
+
+        System.out.println("🎬 FASORES - Cambiando estado REC a: " +
+                (isRecording ? "GRABANDO" : "PAUSADO"));
+
+        // ✅ CAMBIAR FONDO DEL BOTÓN
+        if (isRecording) {
+            btnRec.setBackgroundResource(R.drawable.button_rec_recording);
+            showToast("⏺ Grabación iniciada");
+
+            // ✅ OPCIONAL: Animar el botón (pulso)
+            startRecordingAnimation();
+        } else {
+            btnRec.setBackgroundResource(R.drawable.button_rec);
+            showToast("⏸ Grabación pausada");
+
+            // ✅ DETENER ANIMACIÓN
+            stopRecordingAnimation();
+        }
+
+        // ✅ ENVIAR COMANDO AL DISPOSITIVO
+        sendRecordingCommand(isRecording);
+    }
+
+    private void sendRecordingCommand(boolean recording) {
+        if (!isConnectedToDevice || isWaitingResponse) {
+            System.out.println("❌ FASORES - No se puede cambiar REC: " +
+                    (!isConnectedToDevice ? "sin conexión" : "esperando respuesta"));
+            return;
+        }
+
+        try {
+            // Usar configuración actual
+            int periodValue = periodConfig;
+            int sensorsValue = sensorsConfig;
+            int meteringTypeValue = meteringTypeConfig;
+            boolean recordingValue = recording; // ✅ Nuevo estado
+
+            System.out.println("📤 FASORES - Enviando comando REC:");
+            System.out.println("   Recording: " + (recordingValue ? "ON (0x01)" : "OFF (0x00)"));
+            System.out.println("   Period: " + periodValue);
+            System.out.println("   Sensors: " + sensorsValue);
+            System.out.println("   MeteringType: " + meteringTypeValue);
+
+            // Crear comando
+            byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
+                    recordingValue, periodValue, sensorsValue, meteringTypeValue);
+
+            sendTcpCommandIndependent(command);
+            isWaitingResponse = true;
+
+            // Timeout
+            handler.postDelayed(() -> {
+                if (isWaitingResponse) {
+                    isWaitingResponse = false;
+                    System.out.println("⏰ FASORES - Timeout comando REC");
+                }
+            }, 5000);
+
+        } catch (Exception e) {
+            System.out.println("❌ FASORES - Error enviando REC: " + e.getMessage());
+            e.printStackTrace();
+            isWaitingResponse = false;
+
+            // Revertir estado visual en caso de error
+            isRecording = !isRecording;
+            btnRec.setBackgroundResource(
+                    isRecording ? R.drawable.button_rec_recording : R.drawable.button_rec
+            );
+        }
+    }
+
+
+
+    private void startRecordingAnimation() {
+        if (btnRec == null) return;
+
+        // Animación de opacidad MUY suave y lenta
+        btnRec.animate()
+                .alpha(0.7f) // ✅ Reducir solo al 70% (más sutil)
+                .setDuration(2000) // ✅ 2 segundos para atenuar (MÁS LENTO)
+                .setInterpolator(new DecelerateInterpolator(2.5f)) // ✅ Súper suave
+                .withEndAction(() -> {
+                    if (isRecording && btnRec != null) {
+                        btnRec.animate()
+                                .alpha(1.0f) // ✅ Volver a opacidad completa
+                                .setDuration(2000) // ✅ 2 segundos para iluminar (MÁS LENTO)
+                                .setInterpolator(new AccelerateInterpolator(2.5f)) // ✅ Súper suave
+                                .withEndAction(() -> {
+                                    if (isRecording) {
+                                        startRecordingAnimation(); // Loop continuo
+                                    }
+                                })
+                                .start();
+                    }
+                })
+                .start();
+    }
+
+    private void stopRecordingAnimation() {
+        if (btnRec == null) return;
+
+        btnRec.clearAnimation();
+        btnRec.setScaleX(1.0f);
+        btnRec.setScaleY(1.0f);
+    }
+
     private Drawable createRoundedBackground() {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
@@ -945,7 +1294,29 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void updateModalDiagram() {
         if (modalDiagramImage == null) return;
-        modalDiagramImage.setImageResource(R.drawable.diagram_3p4w_n);
+
+        int diagramResource;
+
+        switch (rangoAmperes) {
+            case 50:
+                diagramResource = R.drawable.a50;
+                break;
+
+            case 200:
+                diagramResource = R.drawable.a200;
+                break;
+
+            case 1000:
+            case 3000:
+                diagramResource = R.drawable.a1000;
+                break;
+
+            default:
+                diagramResource = R.drawable.a50;
+                break;
+        }
+
+        modalDiagramImage.setImageResource(diagramResource);
     }
 
     // =========================================================================
@@ -1691,8 +2062,6 @@ public class FasoresActivity extends AppCompatActivity {
     private void processConfigurationResponseIndependent(byte[] response) {
         try {
             System.out.println("🔍 FASORES - Procesando NODE_SETTINGS...");
-            System.out.println("📊 FASORES - Respuesta hex: " +
-                    OctoNetCommandEncoder.bytesToHexString(response));
 
             byte[] configData = OctoNetCommandEncoder.extractCommandData(response);
 
@@ -1704,43 +2073,65 @@ public class FasoresActivity extends AppCompatActivity {
                 return;
             }
 
-            System.out.println("📊 FASORES - Config datos: " + configData.length + " bytes");
-            System.out.println("   Byte 0 (recording): 0x" + Integer.toHexString(configData[0] & 0xFF));
-            System.out.println("   Byte 1 (period): 0x" + Integer.toHexString(configData[1] & 0xFF));
-            System.out.println("   Byte 2 (sensors): 0x" + Integer.toHexString(configData[2] & 0xFF));
-            System.out.println("   Byte 3 (metering): 0x" + Integer.toHexString(configData[3] & 0xFF));
-
-            // Extraer valores
             recordingConfig = (configData[0] & 0xFF) == 1;
             periodConfig = configData[1] & 0xFF;
             sensorsConfig = configData[2] & 0xFF;
             meteringTypeConfig = configData[3] & 0xFF;
 
-            System.out.println("✅ FASORES - Configuración leída:");
-            System.out.println("   Recording: " + recordingConfig);
-            System.out.println("   Period: " + periodConfig);
-            System.out.println("   Sensors: " + sensorsConfig);
-            System.out.println("   Metering Type: " + meteringTypeConfig);
-
-            // Actualizar UI
             skipSpinnerEvents = true;
 
-            if (sensorsConfig >= 0 && sensorsConfig <= 5) {
-                spinnerAmperes.setSelection(sensorsConfig);
-                updateAmperesRange(sensorsConfig);
-                System.out.println("   ✓ Spinner Amperes actualizado a posición: " + sensorsConfig);
+            isRecording = recordingConfig;
+            handler.post(() -> {
+                if (btnRec != null) {
+                    btnRec.setBackgroundResource(
+                            isRecording ? R.drawable.button_rec_recording : R.drawable.button_rec
+                    );
+
+                    if (isRecording) {
+                        startRecordingAnimation();
+                    } else {
+                        stopRecordingAnimation();
+                    }
+                }
+            });
+
+            configurationSynced = true;
+            setControlsEnabled(true);
+            setSpinnersEnabled(true);
+
+            // ✅ MAPEO INVERSO SIN 400A
+            int spinnerIndex;
+            switch (sensorsConfig) {
+                case 1:
+                    spinnerIndex = 0; // 50A
+                    break;
+                case 2:
+                    spinnerIndex = 1; // 200A
+                    break;
+                case 4:
+                    spinnerIndex = 2; // 1000A
+                    break;
+                case 5:
+                    spinnerIndex = 3; // 3000A
+                    break;
+                default:
+                    spinnerIndex = 0;
+                    break;
             }
 
-            // Tipo de cableado siempre trifásico
+            if (spinnerIndex >= 0 && spinnerIndex < spinnerAmperes.getAdapter().getCount()) {
+                spinnerAmperes.setSelection(spinnerIndex);
+                updateAmperesRange(spinnerIndex);
+            } else {
+                spinnerAmperes.setSelection(0);
+                updateAmperesRange(0);
+            }
+
             meteringTypeConfig = 3;
             tipoCableado = 3;
             spinnerCableado.setSelection(0);
 
             skipSpinnerEvents = false;
-
-            configurationSynced = true;
-            setControlsEnabled(true);
-            setSpinnersEnabled(true);
 
             updateDiagram();
 
@@ -1749,6 +2140,13 @@ public class FasoresActivity extends AppCompatActivity {
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error procesando configuración: " + e.getMessage());
             e.printStackTrace();
+
+            skipSpinnerEvents = true;
+            if (spinnerAmperes != null && spinnerAmperes.getAdapter() != null) {
+                spinnerAmperes.setSelection(0);
+                updateAmperesRange(0);
+            }
+            skipSpinnerEvents = false;
 
             configurationSynced = true;
             setControlsEnabled(true);
@@ -2117,13 +2515,20 @@ public class FasoresActivity extends AppCompatActivity {
         if (fasorVoltaje == null || fasorCorriente == null) return;
 
         try {
-            // Actualizar fasores de voltaje
+            // ✅ ORDEN NORMAL - Los ángulos de ejes ya están corregidos
             fasorVoltaje.setMagnitudes(voltajes[0], voltajes[1], voltajes[2]);
-            fasorVoltaje.setAngles(0.0f, 120.0f, 240.0f); // Ángulos teóricos trifásicos
+            fasorVoltaje.setAngles(0.0f, 120.0f, 240.0f); // Se mapearán a ejes corregidos
 
-            // Actualizar fasores de corriente
             fasorCorriente.setMagnitudes(corrientes[0], corrientes[1], corrientes[2]);
-            fasorCorriente.setAngles(0.0f, 120.0f, 240.0f); // Ángulos teóricos trifásicos
+            fasorCorriente.setAngles(angulos[0], angulos[1], angulos[2]);
+
+            System.out.println("🔄 FASORES - Fasores actualizados:");
+            System.out.printf("   L1 (0°/BLANCO): V=%.1f, A=%.2f∠%.1f°%n",
+                    voltajes[0], corrientes[0], angulos[0]);
+            System.out.printf("   L2 (240°/ROJO): V=%.1f, A=%.2f∠%.1f°%n",
+                    voltajes[1], corrientes[1], angulos[1]);
+            System.out.printf("   L3 (120°/AZUL): V=%.1f, A=%.2f∠%.1f°%n",
+                    voltajes[2], corrientes[2], angulos[2]);
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error actualizando fasores: " + e.getMessage());
@@ -2152,9 +2557,9 @@ public class FasoresActivity extends AppCompatActivity {
         if (tvpF2 != null) tvpF2.setText("0.000");
         if (tvpF3 != null) tvpF3.setText("0.000");
 
-        if (tvCH1 != null) tvCH1.setText("L1-N");
-        if (tvCH2 != null) tvCH2.setText("L2-N");
-        if (tvCH3 != null) tvCH3.setText("L3-N");
+        if (tvCH1 != null) tvCH1.setText("L1");
+        if (tvCH2 != null) tvCH2.setText("L2");
+        if (tvCH3 != null) tvCH3.setText("L3");
     }
 
     // =========================================================================
@@ -2297,8 +2702,33 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void updateDiagram() {
         if (imageDiagram == null) return;
-        // Siempre mostrar diagrama 3P4W-N (Carga Trifásica)
-        imageDiagram.setImageResource(R.drawable.diagram_3p4w_n);
+
+        int diagramResource;
+
+        switch (rangoAmperes) {
+            case 50:
+                diagramResource = R.drawable.a50;
+                System.out.println("📊 FASORES - Mostrando diagrama: a50.jpg (50A)");
+                break;
+
+            case 200:
+                diagramResource = R.drawable.a200;
+                System.out.println("📊 FASORES - Mostrando diagrama: a200.jpg (200A)");
+                break;
+
+            case 1000:
+            case 3000:
+                diagramResource = R.drawable.a1000;
+                System.out.println("📊 FASORES - Mostrando diagrama: a1000.jpg (" + rangoAmperes + "A)");
+                break;
+
+            default:
+                diagramResource = R.drawable.a50;
+                System.out.println("⚠️ FASORES - Rango desconocido (" + rangoAmperes + "A), usando a50.jpg");
+                break;
+        }
+
+        imageDiagram.setImageResource(diagramResource);
     }
 
     // =========================================================================
@@ -2308,6 +2738,7 @@ public class FasoresActivity extends AppCompatActivity {
     private void setControlsEnabled(boolean enabled) {
         handler.post(() -> {
             if (btnPlay != null) btnPlay.setEnabled(enabled);
+            if (btnRec != null) btnRec.setEnabled(enabled);
             if (btnDeviceId != null) btnDeviceId.setEnabled(enabled);
             if (btnConfigWifi != null) btnConfigWifi.setEnabled(enabled);
         });
@@ -2337,6 +2768,7 @@ public class FasoresActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        stopRecordingAnimation();
         System.out.println("⏸️ FASORES - Activity pausada");
 
         if (autoReadEnabled) {
@@ -2379,6 +2811,7 @@ public class FasoresActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopRecordingAnimation();
 
         System.out.println("🔚 FASORES - onDestroy llamado");
 
