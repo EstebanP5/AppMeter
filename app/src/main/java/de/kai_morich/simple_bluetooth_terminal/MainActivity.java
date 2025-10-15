@@ -135,18 +135,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_clientes) {
             frag = new ConfiguracionFragment(); // Fragmento correcto para clientes
 
-        } else if (id == R.id.nav_wifi_setup) {
-            // ✅ NUEVO: Abrir WiFi Setup Activity
-            openWiFiSetup();
-            drawerLayout.closeDrawer(GravityCompat.START);
-            return true;
-
-        } else if (id == R.id.nav_medicion) {
-            startActivity(new Intent(this, FasoresActivity.class));
-            drawerLayout.closeDrawer(GravityCompat.START);
-            return true;
-
-
         }
 
         if (frag != null) {

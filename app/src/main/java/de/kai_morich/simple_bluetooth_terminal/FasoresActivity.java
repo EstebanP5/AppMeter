@@ -255,8 +255,6 @@ public class FasoresActivity extends AppCompatActivity {
             }
         }
 
-        showToast("📡 Conectando a " + deviceIp + ":" + devicePort);
-
         // Conectar inmediatamente con nuestra propia conexión
         handler.postDelayed(() -> connectToDeviceIndependent(), 1000);
     }
@@ -268,7 +266,7 @@ public class FasoresActivity extends AppCompatActivity {
         setupSpinnerAdapter(spinnerCableado, cableadoOptions);
 
         String[] amperesOptions = {
-                 "50A", "200A",
+                "50A", "200A",
                 "400A", "1000A", "3000A"
         };
         setupSpinnerAdapter(spinnerAmperes, amperesOptions);
@@ -316,17 +314,14 @@ public class FasoresActivity extends AppCompatActivity {
         wifiValidationModule = new WiFiValidationModule(this, new WiFiValidationModule.ValidationListener() {
             @Override
             public void onValidationStarted(String ssid) {
-                showToast("🔍 Validando red: " + ssid);
             }
 
             @Override
             public void onValidationProgress(String ssid, String progress) {
-                showToast(progress);
             }
 
             @Override
             public void onValidationSuccess(WiFiValidationModule.ValidatedNetwork network) {
-                showToast("✅ Red " + network.ssid + " validada");
                 showValidatedNetworkConfirmation(network);
             }
 
@@ -337,7 +332,6 @@ public class FasoresActivity extends AppCompatActivity {
 
             @Override
             public void onValidationTimeout(String ssid) {
-                showToast("⏰ Timeout validando " + ssid);
             }
 
             @Override
@@ -376,8 +370,6 @@ public class FasoresActivity extends AppCompatActivity {
 
         executor.execute(() -> {
             try {
-                handler.post(() -> showToast("⚙️ Setup automático..."));
-
                 // ✅ 1. Sincronizar hora
                 System.out.println("🕐 FASORES - Enviando hora del sistema...");
                 sendTimeWriteCommand();
@@ -396,7 +388,6 @@ public class FasoresActivity extends AppCompatActivity {
                 // ✅ MARCAR COMO SINCRONIZADO
                 System.out.println("✅ FASORES - Setup completado");
                 handler.post(() -> {
-                    showToast("✅ Setup completado");
                     configurationSynced = true;
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
@@ -409,7 +400,6 @@ public class FasoresActivity extends AppCompatActivity {
                 System.out.println("❌ FASORES - Error en setup: " + e.getMessage());
                 e.printStackTrace();
                 handler.post(() -> {
-                    showToast("❌ Error en setup");
                     configurationSynced = true; // Permitir uso manual
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
@@ -440,22 +430,18 @@ public class FasoresActivity extends AppCompatActivity {
 
         // ✅ Solicitar datos
         System.out.println("📤 FASORES - Solicitando Device ID...");
-        showToast("📋 Solicitando información...");
         sendDeviceIdReadCommand();
 
         // ✅ ESPERAR SOLO 2 SEGUNDOS Y MOSTRAR LO QUE HAYA
         handler.postDelayed(() -> {
             if (lastReadDeviceIdInfo != null) {
                 displayDeviceIdModal();
-            } else {
-                showToast("⏰ Sin respuesta del dispositivo");
             }
-        }, 2000); // ✅ SOLO 2 SEGUNDOS
+        }, 2000);
     }
 
     private void displayDeviceIdModal() {
         if (lastReadDeviceIdInfo == null) {
-            showToast("❌ No hay información disponible");
             return;
         }
 
@@ -497,7 +483,6 @@ public class FasoresActivity extends AppCompatActivity {
                                 "Estás en: " + currentSsid + "\n\n" +
                                 "¿Deseas continuar de todas formas?")
                         .setPositiveButton("Continuar", (dialog, which) -> {
-                            showToast("🔍 Escaneando redes WiFi...");
                             userRequestedWifiScan = true;
                             wifiManager.startScan();
                         })
@@ -507,7 +492,6 @@ public class FasoresActivity extends AppCompatActivity {
             }
         }
 
-        showToast("🔍 Escaneando redes WiFi...");
         userRequestedWifiScan = true;
         wifiManager.startScan();
     }
@@ -520,7 +504,6 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void displayNetworkSelectionForValidation() {
         if (availableNetworks.isEmpty()) {
-            showToast("❌ No se encontraron redes WiFi.");
             return;
         }
 
@@ -532,7 +515,6 @@ public class FasoresActivity extends AppCompatActivity {
         }
 
         if (networkNames.isEmpty()) {
-            showToast("❌ No hay redes disponibles (se excluyen redes ESP)");
             return;
         }
 
@@ -644,7 +626,6 @@ public class FasoresActivity extends AppCompatActivity {
     private void showValidatedNetworkConfirmation(WiFiValidationModule.ValidatedNetwork network) {
         // ✅ VALIDAR PRIMERO
         if (network == null || network.ssid == null) {
-            showToast("❌ Red inválida");
             return;
         }
 
@@ -666,7 +647,6 @@ public class FasoresActivity extends AppCompatActivity {
             // ✅ VALIDAR QUE NETWORK NO SEA NULL
             if (network == null || network.ssid == null || network.password == null) {
                 System.out.println("❌ FASORES - Network inválido");
-                showToast("❌ Datos de red inválidos");
                 return;
             }
 
@@ -681,7 +661,6 @@ public class FasoresActivity extends AppCompatActivity {
 
             if (command == null || command.length == 0) {
                 System.out.println("❌ FASORES - Comando WiFi vacío");
-                showToast("❌ Error creando comando WiFi");
                 return;
             }
 
@@ -692,12 +671,9 @@ public class FasoresActivity extends AppCompatActivity {
             System.out.println("   Tamaño comando: " + command.length + " bytes");
             System.out.println("   Comando hex: " + OctoNetCommandEncoder.bytesToHexString(command));
 
-            showToast("📡 Enviando credenciales de " + finalSsid + " al medidor");
-
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error enviando WiFi: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error al enviar credenciales WiFi");
         }
     }
 
@@ -788,17 +764,15 @@ public class FasoresActivity extends AppCompatActivity {
 
             sendTcpCommandIndependent(command);
             isWaitingResponse = true;
-            showToast("📝 Escribiendo configuración...");
+            showToast("✅ Configuración aplicada");
 
             handler.postDelayed(() -> {
                 if (isWaitingResponse) {
                     isWaitingResponse = false;
-                    showToast("⏰ Timeout escribiendo configuración");
                 }
             }, 5000);
 
         } catch (Exception e) {
-            showToast("❌ Error al escribir configuración: " + e.getMessage());
             isWaitingResponse = false;
         }
     }
@@ -830,7 +804,6 @@ public class FasoresActivity extends AppCompatActivity {
                 return;
             }
             if (!configurationSynced) {
-                showToast("⏳ Sincronizando configuración...");
                 return;
             }
             if (!autoReadEnabled) {
@@ -1043,8 +1016,6 @@ public class FasoresActivity extends AppCompatActivity {
             return;
         }
 
-        showToast("🔗 Estableciendo conexión independiente...");
-
         executor.execute(() -> {
             try {
                 // ✅ CERRAR RECURSOS ANTERIORES CORRECTAMENTE
@@ -1068,7 +1039,7 @@ public class FasoresActivity extends AppCompatActivity {
 
                 handler.post(() -> {
                     isConnectedToDevice = true;
-                    showToast("✅ Conectado  a " + deviceIp);
+                    showToast("✅ Conectado a " + deviceIp);
                     System.out.println("✅ FASORES - Conexión independiente establecida");
 
                     // Iniciar hilo de recepción mejorado
@@ -1083,14 +1054,13 @@ public class FasoresActivity extends AppCompatActivity {
                 handler.post(() -> {
                     isConnectedToDevice = false;
                     setControlsEnabled(false);
-                    showToast("❌ Dispositivo no responde en " + deviceIp + ":" + devicePort);
+                    showToast("❌ Sin conexión al dispositivo");
                 });
             } catch (java.net.SocketTimeoutException e) {
                 System.out.println("❌ FASORES - Timeout de conexión: " + e.getMessage());
                 handler.post(() -> {
                     isConnectedToDevice = false;
                     setControlsEnabled(false);
-                    showToast("❌ Timeout de conexión");
                 });
             } catch (Exception e) {
                 System.out.println("❌ FASORES - Error de conexión: " + e.getMessage());
@@ -1098,7 +1068,6 @@ public class FasoresActivity extends AppCompatActivity {
                 handler.post(() -> {
                     isConnectedToDevice = false;
                     setControlsEnabled(false);
-
                 });
             }
         });
@@ -1178,7 +1147,6 @@ public class FasoresActivity extends AppCompatActivity {
 
                     // ✅ RECONECTAR AUTOMÁTICAMENTE DESPUÉS DE 3 SEGUNDOS
                     handler.postDelayed(() -> {
-                        showToast("🔄 Intentando reconectar...");
                         connectToDeviceIndependent();
                     }, 3000);
                 });
@@ -1191,7 +1159,6 @@ public class FasoresActivity extends AppCompatActivity {
         configurationSynced = false;
         stopDataAcquisition();
         executor.execute(() -> disconnectFromDeviceInternal());
-        handler.post(() -> showToast("🔌 Desconectado"));
     }
 
     private void disconnectFromDeviceInternal() {
@@ -1257,7 +1224,6 @@ public class FasoresActivity extends AppCompatActivity {
             byte[] command = OctoNetCommandEncoder.createNodeSettingsReadCommand();
             sendTcpCommandIndependent(command);
             isWaitingResponse = true;
-            showToast("📖 Leyendo configuración...");
 
             handler.postDelayed(() -> {
                 if (isWaitingResponse) {
@@ -1265,7 +1231,6 @@ public class FasoresActivity extends AppCompatActivity {
                     configurationSynced = true;
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
-                    showToast("⚠️ Sin respuesta config - continuando...");
                 }
             }, 5000);
 
@@ -1391,7 +1356,6 @@ public class FasoresActivity extends AppCompatActivity {
                 handler.post(() -> {
                     isConnectedToDevice = false;
                     setControlsEnabled(false);
-                    showToast("❌ Error de envío - reconectando...");
 
                     handler.postDelayed(() -> connectToDeviceIndependent(), 1000);
                 });
@@ -1442,7 +1406,6 @@ public class FasoresActivity extends AppCompatActivity {
             // ✅ MANEJAR ERROR DEL DISPOSITIVO
             if (responseType == 0x45) { // ERROR
                 System.out.println("❌ FASORES - Error del dispositivo (0x45)");
-                showToast("❌ Error del dispositivo");
                 return;
             }
 
@@ -1457,7 +1420,6 @@ public class FasoresActivity extends AppCompatActivity {
 
                         case 0x02: // DEVICE_TIME
                             System.out.println("🕐 FASORES - DEVICE_TIME confirmado");
-                            showToast("✅ Hora sincronizada");
                             break;
 
                         case 0x20: // NODE_SETTINGS
@@ -1483,7 +1445,6 @@ public class FasoresActivity extends AppCompatActivity {
                                 processCurrentDataResponseIndependent(data);
                             } else {
                                 System.out.println("⚠️ FASORES - NODE_CURRENT sin datos");
-                                showToast("❌ Sin datos disponibles");
                             }
                             break;
 
@@ -1506,7 +1467,6 @@ public class FasoresActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     System.out.println("❌ FASORES - Error procesando comando: " + e.getMessage());
                     e.printStackTrace();
-                    showToast("❌ Error procesando respuesta");
                 }
             } else {
                 System.out.println("⚠️ FASORES - Tipo de respuesta desconocido: 0x" +
@@ -1516,7 +1476,6 @@ public class FasoresActivity extends AppCompatActivity {
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error crítico: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error procesando datos");
         } finally {
             // ✅ ASEGURAR QUE isWaitingResponse SIEMPRE SE RESETEA
             isWaitingResponse = false;
@@ -1534,7 +1493,6 @@ public class FasoresActivity extends AppCompatActivity {
 
             if (deviceData == null || deviceData.length == 0) {
                 System.out.println("❌ FASORES - Datos Device ID vacíos");
-                showToast("❌ Sin datos de Device ID");
                 return;
             }
 
@@ -1597,7 +1555,6 @@ public class FasoresActivity extends AppCompatActivity {
                     }
 
                     System.out.println("✅ FASORES - Device ID parseado (formato concatenado)");
-                    showToast("✅ Información del dispositivo recibida");
                     return;
 
                 } catch (Exception parseError) {
@@ -1658,7 +1615,6 @@ public class FasoresActivity extends AppCompatActivity {
                     }
 
                     System.out.println("✅ FASORES - Device ID parseado (formato binario)");
-                    showToast("✅ Información del dispositivo recibida");
                     return;
 
                 } catch (Exception binaryError) {
@@ -1678,12 +1634,10 @@ public class FasoresActivity extends AppCompatActivity {
             lastReadDeviceIdInfo.fwVersion = "N/A";
 
             System.out.println("⚠️ FASORES - Información parcial guardada");
-            showToast("⚠️ Información parcial recibida");
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error crítico Device ID: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error procesando Device ID");
 
             lastReadDeviceIdInfo = new DeviceIdInfo();
             lastReadDeviceIdInfo.serial = "ERROR";
@@ -1708,7 +1662,6 @@ public class FasoresActivity extends AppCompatActivity {
 
             if (wifiData == null || wifiData.length < 64) {
                 System.out.println("❌ FASORES - Datos WiFi insuficientes");
-                showToast("❌ Datos WiFi incompletos");
                 lastReadWifiSettings = new OctoNetCommandEncoder.WiFiSettings();
                 return;
             }
@@ -1720,21 +1673,13 @@ public class FasoresActivity extends AppCompatActivity {
                 System.out.println("   SSID: '" + lastReadWifiSettings.ssid + "'");
                 System.out.println("   IP: '" + lastReadWifiSettings.ip + "'");
                 System.out.println("   MAC: '" + lastReadWifiSettings.mac + "'");
-
-                if (lastReadWifiSettings.ssid.isEmpty()) {
-
-                } else {
-
-                }
-
+            } else {
                 System.out.println("❌ FASORES - Error procesando WiFi");
-                showToast("❌ Error procesando WiFi");
             }
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Excepción WiFi: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error procesando WiFi");
             lastReadWifiSettings = new OctoNetCommandEncoder.WiFiSettings();
         }
     }
@@ -1753,7 +1698,6 @@ public class FasoresActivity extends AppCompatActivity {
 
             if (configData == null || configData.length < 4) {
                 System.out.println("❌ FASORES - Datos de configuración insuficientes");
-                showToast("❌ Datos de configuración incompletos");
                 configurationSynced = true;
                 setControlsEnabled(true);
                 setSpinnersEnabled(true);
@@ -1799,14 +1743,12 @@ public class FasoresActivity extends AppCompatActivity {
             setSpinnersEnabled(true);
 
             updateDiagram();
-            showToast("✅ Configuración sincronizada");
 
             System.out.println("✅ FASORES - Sincronización completa");
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error procesando configuración: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error procesando configuración");
 
             configurationSynced = true;
             setControlsEnabled(true);
@@ -1834,7 +1776,6 @@ public class FasoresActivity extends AppCompatActivity {
 
             if (sizeFromDevice == 0) {
                 System.out.println("❌ FASORES - Dispositivo envió SIZE=0 (sin datos)");
-                showToast("❌ Sin datos de energía disponibles");
                 return;
             }
 
@@ -1959,20 +1900,13 @@ public class FasoresActivity extends AppCompatActivity {
                 contadorMuestras++;
                 System.out.println("✅ FASORES - Muestra #" + contadorMuestras + " procesada exitosamente");
 
-                if (contadorMuestras % 5 == 0) {
-                    long tiempoTranscurrido = (System.currentTimeMillis() - tiempoInicio) / 1000;
-                    showToast(String.format("📊 %d muestras (%ds)", contadorMuestras, tiempoTranscurrido));
-                }
-
             } else {
                 System.out.println("❌ FASORES - Estructura incompleta (" + energyData.length + " bytes)");
-                showToast("❌ Datos incompletos del dispositivo");
             }
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error procesando NODE_CURRENT: " + e.getMessage());
             e.printStackTrace();
-            showToast("❌ Error procesando datos");
         }
     }
 
@@ -2075,9 +2009,6 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * ✅ ACTUALIZA EL DISPLAY DE UNA FASE ESPECÍFICA
-     */
     private void updatePhaseDisplay(int phase, float volt, float corr, float power, float freq) {
         TextView tvV, tvA, tvW, tvHz, tvPF;
 
@@ -2238,13 +2169,12 @@ public class FasoresActivity extends AppCompatActivity {
 
         // ✅ VALIDACIONES
         if (!isConnectedToDevice) {
-            showToast("❌ No hay conexión con el dispositivo");
+            showToast("❌ No hay conexión");
             System.out.println("❌ FASORES - Sin conexión");
             return;
         }
 
         if (!configurationSynced) {
-            showToast("⏳ Esperando sincronización de configuración...");
             System.out.println("⏳ FASORES - Configuración no sincronizada");
             return;
         }
@@ -2277,7 +2207,7 @@ public class FasoresActivity extends AppCompatActivity {
             }
 
             // ✅ 4. MOSTRAR TOAST
-            showToast("🚀 Iniciando lectura NODE_CURRENT cada 5 segundos");
+            showToast("▶️ Midiendo");
 
             // ✅ 5. PRIMERA LECTURA INMEDIATA
             System.out.println("📤 FASORES - Solicitando primera lectura inmediata...");
@@ -2293,7 +2223,6 @@ public class FasoresActivity extends AppCompatActivity {
                 if (btnPlay != null) {
                     btnPlay.setImageResource(android.R.drawable.ic_media_play);
                 }
-                showToast("❌ Error iniciando auto-read");
             }
 
             System.out.println("✅ FASORES - Adquisición iniciada exitosamente");
@@ -2309,8 +2238,6 @@ public class FasoresActivity extends AppCompatActivity {
             if (btnPlay != null) {
                 btnPlay.setImageResource(android.R.drawable.ic_media_play);
             }
-
-            showToast("❌ Error al iniciar adquisición: " + e.getMessage());
         }
     }
 
@@ -2346,15 +2273,8 @@ public class FasoresActivity extends AppCompatActivity {
             // ✅ 6. RESETEAR isWaitingResponse
             isWaitingResponse = false;
 
-            // ✅ 7. MOSTRAR TOAST CON ESTADÍSTICAS
-            if (tiempoInicio > 0) {
-                long tiempoTotal = (System.currentTimeMillis() - tiempoInicio) / 1000;
-                showToast(String.format("⏹️ Detenido: %d muestras en %ds", contadorMuestras, tiempoTotal));
-                System.out.println("   Muestras capturadas: " + contadorMuestras);
-                System.out.println("   Tiempo total: " + tiempoTotal + " segundos");
-            } else {
-                showToast("⏹️ Adquisición detenida");
-            }
+            // ✅ 7. MOSTRAR TOAST
+            showToast("⏹️ Detenido");
 
             System.out.println("✅ FASORES - Adquisición detenida correctamente");
 
@@ -2367,7 +2287,7 @@ public class FasoresActivity extends AppCompatActivity {
                 btnPlay.setImageResource(android.R.drawable.ic_media_play);
             }
 
-            showToast("⏹️ Detenido con errores");
+            showToast("⏹️ Detenido");
         }
     }
 
@@ -2478,5 +2398,3 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 }
-
-

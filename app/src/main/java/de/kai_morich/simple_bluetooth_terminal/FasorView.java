@@ -41,6 +41,10 @@ public class FasorView extends View {
     private float maxMagnitude = 100.0f; // Escala automática
     private boolean autoScale = true;
 
+    // ✅ NUEVAS VARIABLES PARA AUTO-ESCALADO MEJORADO
+    private static final float MIN_SCALE = 0.1f;  // Escala mínima (0.1V o 0.1A)
+    private static final float SCALE_MARGIN = 1.3f; // Margen del 30% sobre el valor máximo
+
     // ===== PAINT OBJECTS =====
     private Paint vectorPaint;
     private Paint axisPaint;
@@ -250,9 +254,9 @@ public class FasorView extends View {
         // ✅ RADIO MÁS GRANDE - REDUCIR MARGEN
         float radius = Math.min(width, height) / 2f - 60f; // Era 100f, ahora 60f
 
-        // Auto-escalar si está habilitado
+        // ✅ Auto-escalar si está habilitado (MEJORADO)
         if (autoScale) {
-            updateScale();
+            updateScaleImproved();
         }
 
         // 1. Fondo con gradiente sutil
@@ -370,7 +374,8 @@ public class FasorView extends View {
     // ✅ FASORES CON ÁNGULOS RELATIVOS A SU BASE (0°, 120°, 240°) Y COLORES ACTUALIZADOS
     private void drawPhasorsOnAxesCorrected(Canvas canvas, float centerX, float centerY, float radius) {
         for (int i = 0; i < 3; i++) {
-            if (individualMagnitudes[i] <= 0) continue; // No dibujar si no hay magnitud
+            // ✅ MOSTRAR INCLUSO MAGNITUDES PEQUEÑAS (>=0.001)
+            if (individualMagnitudes[i] < 0.001f) continue; // Solo omitir si es prácticamente cero
 
             // ✅ CALCULAR ÁNGULO RELATIVO A LA BASE DEL CANAL
             float baseAngle = AXIS_ANGLES[i];  // Base: 0°, 120°, 240°
@@ -386,7 +391,14 @@ public class FasorView extends View {
 
             // ✅ DIBUJAR FASOR EN SU POSICIÓN FINAL
             float phasorAngleRad = (float) Math.toRadians(finalAngle - 90); // -90 para que 0° esté arriba
-            float phasorLength = radius * (individualMagnitudes[i] / maxMagnitude);
+
+            // ✅ CALCULAR LONGITUD NORMALIZADA - SIEMPRE VISIBLE
+            float normalizedMagnitude = individualMagnitudes[i] / maxMagnitude;
+            // Asegurar longitud mínima visible (5% del radio)
+            if (normalizedMagnitude < 0.05f && normalizedMagnitude > 0) {
+                normalizedMagnitude = 0.05f;
+            }
+            float phasorLength = radius * normalizedMagnitude;
 
             // Calcular posición final del fasor
             float phasorX = centerX + phasorLength * (float) Math.cos(phasorAngleRad);
@@ -473,8 +485,8 @@ public class FasorView extends View {
             drawProjectionLineToBase(canvas, centerX, centerY, phasorX, phasorY, i, radius);
 
             // ✅ DEBUG: Mostrar ángulos calculados
-            System.out.printf("Canal %d: Base=%.0f°, Dispositivo=%.1f°, Relativo=%.1f°, Final=%.1f°%n",
-                    i+1, baseAngle, deviceAngle, relativeAngle, finalAngle);
+            System.out.printf("Canal %d: Base=%.0f°, Dispositivo=%.1f°, Relativo=%.1f°, Final=%.1f°, Mag=%.3f%n",
+                    i+1, baseAngle, deviceAngle, relativeAngle, finalAngle, individualMagnitudes[i]);
         }
     }
 
@@ -525,18 +537,36 @@ public class FasorView extends View {
             while (deviceAngle > 180f) deviceAngle -= 360f;
             while (deviceAngle < -180f) deviceAngle += 360f;
 
-            String label = String.format("%s: %.1f%s ∠%.1f°",
-                    AXIS_LABELS[i], individualMagnitudes[i], unit, deviceAngle);
+            // ✅ FORMATO DINÁMICO: Más decimales para valores pequeños
+            String magnitudeStr;
+            if (individualMagnitudes[i] < 1.0f) {
+                magnitudeStr = String.format("%.3f", individualMagnitudes[i]);
+            } else if (individualMagnitudes[i] < 10.0f) {
+                magnitudeStr = String.format("%.2f", individualMagnitudes[i]);
+            } else {
+                magnitudeStr = String.format("%.1f", individualMagnitudes[i]);
+            }
+
+            String label = String.format("%s: %s%s ∠%.1f°",
+                    AXIS_LABELS[i], magnitudeStr, unit, deviceAngle);
             canvas.drawText(label, 15f, y, labelPaint);
         }
     }
 
     private void drawEnhancedScale(Canvas canvas) {
-        // Escala con fondo
-        String scaleText = String.format("Escala: %.0f %s", maxMagnitude, unit);
+        // ✅ Escala con formato dinámico
+        String scaleText;
+        if (maxMagnitude < 1.0f) {
+            scaleText = String.format("Escala: %.3f %s", maxMagnitude, unit);
+        } else if (maxMagnitude < 10.0f) {
+            scaleText = String.format("Escala: %.2f %s", maxMagnitude, unit);
+        } else {
+            scaleText = String.format("Escala: %.1f %s", maxMagnitude, unit);
+        }
+
         Paint scalePaint = new Paint();
         scalePaint.setColor(Color.YELLOW);
-        scalePaint.setTextSize(18f); // Más grande
+        scalePaint.setTextSize(18f);
         scalePaint.setAntiAlias(true);
         scalePaint.setTextAlign(Paint.Align.RIGHT);
         scalePaint.setFakeBoldText(true);
@@ -544,26 +574,79 @@ public class FasorView extends View {
         canvas.drawText(scaleText, getWidth() - 25f, 80f, scalePaint);
     }
 
-    private void updateScale() {
+    // ===== ✅ MÉTODO DE AUTO-ESCALADO MEJORADO =====
+    private void updateScaleImproved() {
         // Encontrar la magnitud máxima
         float max = 0;
         for (float mag : individualMagnitudes) {
             if (mag > max) max = mag;
         }
 
-        if (max > 0) {
-            // Ajustar escala con un poco de margen
-            maxMagnitude = max * 1.2f;
-
-            // Redondear a números "bonitos"
-            if (maxMagnitude < 10) maxMagnitude = 10f;
-            else if (maxMagnitude < 50) maxMagnitude = 50f;
-            else if (maxMagnitude < 100) maxMagnitude = 100f;
-            else if (maxMagnitude < 250) maxMagnitude = 250f;
-            else if (maxMagnitude < 500) maxMagnitude = 500f;
-            else maxMagnitude = (float)(Math.ceil(maxMagnitude / 100) * 100);
-        } else {
-            maxMagnitude = 100f; // Valor por defecto
+        if (max < 0.001f) {
+            // Si todos los valores son prácticamente cero
+            maxMagnitude = MIN_SCALE;
+            return;
         }
+
+        // ✅ APLICAR MARGEN
+        float targetScale = max * SCALE_MARGIN;
+
+        // ✅ ESCALAS ADAPTATIVAS SEGÚN EL RANGO
+        if (targetScale < 0.1f) {
+            // Rango muy pequeño (miliamperes, milivoltios)
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{0.01f, 0.02f, 0.05f, 0.1f});
+        } else if (targetScale < 1.0f) {
+            // Rango pequeño (décimas)
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{0.1f, 0.2f, 0.5f, 1.0f});
+        } else if (targetScale < 10f) {
+            // Rango medio-bajo (unidades)
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{1f, 2f, 5f, 10f});
+        } else if (targetScale < 50f) {
+            // Rango medio
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{10f, 20f, 50f});
+        } else if (targetScale < 100f) {
+            // Rango medio-alto
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{50f, 100f});
+        } else if (targetScale < 250f) {
+            // Rango alto
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{100f, 150f, 200f, 250f});
+        } else if (targetScale < 500f) {
+            // Rango muy alto
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{250f, 300f, 400f, 500f});
+        } else if (targetScale < 1000f) {
+            // Rango extra alto
+            maxMagnitude = roundToNiceNumber(targetScale, new float[]{500f, 750f, 1000f});
+        } else {
+            // Rango extremo - redondear a centenas
+            maxMagnitude = (float)(Math.ceil(targetScale / 100) * 100);
+        }
+
+        // ✅ Asegurar escala mínima
+        if (maxMagnitude < MIN_SCALE) {
+            maxMagnitude = MIN_SCALE;
+        }
+
+        // ✅ DEBUG: Mostrar escala calculada
+        System.out.printf("AUTO-SCALE: max=%.3f, target=%.3f, final=%.3f %s%n",
+                max, targetScale, maxMagnitude, unit);
+    }
+
+    /**
+     * ✅ Redondea a un "número bonito" del array proporcionado
+     * Encuentra el primer número en el array que sea >= al valor target
+     */
+    private float roundToNiceNumber(float target, float[] niceNumbers) {
+        for (float nice : niceNumbers) {
+            if (nice >= target) {
+                return nice;
+            }
+        }
+        // Si ninguno es suficiente, devolver el último
+        return niceNumbers[niceNumbers.length - 1];
+    }
+
+    // ===== ✅ MÉTODO ANTIGUO MANTENIDO POR COMPATIBILIDAD =====
+    private void updateScale() {
+        updateScaleImproved(); // Redirigir al método mejorado
     }
 }
