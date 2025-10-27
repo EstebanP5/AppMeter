@@ -105,7 +105,7 @@ public class FasoresActivity extends AppCompatActivity {
     private int periodConfig = 0; // FIJO EN 1 MINUTO
     private int sensorsConfig = 1; // 0=20A, 1=50A, 2=200A, 3=400A, 4=1000A, 5=3000A
     private int meteringTypeConfig = 3; // FORZAR Carga Trifásica
-    private boolean recordingConfig = true;
+    private boolean recordingConfig = false;
 
     // Configuración de interfaz
     private int rangoAmperes = 50;
@@ -171,7 +171,6 @@ public class FasoresActivity extends AppCompatActivity {
         setupSpinners();
         setupButtons();
         setupAutoReadTask();
-
         // Conectar directamente
         handler.postDelayed(() -> connectToDeviceIndependent(), 500);
     }
@@ -183,6 +182,10 @@ public class FasoresActivity extends AppCompatActivity {
         spinnerAmperes = findViewById(R.id.spinnerAmperes);
         imageDiagram = findViewById(R.id.imageDiagram);
         btnRec = findViewById(R.id.btnRec);
+        if (btnRec != null) {
+            btnRec.setImageResource(android.R.drawable.presence_invisible);
+            System.out.println("✅ FASORES - btnRec inicializado como DESACTIVADO");
+        }
         btnPlay = findViewById(R.id.btnPlay);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
 
@@ -1142,6 +1145,7 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void toggleRecording() {
         isRecording = !isRecording;
+        recordingConfig = isRecording;
 
         System.out.println("🎬 FASORES - Cambiando estado REC a: " +
                 (isRecording ? "GRABANDO" : "PAUSADO"));
@@ -2073,14 +2077,22 @@ public class FasoresActivity extends AppCompatActivity {
                 return;
             }
 
-            recordingConfig = (configData[0] & 0xFF) == 1;
+            // ⭐ CAMBIO: NO sobrescribir recordingConfig
+            // recordingConfig = (configData[0] & 0xFF) == 1; // ⬅️ COMENTAR ESTA LÍNEA
+
+            // ⭐ NUEVO: Solo leer pero no aplicar el recording
+            boolean deviceRecording = (configData[0] & 0xFF) == 1;
+            System.out.println("📊 FASORES - Recording del dispositivo: " + deviceRecording + " (IGNORADO)");
+            System.out.println("📊 FASORES - Usando recordingConfig de la app: " + recordingConfig);
+
             periodConfig = configData[1] & 0xFF;
             sensorsConfig = configData[2] & 0xFF;
             meteringTypeConfig = configData[3] & 0xFF;
 
             skipSpinnerEvents = true;
 
-            isRecording = recordingConfig;
+            // ⭐ CAMBIO: Usar recordingConfig de la app, no del dispositivo
+            isRecording = recordingConfig; // ⬅️ CAMBIAR ESTA LÍNEA
             handler.post(() -> {
                 if (btnRec != null) {
                     btnRec.setBackgroundResource(
@@ -2515,20 +2527,45 @@ public class FasoresActivity extends AppCompatActivity {
         if (fasorVoltaje == null || fasorCorriente == null) return;
 
         try {
-            // ✅ ORDEN NORMAL - Los ángulos de ejes ya están corregidos
-            fasorVoltaje.setMagnitudes(voltajes[0], voltajes[1], voltajes[2]);
-            fasorVoltaje.setAngles(0.0f, 120.0f, 240.0f); // Se mapearán a ejes corregidos
+            // ✅ MAPEO FINAL CORREGIDO
+            // FasorView tiene estos arrays de colores:
+            // VOLTAGE_COLORS = {WHITE(0), BLUE(1), RED(2)}
+            // CURRENT_COLORS = {WHITE(0), RED(1), BLUE(2)}
+            //
+            // Los ejes visuales son: L1(0°), L2(120°), L3(240°)
+            //
+            // Queremos que los datos del dispositivo se muestren así:
+            // CH1 → L1 (0° - BLANCO)
+            // CH2 → L2 (120° - ROJO)
+            // CH3 → L3 (240° - AZUL)
 
-            fasorCorriente.setMagnitudes(corrientes[0], corrientes[1], corrientes[2]);
-            fasorCorriente.setAngles(angulos[0], angulos[1], angulos[2]);
+            // ✅ VOLTAJES: Necesitan intercambio porque BLUE y RED están invertidos
+            fasorVoltaje.setMagnitudes(
+                    voltajes[0],  // CH1 → Eje 0 (L1 - BLANCO)
+                    voltajes[2],  // CH3 → Eje 1 (L2 - pero color AZUL, necesita swap)
+                    voltajes[1]   // CH2 → Eje 2 (L3 - pero color ROJO, necesita swap)
+            );
+            fasorVoltaje.setAngles(0.0f, 120.0f, 240.0f);
 
-            System.out.println("🔄 FASORES - Fasores actualizados:");
-            System.out.printf("   L1 (0°/BLANCO): V=%.1f, A=%.2f∠%.1f°%n",
-                    voltajes[0], corrientes[0], angulos[0]);
-            System.out.printf("   L2 (240°/ROJO): V=%.1f, A=%.2f∠%.1f°%n",
-                    voltajes[1], corrientes[1], angulos[1]);
-            System.out.printf("   L3 (120°/AZUL): V=%.1f, A=%.2f∠%.1f°%n",
-                    voltajes[2], corrientes[2], angulos[2]);
+            // ✅ CORRIENTES: NO necesitan intercambio porque RED y BLUE están en orden correcto
+            fasorCorriente.setMagnitudes(
+                    corrientes[0],  // CH1 → Eje 0 (L1 - BLANCO)
+                    corrientes[1],  // CH2 → Eje 1 (L2 - ROJO) ✅ DIRECTO
+                    corrientes[2]   // CH3 → Eje 2 (L3 - AZUL) ✅ DIRECTO
+            );
+            fasorCorriente.setAngles(
+                    angulos[0],    // Ángulo CH1
+                    angulos[1],    // Ángulo CH2 ✅ DIRECTO
+                    angulos[2]     // Ángulo CH3 ✅ DIRECTO
+            );
+
+            System.out.println("🔄 FASORES - Fasores actualizados (CORRECCIÓN FINAL):");
+            System.out.printf("   VOLTAJES - Eje 0 (L1/0°/BLANCO): CH1 → V=%.1f%n", voltajes[0]);
+            System.out.printf("   VOLTAJES - Eje 1 (L2/120°): CH3 → V=%.1f (color azul en array)%n", voltajes[2]);
+            System.out.printf("   VOLTAJES - Eje 2 (L3/240°): CH2 → V=%.1f (color rojo en array)%n", voltajes[1]);
+            System.out.printf("   CORRIENTES - Eje 0 (L1/0°/BLANCO): CH1 → A=%.2f∠%.1f°%n", corrientes[0], angulos[0]);
+            System.out.printf("   CORRIENTES - Eje 1 (L2/120°/ROJO): CH2 → A=%.2f∠%.1f°%n", corrientes[1], angulos[1]);
+            System.out.printf("   CORRIENTES - Eje 2 (L3/240°/AZUL): CH3 → A=%.2f∠%.1f°%n", corrientes[2], angulos[2]);
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error actualizando fasores: " + e.getMessage());

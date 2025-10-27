@@ -29,9 +29,11 @@ public class FasorView extends View {
     };
 
     private static final int[] VOLTAGE_COLORS = {
-            Color.WHITE,  // L1 (0°)   → BLANCO
-            Color.BLUE,    // L3 (240°) → AZUL
-            Color.RED     // L2 (120°) → ROJO
+            Color.WHITE,
+            Color.BLUE,
+            Color.RED  // L1 (0°)   → BLANCO
+                // L3 (240°) → AZUL
+                 // L2 (120°) → ROJO
 
     };
     private static final int[] CURRENT_COLORS = {
