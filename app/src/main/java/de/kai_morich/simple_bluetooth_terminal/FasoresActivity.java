@@ -49,10 +49,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -102,10 +99,12 @@ public class FasoresActivity extends AppCompatActivity {
     private boolean isConnectedToDevice = false;
 
     // ===== CONFIGURACIÓN DEL MEDIDOR =====
-    private int periodConfig = 1; // FIJO EN 1 MINUTO
-    private int sensorsConfig = 1; // 0=20A, 1=50A, 2=200A, 3=400A, 4=1000A, 5=3000A
-    private int meteringTypeConfig = 2; // FORZAR Carga Trifásica
+    private int periodConfig = 1;           // 1 = 5 MINUTOS
+    private int sensorsConfig = 2;          // 2 = CT-200A
+    private int meteringTypeConfig = 3;     // 2 = 3PH, 3W
     private boolean recordingConfig = false;
+
+
 
     // Configuración de interfaz
     private int rangoAmperes = 50;
@@ -926,8 +925,8 @@ public class FasoresActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!skipSpinnerEvents && configurationSynced) {
-                    // Como solo hay "Carga Trifásica", siempre es tipoCableado = 3
-                    tipoCableado = 2;
+
+                    tipoCableado = 3;
                     handler.postDelayed(() -> {
                         if (!isWaitingResponse) {
                             writeDeviceConfigurationFromSpinners();
@@ -973,13 +972,17 @@ public class FasoresActivity extends AppCompatActivity {
                     break;
             }
 
-            int meteringTypeValue = 2;
-            boolean recordingValue = false;
+            int meteringTypeValue = 2; // 2 = 3PH, 3W (Fuente Trifásica)
+            boolean recordingValue = false; // PAUSA
 
-            System.out.println("📤 FASORES - Enviando configuración:");
+            System.out.println("📤 FASORES - Enviando configuración completa:");
             System.out.println("   Posición spinner: " + spinnerPosition);
             System.out.println("   Código sensor: 0x0" + sensorsValue);
             System.out.println("   Rango: " + rangoAmperes + "A");
+            System.out.println("   Período: 5 minutos (01h)");
+            System.out.println("   Tipo cableado: 3PH, 3W (02h)");
+            System.out.println("   Grabación: PAUSA (00h)");
+            System.out.println("   ℹ️  Fecha/Hora se incluyen automáticamente");
 
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
                     recordingValue, periodValue, sensorsValue, meteringTypeValue);
@@ -995,6 +998,7 @@ public class FasoresActivity extends AppCompatActivity {
             }, 5000);
 
         } catch (Exception e) {
+            System.out.println("❌ FASORES - Error enviando configuración: " + e.getMessage());
             isWaitingResponse = false;
         }
     }
@@ -1178,18 +1182,19 @@ public class FasoresActivity extends AppCompatActivity {
 
         try {
             // Usar configuración actual
-            int periodValue = periodConfig;
-            int sensorsValue = sensorsConfig;
-            int meteringTypeValue = meteringTypeConfig;
-            boolean recordingValue = recording; // ✅ Nuevo estado
+            int periodValue = periodConfig;       // 1 = 5 minutos
+            int sensorsValue = sensorsConfig;     // Sensor actual
+            int meteringTypeValue = meteringTypeConfig; // 2 = 3PH, 3W
+            boolean recordingValue = recording;    // Nuevo estado
 
             System.out.println("📤 FASORES - Enviando comando REC:");
-            System.out.println("   Recording: " + (recordingValue ? "ON (0x01)" : "OFF (0x00)"));
-            System.out.println("   Period: " + periodValue);
-            System.out.println("   Sensors: " + sensorsValue);
-            System.out.println("   MeteringType: " + meteringTypeValue);
+            System.out.println("   Recording: " + (recordingValue ? "ON (0x01)" : "PAUSA (0x00)"));
+            System.out.println("   Period: 5 minutos (01h)");
+            System.out.println("   Sensors: 0x0" + sensorsValue);
+            System.out.println("   MeteringType: 3PH, 3W (02h)");
+            System.out.println("   ℹ️  Fecha/Hora se incluyen automáticamente");
 
-            // Crear comando
+            // Crear comando (la fecha/hora se agregan automáticamente dentro del método)
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
                     recordingValue, periodValue, sensorsValue, meteringTypeValue);
 
@@ -2085,9 +2090,9 @@ public class FasoresActivity extends AppCompatActivity {
             System.out.println("📊 FASORES - Recording del dispositivo: " + deviceRecording + " (IGNORADO)");
             System.out.println("📊 FASORES - Usando recordingConfig de la app: " + recordingConfig);
 
-            periodConfig = configData[1] & 0xFF;
+            periodConfig = configData[2] & 0xFF;
             sensorsConfig = configData[2] & 0xFF;
-            meteringTypeConfig = configData[2] & 0xFF;
+            meteringTypeConfig = configData[3] & 0xFF;
 
             skipSpinnerEvents = true;
 
@@ -2139,8 +2144,8 @@ public class FasoresActivity extends AppCompatActivity {
                 updateAmperesRange(0);
             }
 
-            meteringTypeConfig = 2;
-            tipoCableado = 2;
+            meteringTypeConfig = 3;
+            tipoCableado = 3;
             spinnerCableado.setSelection(0);
 
             skipSpinnerEvents = false;
