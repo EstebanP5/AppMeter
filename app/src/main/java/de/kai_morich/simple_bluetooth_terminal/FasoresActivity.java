@@ -102,14 +102,14 @@ public class FasoresActivity extends AppCompatActivity {
     private boolean isConnectedToDevice = false;
 
     // ===== CONFIGURACIÓN DEL MEDIDOR =====
-    private int periodConfig = 0; // FIJO EN 1 MINUTO
+    private int periodConfig = 1; // FIJO EN 1 MINUTO
     private int sensorsConfig = 1; // 0=20A, 1=50A, 2=200A, 3=400A, 4=1000A, 5=3000A
-    private int meteringTypeConfig = 3; // FORZAR Carga Trifásica
+    private int meteringTypeConfig = 2; // FORZAR Carga Trifásica
     private boolean recordingConfig = false;
 
     // Configuración de interfaz
     private int rangoAmperes = 50;
-    private int tipoCableado = 3; // Carga Trifásica
+    private int tipoCableado = 2; // Carga Trifásica
 
     // ===== AUTO-LECTURA =====
     private boolean autoReadEnabled = false;
@@ -184,7 +184,7 @@ public class FasoresActivity extends AppCompatActivity {
         btnRec = findViewById(R.id.btnRec);
         if (btnRec != null) {
             btnRec.setImageResource(android.R.drawable.presence_invisible);
-            System.out.println("✅ FASORES - btnRec inicializado como DESACTIVADO");
+            recordingConfig = false;
         }
         btnPlay = findViewById(R.id.btnPlay);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
@@ -275,7 +275,7 @@ public class FasoresActivity extends AppCompatActivity {
         String[] cableadoOptions = {"Carga Trifásica"};
         setupSpinnerAdapter(spinnerCableado, cableadoOptions);
 
-        // ✅ SOLO QUITAR 400A
+
         String[] amperesOptions = {
                 "50A", "200A", "1000A", "3000A"
         };
@@ -927,7 +927,7 @@ public class FasoresActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!skipSpinnerEvents && configurationSynced) {
                     // Como solo hay "Carga Trifásica", siempre es tipoCableado = 3
-                    tipoCableado = 3;
+                    tipoCableado = 2;
                     handler.postDelayed(() -> {
                         if (!isWaitingResponse) {
                             writeDeviceConfigurationFromSpinners();
@@ -950,7 +950,7 @@ public class FasoresActivity extends AppCompatActivity {
         }
 
         try {
-            int periodValue = 0;
+            int periodValue = 1;
 
             int spinnerPosition = spinnerAmperes.getSelectedItemPosition();
             int sensorsValue;
@@ -973,8 +973,8 @@ public class FasoresActivity extends AppCompatActivity {
                     break;
             }
 
-            int meteringTypeValue = 3;
-            boolean recordingValue = true;
+            int meteringTypeValue = 2;
+            boolean recordingValue = false;
 
             System.out.println("📤 FASORES - Enviando configuración:");
             System.out.println("   Posición spinner: " + spinnerPosition);
@@ -2078,7 +2078,7 @@ public class FasoresActivity extends AppCompatActivity {
             }
 
             // ⭐ CAMBIO: NO sobrescribir recordingConfig
-            // recordingConfig = (configData[0] & 0xFF) == 1; // ⬅️ COMENTAR ESTA LÍNEA
+
 
             // ⭐ NUEVO: Solo leer pero no aplicar el recording
             boolean deviceRecording = (configData[0] & 0xFF) == 1;
@@ -2087,12 +2087,12 @@ public class FasoresActivity extends AppCompatActivity {
 
             periodConfig = configData[1] & 0xFF;
             sensorsConfig = configData[2] & 0xFF;
-            meteringTypeConfig = configData[3] & 0xFF;
+            meteringTypeConfig = configData[2] & 0xFF;
 
             skipSpinnerEvents = true;
 
-            // ⭐ CAMBIO: Usar recordingConfig de la app, no del dispositivo
-            isRecording = recordingConfig; // ⬅️ CAMBIAR ESTA LÍNEA
+
+            isRecording = recordingConfig;
             handler.post(() -> {
                 if (btnRec != null) {
                     btnRec.setBackgroundResource(
@@ -2139,8 +2139,8 @@ public class FasoresActivity extends AppCompatActivity {
                 updateAmperesRange(0);
             }
 
-            meteringTypeConfig = 3;
-            tipoCableado = 3;
+            meteringTypeConfig = 2;
+            tipoCableado = 2;
             spinnerCableado.setSelection(0);
 
             skipSpinnerEvents = false;
