@@ -533,7 +533,7 @@ public class OctoNetCommandEncoder {
         return cmd;
     }
 
-    // ✅ MÉTODO CORREGIDO PARA DEVICE_TIME_WRITE - 5 BYTES SEGÚN TABLA 4
+    //  MÉTODO PARA DEVICE_TIME_WRITE
     public static byte[] createDeviceTimeWriteCommand(int year, int month, int day, int hour, int minute, int second, int dayOfWeek) {
         // Validar parámetros
         if (year < 1900 || year > 2100) {
@@ -586,15 +586,40 @@ public class OctoNetCommandEncoder {
     }
 
     public static byte[] createNodeSettingsWriteCommand(boolean recording, int period, int sensorAmps, int meteringType) {
-        // Array de 12 bytes según C# original
+        // Array de 12 bytes según TABLA 11 - METER_SETTINGS_STRC
         byte[] settingsData = new byte[12];
 
         int index = 0;
 
-        // Byte 0: REC_ON/OFF
+        // Byte 0: ID (0xEA - Identificador de Ajustes)
+        settingsData[index++] = (byte)0xEA;
+
+        // Byte 1: FW_VER (2 dígitos más significativos del FW)
+        settingsData[index++] = (byte)0x01;  // Versión 1 por defecto
+
+        // Bytes 2-4: YY/MM/DD (Fecha de último cambio de Ajustes)
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        int year = cal.get(java.util.Calendar.YEAR) % 100;
+        int month = cal.get(java.util.Calendar.MONTH) + 1;
+        int day = cal.get(java.util.Calendar.DAY_OF_MONTH);
+
+        settingsData[index++] = (byte)year;   // Byte 2: Año (00h-63h)
+        settingsData[index++] = (byte)month;  // Byte 3: Mes (01h-0Ch)
+        settingsData[index++] = (byte)day;    // Byte 4: Día (01h-1Fh)
+
+        // Bytes 5-7: HH:MM:SS (Hora de último cambio de Ajustes)
+        int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+        int minute = cal.get(java.util.Calendar.MINUTE);
+        int second = cal.get(java.util.Calendar.SECOND);
+
+        settingsData[index++] = (byte)hour;   // Byte 5: Hora (00h-17h)
+        settingsData[index++] = (byte)minute; // Byte 6: Minuto (00h-3Bh)
+        settingsData[index++] = (byte)second; // Byte 7: Segundo (00h-3Bh)
+
+        // Byte 8: REC_ON/OFF
         settingsData[index++] = recording ? (byte)0x01 : (byte)0x00;
 
-        // Byte 1: PERIOD
+        // Byte 9: PERIOD
         switch (period) {
             case 0:  settingsData[index++] = (byte)0x00; break;  // 1 minuto
             case 1:  settingsData[index++] = (byte)0x01; break;  // 5 minutos
@@ -603,7 +628,7 @@ public class OctoNetCommandEncoder {
             default: settingsData[index++] = (byte)0x01; break;  // Default 5 minutos
         }
 
-        // Byte 2: SENSORS
+        // Byte 10: SENSORS
         switch (sensorAmps) {
             case 0:   settingsData[index++] = (byte)0x00; break;  // Shunt-20A
             case 1:   settingsData[index++] = (byte)0x01; break;  // CT-50A
@@ -611,37 +636,72 @@ public class OctoNetCommandEncoder {
             case 3:   settingsData[index++] = (byte)0x03; break;  // CT-400A
             case 4:   settingsData[index++] = (byte)0x04; break;  // RoGo-1000A
             case 5:   settingsData[index++] = (byte)0x05; break;  // RoGo-3000A
-            default:  settingsData[index++] = (byte)0x01; break;  // Default CT-50A
+            default:  settingsData[index++] = (byte)0x02; break;  // Default CT-200A
         }
 
-        // Byte 3: METERING_TYPE
+        // Byte 11: WIRING_SET (Tipo de cableado)
         switch (meteringType) {
-            case 0: settingsData[index++] = (byte)0x00; break;  // Fuente y Carga Monofásica
-            case 1: settingsData[index++] = (byte)0x01; break;  // Fuente y Carga Bifásica
-            case 2: settingsData[index++] = (byte)0x02; break;  // Fuente Trifásica
-            case 3: settingsData[index++] = (byte)0x03; break;  // Carga Trifásica
-            default: settingsData[index++] = (byte)0x03; break; // Default Carga Trifásica
+            case 0: settingsData[index++] = (byte)0x00; break;  // 1PH, 2W
+            case 1: settingsData[index++] = (byte)0x01; break;  // 2PH, 3W
+            case 2: settingsData[index++] = (byte)0x02; break;  // 3PH, 3W
+            case 3: settingsData[index++] = (byte)0x03; break;  // 3PH, 4W
+            default: settingsData[index++] = (byte)0x03; break;  // Default 3PH, 4W
         }
-
-        // Bytes 4-5: Bytes de relleno
-        settingsData[index++] = (byte)0x00;
-        settingsData[index++] = (byte)0x00;
-
-        // Bytes 6-11: Fecha y hora actual
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        settingsData[index++] = (byte)(cal.get(java.util.Calendar.YEAR) % 100);
-        settingsData[index++] = (byte)(cal.get(java.util.Calendar.MONTH) + 1);
-        settingsData[index++] = (byte)cal.get(java.util.Calendar.DAY_OF_MONTH);
-        settingsData[index++] = (byte)cal.get(java.util.Calendar.HOUR_OF_DAY);
-        settingsData[index++] = (byte)cal.get(java.util.Calendar.MINUTE);
-        settingsData[index++] = (byte)cal.get(java.util.Calendar.SECOND);
 
         byte[] cmd = encodeCommand(CMD_WRITE, CMD_NODE_SETTINGS, settingsData);
-        System.out.println("🔍 NODE_SETTINGS write generado: " + bytesToHexString(cmd));
-        System.out.println("   Config - REC:" + recording + " PERIOD:" + period + " SENSORS:" + sensorAmps + " TYPE:" + meteringType);
+
+        // ✅ LOGS MEJORADOS Y DETALLADOS
+        System.out.println("🔍 METER_SETTINGS write generado (Tabla 11):");
+        System.out.println("   📦 Comando HEX: " + bytesToHexString(cmd));
+        System.out.println("   ⚙️  Configuración:");
+        System.out.println("      • ID: 0xEA (Identificador de Ajustes)");
+        System.out.println("      • FW_VER: 0x01");
+        System.out.println("      • REC: " + (recording ? "ON (0x01)" : "PAUSA (0x00)"));
+        System.out.println("      • PERIOD: " + getPeriodName(period) + " (0x0" + period + ")");
+        System.out.println("      • SENSORS: " + getSensorName(sensorAmps) + " (0x0" + sensorAmps + ")");
+        System.out.println("      • WIRING_SET: " + getWiringSetName(meteringType) + " (0x0" + meteringType + ")");
+        System.out.println("   📅 Fecha/Hora de último cambio:");
+        System.out.printf("      • %02d/%02d/20%02d %02d:%02d:%02d%n", day, month, year, hour, minute, second);
 
         return cmd;
     }
+
+    // ✅ MÉTODOS HELPER PARA LOGS DESCRIPTIVOS
+    private static String getPeriodName(int period) {
+        switch (period) {
+            case 0: return "1 minuto";
+            case 1: return "5 minutos";
+            case 2: return "10 minutos";
+            case 3: return "15 minutos";
+            default: return "Desconocido";
+        }
+    }
+
+    private static String getSensorName(int sensor) {
+        switch (sensor) {
+            case 0: return "Shunt-20A";
+            case 1: return "CT-50A";
+            case 2: return "CT-200A ✅";
+            case 3: return "CT-400A";
+            case 4: return "RoGo-1000A ✅";
+            case 5: return "RoGo-3000A ✅";
+            default: return "Desconocido";
+        }
+    }
+
+    private static String getWiringSetName(int wiring) {
+        switch (wiring) {
+            case 0: return "1PH, 2W (Monofásico)";
+            case 1: return "2PH, 3W (Bifásico)";
+            case 2: return "3PH, 3W (Trifásico sin neutro) ✅";
+            case 3: return "3PH, 4W (Trifásico con neutro) ✅";
+            default: return "Desconocido";
+        }
+    }
+
+
+
+
 
     // Comando para escribir configuración WiFi
     public static byte[] createWiFiSettingsWriteCommand(String ssid, String password, String mac, String ip,
@@ -1242,6 +1302,8 @@ public class OctoNetCommandEncoder {
             System.err.printf("❌ Error procesando NODE_CURRENT: %s%n", e.getMessage());
         }
     }
+
+
 
     /**
      * Valida estructura de comando según C# original

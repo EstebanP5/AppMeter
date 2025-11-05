@@ -99,15 +99,15 @@ public class FasoresActivity extends AppCompatActivity {
     private boolean isConnectedToDevice = false;
 
     // ===== CONFIGURACIÓN DEL MEDIDOR =====
-    private int periodConfig = 1;           // 1 = 5 MINUTOS
-    private int sensorsConfig = 2;          // 2 = CT-200A
-    private int meteringTypeConfig = 3;     // 2 = 3PH, 3W
-    private boolean recordingConfig = false;
+    private int periodConfig = 1;           // 1 = 5 MINUTOS (Byte 9)
+    private int sensorsConfig = 2;          // 2 = CT-200A (Byte 10)
+    private int meteringTypeConfig = 2;     // 2 = 3PH, 3W (Byte 11 - WIRING_SET)
+    private boolean recordingConfig = false; // false = PAUSA (Byte 8)
 
 
 
     // Configuración de interfaz
-    private int rangoAmperes = 50;
+    private int rangoAmperes = 200;
     private int tipoCableado = 2; // Carga Trifásica
 
     // ===== AUTO-LECTURA =====
@@ -170,9 +170,23 @@ public class FasoresActivity extends AppCompatActivity {
         setupSpinners();
         setupButtons();
         setupAutoReadTask();
-        // Conectar directamente
-        handler.postDelayed(() -> connectToDeviceIndependent(), 500);
+
+        // Conectar directamente y luego sincronizar hora
+        handler.postDelayed(() -> {
+            connectToDeviceIndependent();
+
+            // ✅ Sincronizar hora 2 segundos después de conectar
+            handler.postDelayed(() -> {
+                if (isConnectedToDevice) {
+                    sendTimeWriteCommand();
+                } else {
+                    System.out.println("⚠️ No se pudo sincronizar hora - sin conexión");
+                }
+            }, 2000);
+        }, 500);
     }
+
+
 
     private void initializeViews() {
 
@@ -830,58 +844,13 @@ public class FasoresActivity extends AppCompatActivity {
 
 
 
-    private void sendWiFiCredentialsToDevice(WiFiValidationModule.ValidatedNetwork network) {
-        try {
-            // ✅ VALIDAR QUE NETWORK NO SEA NULL
-            if (network == null || network.ssid == null || network.password == null) {
-                System.out.println("❌ FASORES - Network inválido");
-                return;
-            }
 
-            // ✅ CREAR VARIABLES FINALES
-            final String finalSsid = network.ssid;
-            final String finalPassword = network.password;
-
-            byte[] command = OctoNetCommandEncoder.createWiFiSettingsWriteCommand(
-                    finalSsid,
-                    finalPassword
-            );
-
-            if (command == null || command.length == 0) {
-                System.out.println("❌ FASORES - Comando WiFi vacío");
-                return;
-            }
-
-            sendTcpCommandIndependent(command);
-
-            System.out.println("📡 FASORES - Enviando WiFi al medidor:");
-            System.out.println("   SSID: " + finalSsid);
-            System.out.println("   Tamaño comando: " + command.length + " bytes");
-            System.out.println("   Comando hex: " + OctoNetCommandEncoder.bytesToHexString(command));
-
-        } catch (Exception e) {
-            System.out.println("❌ FASORES - Error enviando WiFi: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 
     // =========================================================================
     // ===== COMANDOS TCP =====================================================
     // =========================================================================
 
-    private void sendTimeWriteCommand() {
-        Calendar cal = Calendar.getInstance();
-        byte[] command = OctoNetCommandEncoder.createDeviceTimeWriteCommand(
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH) + 1,
-                cal.get(Calendar.DAY_OF_MONTH),
-                cal.get(Calendar.HOUR_OF_DAY),
-                cal.get(Calendar.MINUTE),
-                cal.get(Calendar.SECOND),
-                cal.get(Calendar.DAY_OF_WEEK)
-        );
-        sendTcpCommandIndependent(command);
-    }
+
 
     private void sendDeviceIdReadCommand() {
         byte[] command = OctoNetCommandEncoder.createDeviceIdReadCommand();
@@ -900,6 +869,51 @@ public class FasoresActivity extends AppCompatActivity {
     // =========================================================================
     // ===== LISTENERS DE SPINNERS ============================================
     // =========================================================================
+
+    private void sendTimeWriteCommand() {
+        // ✅ EJECUTAR EN HILO SECUNDARIO
+        executor.execute(() -> {
+            try {
+                if (!isConnectedToDevice || outputStream == null) {
+                    System.out.println("❌ No conectado al dispositivo");
+                    return;
+                }
+
+                // ✅ Obtener fecha y hora actual
+                Calendar calendar = Calendar.getInstance();
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH) + 1;  // Calendar.MONTH es 0-11
+                int day = calendar.get(Calendar.DAY_OF_MONTH);
+                int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                int minute = calendar.get(Calendar.MINUTE);
+                int second = calendar.get(Calendar.SECOND);
+                int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // 1=Domingo, 7=Sábado
+
+                System.out.println("⏰ Enviando fecha/hora al medidor:");
+                System.out.printf("   📅 %02d/%02d/%04d %02d:%02d:%02d (Día de semana: %d)%n",
+                        day, month, year, hour, minute, second, dayOfWeek);
+
+                // ✅ Crear comando para ESCRIBIR fecha/hora
+                byte[] command = OctoNetCommandEncoder.createDeviceTimeWriteCommand(
+                        year, month, day, hour, minute, second, dayOfWeek);
+
+                outputStream.write(command);
+                outputStream.flush();
+
+                System.out.println("✅ Comando de fecha/hora enviado");
+
+                // ✅ Toast en el hilo principal
+
+
+            } catch (Exception e) {
+                System.out.println("❌ Error enviando fecha/hora: " + e.getMessage());
+                e.printStackTrace();
+
+                // ✅ Toast de error en el hilo principal
+                handler.post(() -> showToast("❌ Error sincronizando hora"));
+            }
+        });
+    }
 
     private void setupSpinnerListeners() {
         spinnerAmperes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -926,7 +940,7 @@ public class FasoresActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!skipSpinnerEvents && configurationSynced) {
 
-                    tipoCableado = 3;
+                    tipoCableado = 2;
                     handler.postDelayed(() -> {
                         if (!isWaitingResponse) {
                             writeDeviceConfigurationFromSpinners();
@@ -949,40 +963,49 @@ public class FasoresActivity extends AppCompatActivity {
         }
 
         try {
-            int periodValue = 1;
+            int periodValue = 1; // 5 minutos
 
             int spinnerPosition = spinnerAmperes.getSelectedItemPosition();
             int sensorsValue;
 
+            // ✅ ACTUALIZAR rangoAmperes según la posición del spinner
             switch (spinnerPosition) {
                 case 0:
                     sensorsValue = 1; // 50A
+                    rangoAmperes = 50;
                     break;
                 case 1:
                     sensorsValue = 2; // 200A
+                    rangoAmperes = 200;
                     break;
                 case 2:
                     sensorsValue = 4; // 1000A
+                    rangoAmperes = 1000;
                     break;
                 case 3:
                     sensorsValue = 5; // 3000A
+                    rangoAmperes = 3000;
                     break;
                 default:
-                    sensorsValue = 1;
+                    sensorsValue = 2;
+                    rangoAmperes = 200;
                     break;
             }
 
-            int meteringTypeValue = 2; // 2 = 3PH, 3W (Fuente Trifásica)
+            // ✅ ACTUALIZAR sensorsConfig para mantenerlo sincronizado
+            sensorsConfig = sensorsValue;
+
+            int meteringTypeValue = 2; // 2 = 3PH, 3W (WIRING_SET)
             boolean recordingValue = false; // PAUSA
 
-            System.out.println("📤 FASORES - Enviando configuración completa:");
+            System.out.println("📤 FASORES - Enviando configuración completa (Tabla 11):");
             System.out.println("   Posición spinner: " + spinnerPosition);
             System.out.println("   Código sensor: 0x0" + sensorsValue);
-            System.out.println("   Rango: " + rangoAmperes + "A");
+            System.out.println("   Rango: " + rangoAmperes + "A"); // ✅ Ahora mostrará el correcto
             System.out.println("   Período: 5 minutos (01h)");
-            System.out.println("   Tipo cableado: 3PH, 3W (02h)");
+            System.out.println("   Tipo cableado: 3PH, 3W (02h) - WIRING_SET");
             System.out.println("   Grabación: PAUSA (00h)");
-            System.out.println("   ℹ️  Fecha/Hora se incluyen automáticamente");
+            System.out.println("   ℹ️  Estructura Tabla 11: ID + FW_VER + Fecha/Hora + Config");
 
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
                     recordingValue, periodValue, sensorsValue, meteringTypeValue);
@@ -990,6 +1013,9 @@ public class FasoresActivity extends AppCompatActivity {
             sendTcpCommandIndependent(command);
             isWaitingResponse = true;
             showToast("✅ Configuración aplicada");
+
+            // ✅ ACTUALIZAR DIAGRAMA con el nuevo rango
+            updateDiagram();
 
             handler.postDelayed(() -> {
                 if (isWaitingResponse) {
@@ -1004,25 +1030,12 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void updateAmperesRange(int sensorIndex) {
-        // 0 -> 0x01 -> 50A
-        // 1 -> 0x02 -> 200A
-        // 2 -> 0x04 -> 1000A
-        // 3 -> 0x05 -> 3000A
-
         int[] amperesValues = {50, 200, 1000, 3000};
 
         if (sensorIndex >= 0 && sensorIndex < amperesValues.length) {
-            rangoAmperes = amperesValues[sensorIndex];
-            System.out.println("⚡ FASORES - Rango amperes actualizado:");
-            System.out.println("   Índice spinner: " + sensorIndex);
-            System.out.println("   Valor real: " + rangoAmperes + "A");
-
+            rangoAmperes = amperesValues[sensorIndex]; //  Debe estar esto
             updateDiagram();
-
-        } else {
-            System.out.println("❌ FASORES - Índice de sensor inválido: " + sensorIndex);
-            rangoAmperes = 50;
-            updateDiagram();
+            System.out.println("📊 Rango actualizado a: " + rangoAmperes + "A");
         }
     }
 
@@ -1182,19 +1195,19 @@ public class FasoresActivity extends AppCompatActivity {
 
         try {
             // Usar configuración actual
-            int periodValue = periodConfig;       // 1 = 5 minutos
-            int sensorsValue = sensorsConfig;     // Sensor actual
-            int meteringTypeValue = meteringTypeConfig; // 2 = 3PH, 3W
-            boolean recordingValue = recording;    // Nuevo estado
+            int periodValue = periodConfig;         // 1 = 5 minutos (Byte 9)
+            int sensorsValue = sensorsConfig;       // 2 = CT-200A (Byte 10)
+            int meteringTypeValue = meteringTypeConfig; // 2 = 3PH, 3W (Byte 11 - WIRING_SET)
+            boolean recordingValue = recording;      // Estado de grabación (Byte 8)
 
-            System.out.println("📤 FASORES - Enviando comando REC:");
+            System.out.println("📤 FASORES - Enviando comando REC (Tabla 11):");
             System.out.println("   Recording: " + (recordingValue ? "ON (0x01)" : "PAUSA (0x00)"));
-            System.out.println("   Period: 5 minutos (01h)");
-            System.out.println("   Sensors: 0x0" + sensorsValue);
-            System.out.println("   MeteringType: 3PH, 3W (02h)");
-            System.out.println("   ℹ️  Fecha/Hora se incluyen automáticamente");
+            System.out.println("   Period: 5 minutos (01h) - Byte 9");
+            System.out.println("   Sensors: 0x0" + sensorsValue + " - Byte 10");
+            System.out.println("   WIRING_SET: 3PH, 3W (02h) - Byte 11");
+            System.out.println("   ℹ️  Estructura: 0xEA + FW_VER + Fecha/Hora + Config");
 
-            // Crear comando (la fecha/hora se agregan automáticamente dentro del método)
+            // Crear comando (incluye ID, FW_VER, fecha/hora automáticamente)
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
                     recordingValue, periodValue, sensorsValue, meteringTypeValue);
 
@@ -2068,106 +2081,108 @@ public class FasoresActivity extends AppCompatActivity {
     // ===== PROCESAMIENTO DE CONFIGURACIÓN ===================================
     // =========================================================================
 
-    private void processConfigurationResponseIndependent(byte[] response) {
+    private void processConfigurationResponseIndependent(byte[] data) {
         try {
-            System.out.println("🔍 FASORES - Procesando NODE_SETTINGS...");
+            // Extraer los datos del comando
+            byte[] configData = OctoNetCommandEncoder.extractCommandData(data);
 
-            byte[] configData = OctoNetCommandEncoder.extractCommandData(response);
-
-            if (configData == null || configData.length < 4) {
-                System.out.println("❌ FASORES - Datos de configuración insuficientes");
-                configurationSynced = true;
-                setControlsEnabled(true);
-                setSpinnersEnabled(true);
+            if (configData == null || configData.length < 12) {
+                System.out.println("❌ FASORES - Datos insuficientes para NODE_SETTINGS: " +
+                        (configData != null ? configData.length : "null") + " bytes");
                 return;
             }
 
-            // ⭐ CAMBIO: NO sobrescribir recordingConfig
+            System.out.println("🔍 FASORES - Procesando NODE_SETTINGS (Tabla 11)...");
+            System.out.println("   Datos recibidos: " + configData.length + " bytes");
 
+            // ===== ESTRUCTURA TABLA 11 - METER_SETTINGS_STRC =====
+            // Byte 0: ID (0xEA)
+            // Byte 1: FW_VER
+            // Byte 2-4: YY/MM/DD
+            // Byte 5-7: HH:MM:SS
+            // Byte 8: REC_ON/OFF
+            // Byte 9: PERIOD
+            // Byte 10: SENSORS
+            // Byte 11: WIRING_SET
 
-            // ⭐ NUEVO: Solo leer pero no aplicar el recording
-            boolean deviceRecording = (configData[0] & 0xFF) == 1;
-            System.out.println("📊 FASORES - Recording del dispositivo: " + deviceRecording + " (IGNORADO)");
+            int id = configData[0] & 0xFF;
+            int fwVer = configData[1] & 0xFF;
+            int year = configData[2] & 0xFF;
+            int month = configData[3] & 0xFF;
+            int day = configData[4] & 0xFF;
+            int hour = configData[5] & 0xFF;
+            int minute = configData[6] & 0xFF;
+            int second = configData[7] & 0xFF;
+            boolean recording = (configData[8] & 0xFF) == 0x01;
+            int period = configData[9] & 0xFF;
+            int sensors = configData[10] & 0xFF;
+            int wiringSet = configData[11] & 0xFF;
+
+            System.out.println("📊 FASORES - Configuración recibida del medidor (Tabla 11):");
+            System.out.println("   ID: 0x" + String.format("%02X", id));
+            System.out.println("   FW_VER: " + fwVer);
+            System.out.println("   Fecha: " + String.format("%02d/%02d/20%02d", day, month, year));
+            System.out.println("   Hora: " + String.format("%02d:%02d:%02d", hour, minute, second));
+            System.out.println("   Recording: " + (recording ? "ON (0x01)" : "PAUSA (0x00)"));
+            System.out.println("   Period: " + period + " (" + getPeriodDescription(period) + ")");
+            System.out.println("   Sensors: " + sensors + " (" + getSensorDescription(sensors) + ")");
+            System.out.println("   Wiring Set: " + wiringSet + " (" + getWiringDescription(wiringSet) + ")");
+
+            // ✅ CRÍTICO: NO ACTUALIZAR rangoAmperes NI LLAMAR updateDiagram()
+            // Solo sincronizar sensorsConfig si es necesario
+            System.out.println("📊 FASORES - Recording del dispositivo: " + recording + " (IGNORADO)");
             System.out.println("📊 FASORES - Usando recordingConfig de la app: " + recordingConfig);
 
-            periodConfig = configData[2] & 0xFF;
-            sensorsConfig = configData[2] & 0xFF;
-            meteringTypeConfig = configData[3] & 0xFF;
+            // Actualizar solo sensorsConfig para mantener sincronizado
+            sensorsConfig = sensors;
+            meteringTypeConfig = wiringSet;
+            periodConfig = period;
 
-            skipSpinnerEvents = true;
-
-
-            isRecording = recordingConfig;
-            handler.post(() -> {
-                if (btnRec != null) {
-                    btnRec.setBackgroundResource(
-                            isRecording ? R.drawable.button_rec_recording : R.drawable.button_rec
-                    );
-
-                    if (isRecording) {
-                        startRecordingAnimation();
-                    } else {
-                        stopRecordingAnimation();
-                    }
-                }
-            });
+            System.out.println("✅ FASORES - Variables sincronizadas (rangoAmperes NO modificado)");
+            System.out.println("   sensorsConfig: " + sensorsConfig);
+            System.out.println("   meteringTypeConfig: " + meteringTypeConfig);
+            System.out.println("   periodConfig: " + periodConfig);
+            System.out.println("   rangoAmperes: " + rangoAmperes + "A (mantenido)");
 
             configurationSynced = true;
-            setControlsEnabled(true);
-            setSpinnersEnabled(true);
-
-            // ✅ MAPEO INVERSO SIN 400A
-            int spinnerIndex;
-            switch (sensorsConfig) {
-                case 1:
-                    spinnerIndex = 0; // 50A
-                    break;
-                case 2:
-                    spinnerIndex = 1; // 200A
-                    break;
-                case 4:
-                    spinnerIndex = 2; // 1000A
-                    break;
-                case 5:
-                    spinnerIndex = 3; // 3000A
-                    break;
-                default:
-                    spinnerIndex = 0;
-                    break;
-            }
-
-            if (spinnerIndex >= 0 && spinnerIndex < spinnerAmperes.getAdapter().getCount()) {
-                spinnerAmperes.setSelection(spinnerIndex);
-                updateAmperesRange(spinnerIndex);
-            } else {
-                spinnerAmperes.setSelection(0);
-                updateAmperesRange(0);
-            }
-
-            meteringTypeConfig = 3;
-            tipoCableado = 3;
-            spinnerCableado.setSelection(0);
-
-            skipSpinnerEvents = false;
-
-            updateDiagram();
-
             System.out.println("✅ FASORES - Sincronización completa");
 
         } catch (Exception e) {
             System.out.println("❌ FASORES - Error procesando configuración: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
 
-            skipSpinnerEvents = true;
-            if (spinnerAmperes != null && spinnerAmperes.getAdapter() != null) {
-                spinnerAmperes.setSelection(0);
-                updateAmperesRange(0);
-            }
-            skipSpinnerEvents = false;
+    // ===== MÉTODOS HELPER PARA DESCRIPCIONES =====
+    private String getPeriodDescription(int period) {
+        switch (period) {
+            case 0: return "1 minuto";
+            case 1: return "5 minutos";
+            case 2: return "10 minutos";
+            case 3: return "15 minutos";
+            default: return "Desconocido";
+        }
+    }
 
-            configurationSynced = true;
-            setControlsEnabled(true);
-            setSpinnersEnabled(true);
+    private String getSensorDescription(int sensor) {
+        switch (sensor) {
+            case 0: return "Shunt-20A";
+            case 1: return "CT-50A";
+            case 2: return "CT-200A";
+            case 3: return "CT-400A";
+            case 4: return "RoGo-1000A";
+            case 5: return "RoGo-3000A";
+            default: return "Desconocido";
+        }
+    }
+
+    private String getWiringDescription(int wiring) {
+        switch (wiring) {
+            case 0: return "1PH, 2W";
+            case 1: return "2PH, 3W";
+            case 2: return "3PH, 3W";
+            case 3: return "3PH, 4W";
+            default: return "Desconocido";
         }
     }
 
