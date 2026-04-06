@@ -30,6 +30,11 @@ import com.google.android.material.navigation.NavigationView;
 import java.io.IOException;
 
 import de.kai_morich.simple_bluetooth_terminal.activities.LoginActivity;
+import de.kai_morich.simple_bluetooth_terminal.api.JwtUtils;
+import de.kai_morich.simple_bluetooth_terminal.api.TokenManager;
+import de.kai_morich.simple_bluetooth_terminal.activities.MisDispositivosActivity;
+import de.kai_morich.simple_bluetooth_terminal.activities.AdminMedicionesActivity;
+import de.kai_morich.simple_bluetooth_terminal.activities.MedicionesActivity;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -80,6 +85,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     .commit();
             navigationView.setCheckedItem(R.id.nav_dashboard);
         }
+
+        // Configurar visibilidad del menú según rol
+        configureDrawerMenu();
+    }
+
+    private void configureDrawerMenu() {
+        TokenManager tokenManager = new TokenManager(this);
+        boolean isAdmin = JwtUtils.isInstallerAdmin(tokenManager.getToken());
+
+        android.view.Menu menu = navigationView.getMenu();
+
+        // Dashboard: siempre visible
+        // Clientes: solo admin
+        menu.findItem(R.id.nav_clientes).setVisible(isAdmin);
+        // Mediciones Admin: solo admin
+        menu.findItem(R.id.nav_mediciones_admin).setVisible(isAdmin);
+        // Mediciones: todos
+        menu.findItem(R.id.nav_mediciones).setVisible(true);
+        // Mis Dispositivos: deshabilitado
+        // menu.findItem(R.id.nav_mis_dispositivos).setVisible(true);
+        // Configuración: todos
+        menu.findItem(R.id.nav_configuracion).setVisible(true);
     }
 
     private void initToolbar() {
@@ -135,6 +162,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_clientes) {
             frag = new ConfiguracionFragment(); // Fragmento correcto para clientes
 
+        } else if (id == R.id.nav_configuracion) {
+            frag = new ConfiguracionFragment();
+
+        } else if (id == R.id.nav_mediciones_admin) {
+            startActivity(new Intent(this, AdminMedicionesActivity.class));
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
+
+        } else if (id == R.id.nav_mediciones) {
+            startActivity(new Intent(this, MedicionesActivity.class));
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
         }
 
         if (frag != null) {

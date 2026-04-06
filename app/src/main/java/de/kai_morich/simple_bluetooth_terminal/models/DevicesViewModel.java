@@ -9,6 +9,12 @@ public class DevicesViewModel {
     @SerializedName("IdCircuit")
     private Integer idCircuit;
 
+    @SerializedName("IdLocation")
+    private Integer idLocation;
+
+    @SerializedName("Type")
+    private Integer type;
+
     @SerializedName("Name")
     private String name;
 
@@ -33,6 +39,18 @@ public class DevicesViewModel {
     @SerializedName("IdCustomer")
     private Integer idCustomer;
 
+    @SerializedName(value = "idHW", alternate = {"IdHW"})
+    private Integer idHW;
+
+    @SerializedName("IdNode")
+    private Integer idNode;
+
+    @SerializedName("NodeType")
+    private Integer nodeType;
+
+    @SerializedName("Load")
+    private Integer load;
+
     // Constructor vacío
     public DevicesViewModel() {}
 
@@ -50,6 +68,27 @@ public class DevicesViewModel {
         this.longitude = longitude;
         this.icon = icon;
         this.idCustomer = idCustomer;
+    }
+
+    public DevicesViewModel(Integer idDevice, Integer idCircuit, Integer idLocation, Integer type,
+                            String name, String serie, String description, String ubiety,
+                            Double latitude, Double longitude, String icon, Integer idCustomer,
+                            Integer idHW, Integer idNode, Integer load) {
+        this.idDevice = idDevice;
+        this.idCircuit = idCircuit;
+        this.idLocation = idLocation;
+        this.type = type;
+        this.name = name;
+        this.serie = serie;
+        this.description = description;
+        this.ubiety = ubiety;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.icon = icon;
+        this.idCustomer = idCustomer;
+        this.idHW = idHW;
+        this.idNode = idNode;
+        this.load = load;
     }
 
     // Constructor para crear nuevo dispositivo (sin ID)
@@ -82,6 +121,22 @@ public class DevicesViewModel {
 
     public void setIdCircuit(Integer idCircuit) {
         this.idCircuit = idCircuit;
+    }
+
+    public Integer getIdLocation() {
+        return idLocation;
+    }
+
+    public void setIdLocation(Integer idLocation) {
+        this.idLocation = idLocation;
+    }
+
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
     }
 
     public String getName() {
@@ -146,6 +201,38 @@ public class DevicesViewModel {
 
     public void setIdCustomer(Integer idCustomer) {
         this.idCustomer = idCustomer;
+    }
+
+    public Integer getIdHW() {
+        return idHW;
+    }
+
+    public void setIdHW(Integer idHW) {
+        this.idHW = idHW;
+    }
+
+    public Integer getIdNode() {
+        return idNode;
+    }
+
+    public void setIdNode(Integer idNode) {
+        this.idNode = idNode;
+    }
+
+    public Integer getNodeType() {
+        return nodeType;
+    }
+
+    public void setNodeType(Integer nodeType) {
+        this.nodeType = nodeType;
+    }
+
+    public Integer getLoad() {
+        return load;
+    }
+
+    public void setLoad(Integer load) {
+        this.load = load;
     }
 
     @Override

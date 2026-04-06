@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tipo de dispositivo"
+        android:textColor="#FF6B00"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/rgTipoDispositivo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <RadioButton
+            android:id="@+id/rbMeter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="METER"
+            android:checked="true"
+            android:layout_marginEnd="24dp" />
+
+        <RadioButton
+            android:id="@+id/rbHub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="HUB" />
+
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Número de serie (máx. 12 chars)"
+        android:textColor="#FF6B00"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etSerieNueva"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Ej: ABC123456789"
+        android:inputType="textCapCharacters"
+        android:maxLength="12"
+        android:padding="8dp" />
+
+</LinearLayout>

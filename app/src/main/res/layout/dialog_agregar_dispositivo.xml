@@ -55,23 +55,6 @@
                 android:textColor="#2C3E50" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo Serie -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Número de serie"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDispositivoSerie"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textCapCharacters"
-                android:textSize="16sp"
-                android:textColor="#2C3E50" />
-        </com.google.android.material.textfield.TextInputLayout>
-
         <!-- Campo Descripción -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
@@ -90,80 +73,19 @@
                 android:textColor="#2C3E50" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo Ubicación -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Ubicación específica"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDispositivoUbicacion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPostalAddress"
-                android:textSize="16sp"
-                android:textColor="#2C3E50" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Coordenadas Layout -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <!-- Campo Latitud -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:hint="Latitud"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etDispositivoLatitud"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal|numberSigned"
-                    android:textSize="16sp"
-                    android:textColor="#2C3E50" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Campo Longitud -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:hint="Longitud"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etDispositivoLongitud"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal|numberSigned"
-                    android:textSize="16sp"
-                    android:textColor="#2C3E50" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-
-        <!-- Campo Icono -->
+        <!-- Tipo de nodo -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            android:hint="Icono (opcional)"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:hint="Tipo de nodo"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDispositivoIcono"
+            <AutoCompleteTextView
+                android:id="@+id/spDispositivoTipoNodo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:inputType="none"
                 android:textSize="16sp"
                 android:textColor="#2C3E50" />
         </com.google.android.material.textfield.TextInputLayout>

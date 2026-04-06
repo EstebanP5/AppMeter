@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="@android:color/white">
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="@android:color/white">
 
     <!-- Título del diálogo -->
     <TextView
@@ -179,7 +183,9 @@
                 android:layout_weight="2"
                 android:text="logo.png"
                 android:textSize="14sp"
-                android:textColor="#2C3E50" />
+                android:textColor="#2C3E50"
+                android:maxLines="3"
+                android:ellipsize="end" />
         </LinearLayout>
 
         <!-- Configuración -->
@@ -242,4 +248,6 @@
             android:background="@drawable/selector_background" />
     </LinearLayout>
 
-</LinearLayout>
+    </LinearLayout>
+
+</ScrollView>

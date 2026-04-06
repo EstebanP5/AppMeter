@@ -2,7 +2,9 @@ package de.kai_morich.simple_bluetooth_terminal;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -39,11 +42,13 @@ public class    AgregarClienteFragment extends Fragment {
 
     // Vistas principales
     private RecyclerView rvClientes;
+    private EditText etBuscarCliente;
     private ClientesAdapter adapter;
     private Button btnAgregarCliente, btnAgregarLocalidad, btnAgregarCircuito, btnAgregarDispositivo;
 
     // Datos
     private List<CustomerViewModel> clienteList = new ArrayList<>();
+    private List<CustomerViewModel> allClientesFull = new ArrayList<>();
     private List<LocationsViewModel> localidadesList = new ArrayList<>();
     private List<CircuitsViewModel> circuitosList = new ArrayList<>();
     private ApiService api;
@@ -76,6 +81,7 @@ public class    AgregarClienteFragment extends Fragment {
     private boolean initViews(View view) {
         try {
             rvClientes = view.findViewById(R.id.rvClientes);
+            etBuscarCliente = view.findViewById(R.id.etBuscarCliente);
             btnAgregarCliente = view.findViewById(R.id.btnAgregarCliente);
             btnAgregarLocalidad = view.findViewById(R.id.btnAgregarLocalidad);
             btnAgregarCircuito = view.findViewById(R.id.btnAgregarCircuito);
@@ -136,6 +142,33 @@ public class    AgregarClienteFragment extends Fragment {
         btnAgregarLocalidad.setOnClickListener(v -> mostrarDialogoAgregarLocalidad());
         btnAgregarCircuito.setOnClickListener(v -> mostrarDialogoAgregarCircuito());
         btnAgregarDispositivo.setOnClickListener(v -> mostrarDialogoAgregarDispositivo());
+
+        if (etBuscarCliente != null) {
+            etBuscarCliente.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override public void afterTextChanged(Editable s) {
+                    filtrarClientes(s.toString().trim());
+                }
+            });
+        }
+    }
+
+    private void filtrarClientes(String query) {
+        clienteList.clear();
+        if (query.isEmpty()) {
+            clienteList.addAll(allClientesFull);
+        } else {
+            String lowerQuery = query.toLowerCase();
+            for (CustomerViewModel c : allClientesFull) {
+                String nombre = c.getName() != null ? c.getName().toLowerCase() : "";
+                String email = c.getEmail() != null ? c.getEmail().toLowerCase() : "";
+                if (nombre.contains(lowerQuery) || email.contains(lowerQuery)) {
+                    clienteList.add(c);
+                }
+            }
+        }
+        if (adapter != null) adapter.notifyDataSetChanged();
     }
 
     // Callback cuando se selecciona un cliente
@@ -290,7 +323,9 @@ public class    AgregarClienteFragment extends Fragment {
                 try {
                     if (response.isSuccessful() && response.body() != null) {
                         clienteList.clear();
+                        allClientesFull.clear();
                         clienteList.addAll(response.body());
+                        allClientesFull.addAll(response.body());
 
                         if (adapter != null) {
                             adapter.notifyDataSetChanged();
@@ -351,15 +386,17 @@ public class    AgregarClienteFragment extends Fragment {
                                 CustomerViewModel clienteCompleto = response.body();
 
                                 // Actualizar en la lista local en la posición específica
-                                if (posicion < clienteList.size()) {
-                                    clienteList.set(posicion, clienteCompleto);
-
-                                    // Actualizar solo ese item en el adapter
-                                    if (adapter != null) {
-                                        adapter.notifyItemChanged(posicion);
+                                if (posicion < allClientesFull.size()) {
+                                    allClientesFull.set(posicion, clienteCompleto);
+                                }
+                                // Find and update in clienteList by ID
+                                for (int j = 0; j < clienteList.size(); j++) {
+                                    if (clienteList.get(j).getId() != null &&
+                                            clienteList.get(j).getId().equals(clienteCompleto.getId())) {
+                                        clienteList.set(j, clienteCompleto);
+                                        if (adapter != null) adapter.notifyItemChanged(j);
+                                        break;
                                     }
-
-                                    Log.d(TAG, "Información completa cargada para cliente: " + clienteCompleto.getName() + " (posición: " + posicion + ")");
                                 }
 
                             } else {
@@ -499,9 +536,7 @@ public class    AgregarClienteFragment extends Fragment {
 
             TextInputEditText etNombre = dialogView.findViewById(R.id.etLocalidadNombre);
             TextInputEditText etDescripcion = dialogView.findViewById(R.id.etLocalidadDescripcion);
-            TextInputEditText etUbicacion = dialogView.findViewById(R.id.etLocalidadUbicacion);
-            TextInputEditText etLatitud = dialogView.findViewById(R.id.etLocalidadLatitud);
-            TextInputEditText etLongitud = dialogView.findViewById(R.id.etLocalidadLongitud);
+            TextInputEditText etCoordenadas = dialogView.findViewById(R.id.etLocalidadCoordenadas);
 
             Button btnCancelar = dialogView.findViewById(R.id.btnCancelarLocalidad);
             Button btnGuardar = dialogView.findViewById(R.id.btnGuardarLocalidad);
@@ -512,8 +547,7 @@ public class    AgregarClienteFragment extends Fragment {
             }
 
             btnCancelar.setOnClickListener(v -> dialog.dismiss());
-            btnGuardar.setOnClickListener(v -> guardarLocalidad(dialog, etNombre, etDescripcion,
-                    etUbicacion, etLatitud, etLongitud));
+            btnGuardar.setOnClickListener(v -> guardarLocalidad(dialog, etNombre, etDescripcion, etCoordenadas));
 
             dialog.setCancelable(true);
             dialog.setCanceledOnTouchOutside(false);
@@ -563,9 +597,6 @@ public class    AgregarClienteFragment extends Fragment {
             AutoCompleteTextView spLocalidad = dialogView.findViewById(R.id.spCircuitoLocalidad);
             TextInputEditText etNombre = dialogView.findViewById(R.id.etCircuitoNombre);
             TextInputEditText etDescripcion = dialogView.findViewById(R.id.etCircuitoDescripcion);
-            TextInputEditText etTarifa = dialogView.findViewById(R.id.etCircuitoTarifa);
-            TextInputEditText etRPU = dialogView.findViewById(R.id.etCircuitoRPU);
-            TextInputEditText etPrecioKwh = dialogView.findViewById(R.id.etCircuitoPrecioKwh);
 
             Button btnCancelar = dialogView.findViewById(R.id.btnCancelarCircuito);
             Button btnGuardar = dialogView.findViewById(R.id.btnGuardarCircuito);
@@ -581,8 +612,7 @@ public class    AgregarClienteFragment extends Fragment {
             spLocalidad.setAdapter(localidadesAdapter);
 
             btnCancelar.setOnClickListener(v -> dialog.dismiss());
-            btnGuardar.setOnClickListener(v -> guardarCircuito(dialog, spLocalidad, etNombre,
-                    etDescripcion, etTarifa, etRPU, etPrecioKwh));
+            btnGuardar.setOnClickListener(v -> guardarCircuito(dialog, spLocalidad, etNombre, etDescripcion));
 
             dialog.setCancelable(true);
             dialog.setCanceledOnTouchOutside(false);
@@ -630,13 +660,9 @@ public class    AgregarClienteFragment extends Fragment {
             dialog.setContentView(dialogView);
 
             AutoCompleteTextView spCircuito = dialogView.findViewById(R.id.spDispositivoCircuito);
+            AutoCompleteTextView spTipoNodo = dialogView.findViewById(R.id.spDispositivoTipoNodo);
             TextInputEditText etNombre = dialogView.findViewById(R.id.etDispositivoNombre);
-            TextInputEditText etSerie = dialogView.findViewById(R.id.etDispositivoSerie);
             TextInputEditText etDescripcion = dialogView.findViewById(R.id.etDispositivoDescripcion);
-            TextInputEditText etUbicacion = dialogView.findViewById(R.id.etDispositivoUbicacion);
-            TextInputEditText etLatitud = dialogView.findViewById(R.id.etDispositivoLatitud);
-            TextInputEditText etLongitud = dialogView.findViewById(R.id.etDispositivoLongitud);
-            TextInputEditText etIcono = dialogView.findViewById(R.id.etDispositivoIcono);
 
             Button btnCancelar = dialogView.findViewById(R.id.btnCancelarDispositivo);
             Button btnGuardar = dialogView.findViewById(R.id.btnGuardarDispositivo);
@@ -651,9 +677,16 @@ public class    AgregarClienteFragment extends Fragment {
                     getContext(), android.R.layout.simple_dropdown_item_1line, circuitosList);
             spCircuito.setAdapter(circuitosAdapter);
 
+            // Configurar spinner de tipo de nodo
+            String[] nodeTypes = {"0 - TOTAL_Wh", "1 - TRANSFORMER", "2 - PV", "3 - BESS",
+                    "4 - GENERATOR", "5 - PANEL", "6 - CIRCUIT", "7 - LOAD"};
+            ArrayAdapter<String> nodeTypesAdapter = new ArrayAdapter<>(
+                    getContext(), android.R.layout.simple_dropdown_item_1line, nodeTypes);
+            spTipoNodo.setAdapter(nodeTypesAdapter);
+
             btnCancelar.setOnClickListener(v -> dialog.dismiss());
-            btnGuardar.setOnClickListener(v -> guardarDispositivo(dialog, spCircuito, etNombre, etSerie,
-                    etDescripcion, etUbicacion, etLatitud, etLongitud, etIcono));
+            btnGuardar.setOnClickListener(v -> guardarDispositivo(dialog, spCircuito, etNombre,
+                    etDescripcion, spTipoNodo));
 
             dialog.setCancelable(true);
             dialog.setCanceledOnTouchOutside(false);
@@ -760,14 +793,29 @@ public class    AgregarClienteFragment extends Fragment {
         }
     }
 
+    private void guardarCoordenadasLocalidad(LocationsViewModel loc, Dialog dialog) {
+        api.saveLocationInformation(loc).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> c2, Response<Void> r2) {
+                showSuccess("Localidad creada exitosamente");
+                cargarLocalidadesCliente(clienteSeleccionadoId);
+                dialog.dismiss();
+            }
+            @Override
+            public void onFailure(Call<Void> c2, Throwable t) {
+                showSuccess("Localidad creada (error guardando coordenadas)");
+                cargarLocalidadesCliente(clienteSeleccionadoId);
+                dialog.dismiss();
+            }
+        });
+    }
+
     private void guardarLocalidad(Dialog dialog, TextInputEditText etNombre, TextInputEditText etDescripcion,
-                                  TextInputEditText etUbicacion, TextInputEditText etLatitud, TextInputEditText etLongitud) {
+                                  TextInputEditText etCoordenadas) {
         try {
             String nombre = etNombre.getText().toString().trim();
             String descripcion = etDescripcion != null ? etDescripcion.getText().toString().trim() : "";
-            String ubicacion = etUbicacion != null ? etUbicacion.getText().toString().trim() : "";
-            String latitudStr = etLatitud != null ? etLatitud.getText().toString().trim() : "";
-            String longitudStr = etLongitud != null ? etLongitud.getText().toString().trim() : "";
+            String coordenadasStr = etCoordenadas != null ? etCoordenadas.getText().toString().trim() : "";
 
             if (TextUtils.isEmpty(nombre)) {
                 etNombre.setError("El nombre es obligatorio");
@@ -778,21 +826,31 @@ public class    AgregarClienteFragment extends Fragment {
             Double latitud = null;
             Double longitud = null;
 
-            try {
-                if (!TextUtils.isEmpty(latitudStr)) {
-                    latitud = Double.parseDouble(latitudStr);
+            if (!TextUtils.isEmpty(coordenadasStr)) {
+                String[] partes = coordenadasStr.split(",");
+                if (partes.length == 2) {
+                    try {
+                        latitud = Double.parseDouble(partes[0].trim());
+                        longitud = Double.parseDouble(partes[1].trim());
+                    } catch (NumberFormatException e) {
+                        if (etCoordenadas != null) etCoordenadas.setError("Formato inválido. Usa: lat, lon");
+                        return;
+                    }
+                } else {
+                    if (etCoordenadas != null) etCoordenadas.setError("Formato inválido. Usa: lat, lon");
+                    return;
                 }
-                if (!TextUtils.isEmpty(longitudStr)) {
-                    longitud = Double.parseDouble(longitudStr);
-                }
-            } catch (NumberFormatException e) {
-                showError("Las coordenadas deben ser números válidos");
-                return;
             }
 
+            String ubietyInicial = (latitud != null && longitud != null) ? (latitud + "," + longitud) : "";
             LocationsViewModel nuevaLocalidad = new LocationsViewModel(
-                    clienteSeleccionadoId, nombre, descripcion, ubicacion, latitud, longitud
+                    clienteSeleccionadoId, nombre, descripcion, ubietyInicial, latitud, longitud
             );
+
+            final Double latFinal = latitud;
+            final Double lonFinal = longitud;
+            final String descripcionFinal = descripcion;
+            final String nombreFinal = nombre;
 
             if (api == null) {
                 showError("Error: Servicio API no disponible");
@@ -800,15 +858,62 @@ public class    AgregarClienteFragment extends Fragment {
             }
             Log.d(TAG, "Enviando localidad: " + nombre);
 
-            api.addNewLocation(nuevaLocalidad).enqueue(new Callback<Void>() {
+            api.addNewLocation(nuevaLocalidad).enqueue(new Callback<LocationsViewModel>() {
                 @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
+                public void onResponse(Call<LocationsViewModel> call, Response<LocationsViewModel> response) {
                     try {
                         if (response.isSuccessful()) {
                             Log.d(TAG, "Localidad creada exitosamente");
-                            showSuccess("Localidad creada exitosamente");
-                            cargarLocalidadesCliente(clienteSeleccionadoId);
-                            dialog.dismiss();
+                            if (latFinal == null || lonFinal == null) {
+                                showSuccess("Localidad creada exitosamente");
+                                cargarLocalidadesCliente(clienteSeleccionadoId);
+                                dialog.dismiss();
+                                return;
+                            }
+                            // Try to get IdLocation from response body first
+                            LocationsViewModel creada = response.body();
+                            if (creada != null && creada.getIdLocation() != null) {
+                                creada.setIdCustomer(clienteSeleccionadoId);
+                                creada.setName(nombreFinal);
+                                creada.setDescription(descripcionFinal);
+                                creada.setUbiety(latFinal + "," + lonFinal);
+                                guardarCoordenadasLocalidad(creada, dialog);
+                            } else {
+                                // Response didn't include IdLocation — fetch all locations to find the new one
+                                api.getCustomerLocations(clienteSeleccionadoId).enqueue(new Callback<List<LocationsViewModel>>() {
+                                    @Override
+                                    public void onResponse(Call<List<LocationsViewModel>> c2, Response<List<LocationsViewModel>> r2) {
+                                        if (r2.isSuccessful() && r2.body() != null) {
+                                            LocationsViewModel encontrada = null;
+                                            for (LocationsViewModel loc : r2.body()) {
+                                                if (nombreFinal.equals(loc.getName())) {
+                                                    encontrada = loc;
+                                                    break;
+                                                }
+                                            }
+                                            if (encontrada != null) {
+                                                encontrada.setDescription(descripcionFinal);
+                                                encontrada.setUbiety(latFinal + "," + lonFinal);
+                                                guardarCoordenadasLocalidad(encontrada, dialog);
+                                            } else {
+                                                showSuccess("Localidad creada exitosamente");
+                                                cargarLocalidadesCliente(clienteSeleccionadoId);
+                                                dialog.dismiss();
+                                            }
+                                        } else {
+                                            showSuccess("Localidad creada exitosamente");
+                                            cargarLocalidadesCliente(clienteSeleccionadoId);
+                                            dialog.dismiss();
+                                        }
+                                    }
+                                    @Override
+                                    public void onFailure(Call<List<LocationsViewModel>> c2, Throwable t) {
+                                        showSuccess("Localidad creada exitosamente");
+                                        cargarLocalidadesCliente(clienteSeleccionadoId);
+                                        dialog.dismiss();
+                                    }
+                                });
+                            }
                         } else {
                             String errorMsg = "Error al crear localidad: " + response.code();
                             Log.e(TAG, errorMsg);
@@ -821,7 +926,7 @@ public class    AgregarClienteFragment extends Fragment {
                 }
 
                 @Override
-                public void onFailure(Call<Void> call, Throwable t) {
+                public void onFailure(Call<LocationsViewModel> call, Throwable t) {
                     String errorMsg = "Error de conexión: " + t.getMessage();
                     Log.e(TAG, errorMsg, t);
                     showError(errorMsg);
@@ -835,15 +940,11 @@ public class    AgregarClienteFragment extends Fragment {
     }
 
     private void guardarCircuito(Dialog dialog, AutoCompleteTextView spLocalidad, TextInputEditText etNombre,
-                                 TextInputEditText etDescripcion, TextInputEditText etTarifa,
-                                 TextInputEditText etRPU, TextInputEditText etPrecioKwh) {
+                                 TextInputEditText etDescripcion) {
         try {
             String localidadSeleccionada = spLocalidad.getText().toString().trim();
             String nombre = etNombre.getText().toString().trim();
             String descripcion = etDescripcion != null ? etDescripcion.getText().toString().trim() : "";
-            String tarifa = etTarifa != null ? etTarifa.getText().toString().trim() : "";
-            String rpu = etRPU != null ? etRPU.getText().toString().trim() : "";
-            String precioKwhStr = etPrecioKwh != null ? etPrecioKwh.getText().toString().trim() : "";
 
             if (TextUtils.isEmpty(localidadSeleccionada)) {
                 showError("Selecciona una localidad");
@@ -870,19 +971,8 @@ public class    AgregarClienteFragment extends Fragment {
                 return;
             }
 
-            Double precioKwh = null;
-            try {
-                if (!TextUtils.isEmpty(precioKwhStr)) {
-                    precioKwh = Double.parseDouble(precioKwhStr);
-                }
-            } catch (NumberFormatException e) {
-                etPrecioKwh.setError("Precio debe ser un número válido");
-                etPrecioKwh.requestFocus();
-                return;
-            }
-
             CircuitsViewModel nuevoCircuito = new CircuitsViewModel(
-                    localidadObj.getIdLocation(), nombre, descripcion, tarifa, rpu, precioKwh, clienteSeleccionadoId
+                    localidadObj.getIdLocation(), nombre, descripcion, "", "", null, clienteSeleccionadoId
             );
 
             if (api == null) {
@@ -927,18 +1017,12 @@ public class    AgregarClienteFragment extends Fragment {
     }
 
     private void guardarDispositivo(Dialog dialog, AutoCompleteTextView spCircuito, TextInputEditText etNombre,
-                                    TextInputEditText etSerie, TextInputEditText etDescripcion,
-                                    TextInputEditText etUbicacion, TextInputEditText etLatitud,
-                                    TextInputEditText etLongitud, TextInputEditText etIcono) {
+                                    TextInputEditText etDescripcion, AutoCompleteTextView spTipoNodo) {
         try {
             String circuitoSeleccionado = spCircuito.getText().toString().trim();
             String nombre = etNombre.getText().toString().trim();
-            String serie = etSerie != null ? etSerie.getText().toString().trim() : "";
             String descripcion = etDescripcion != null ? etDescripcion.getText().toString().trim() : "";
-            String ubicacion = etUbicacion != null ? etUbicacion.getText().toString().trim() : "";
-            String latitudStr = etLatitud != null ? etLatitud.getText().toString().trim() : "";
-            String longitudStr = etLongitud != null ? etLongitud.getText().toString().trim() : "";
-            String icono = etIcono != null ? etIcono.getText().toString().trim() : "";
+            String tipoNodoStr = spTipoNodo != null ? spTipoNodo.getText().toString().trim() : "";
 
             if (TextUtils.isEmpty(circuitoSeleccionado)) {
                 showError("Selecciona un circuito");
@@ -948,6 +1032,11 @@ public class    AgregarClienteFragment extends Fragment {
             if (TextUtils.isEmpty(nombre)) {
                 etNombre.setError("El nombre es obligatorio");
                 etNombre.requestFocus();
+                return;
+            }
+
+            if (TextUtils.isEmpty(tipoNodoStr)) {
+                showError("Selecciona un tipo de nodo");
                 return;
             }
 
@@ -965,25 +1054,23 @@ public class    AgregarClienteFragment extends Fragment {
                 return;
             }
 
-            Double latitud = null;
-            Double longitud = null;
-
+            // Parsear tipo de nodo (formato "N - NOMBRE")
+            int nodeType;
             try {
-                if (!TextUtils.isEmpty(latitudStr)) {
-                    latitud = Double.parseDouble(latitudStr);
-                }
-                if (!TextUtils.isEmpty(longitudStr)) {
-                    longitud = Double.parseDouble(longitudStr);
-                }
+                nodeType = Integer.parseInt(tipoNodoStr.split(" ")[0]);
             } catch (NumberFormatException e) {
-                showError("Las coordenadas deben ser números válidos");
+                showError("Tipo de nodo inválido");
                 return;
             }
 
             DevicesViewModel nuevoDispositivo = new DevicesViewModel(
-                    circuitoObj.getIdCircuit(), nombre, serie, descripcion, ubicacion,
-                    latitud, longitud, icono, clienteSeleccionadoId
+                    circuitoObj.getIdCircuit(), nombre, "", descripcion, "",
+                    null, null, "", clienteSeleccionadoId
             );
+            nuevoDispositivo.setIdLocation(circuitoObj.getIdLocation());
+            nuevoDispositivo.setType(nodeType);
+            nuevoDispositivo.setNodeType(nodeType);
+            nuevoDispositivo.setIdHW(nodeType);
 
             if (api == null) {
                 showError("Error: Servicio API no disponible");
@@ -998,8 +1085,7 @@ public class    AgregarClienteFragment extends Fragment {
                     try {
                         if (response.isSuccessful()) {
                             Log.d(TAG, "Dispositivo creado exitosamente");
-                            showSuccess("Dispositivo creado exitosamente");
-                            dialog.dismiss();
+                            registrarSerialYVinculosSiAplica(dialog, nuevoDispositivo);
                         } else {
                             String errorMsg = "Error al crear dispositivo: " + response.code();
                             Log.e(TAG, errorMsg);
@@ -1023,6 +1109,115 @@ public class    AgregarClienteFragment extends Fragment {
             Log.e(TAG, "Error al guardar dispositivo: " + e.getMessage(), e);
             showError("Error al guardar dispositivo: " + e.getMessage());
         }
+    }
+
+    private void registrarSerialYVinculosSiAplica(Dialog dialog, DevicesViewModel dispositivo) {
+        if (api == null || dispositivo == null) {
+            showSuccess("Dispositivo creado exitosamente");
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+            return;
+        }
+
+        String serie = dispositivo.getSerie();
+        if (TextUtils.isEmpty(serie)) {
+            showSuccess("Dispositivo creado exitosamente");
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+            return;
+        }
+
+        DevicesViewModel registerPayload = new DevicesViewModel();
+        registerPayload.setIdCustomer(dispositivo.getIdCustomer());
+        registerPayload.setSerie(serie);
+        registerPayload.setType(dispositivo.getType());
+
+        // Backend espera idHW frontend: 0=METER, 1=PHOTOCELL, 2=HUB
+        int frontendIdHw = (dispositivo.getType() != null && dispositivo.getType() == 255) ? 2 : 0;
+        registerPayload.setIdHW(frontendIdHw);
+
+        api.registerDeviceSerial(registerPayload).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    vincularNodoYActualizarLoadSiAplica(dialog, dispositivo);
+                } else {
+                    showError("Dispositivo creado, pero no se pudo registrar serial: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showError("Dispositivo creado, pero falló registro de serial: " + t.getMessage());
+            }
+        });
+    }
+
+    private void vincularNodoYActualizarLoadSiAplica(Dialog dialog, DevicesViewModel dispositivo) {
+        if (api == null || dispositivo == null || dispositivo.getIdNode() == null) {
+            showSuccess("Dispositivo y serial registrados exitosamente");
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+            return;
+        }
+
+        api.linkNodeWithSerial(dispositivo).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    actualizarLoadSiAplica(dialog, dispositivo);
+                } else {
+                    showError("Serial registrado, pero no se pudo vincular nodo: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showError("Serial registrado, pero falló vínculo nodo-serial: " + t.getMessage());
+            }
+        });
+    }
+
+    private void actualizarLoadSiAplica(Dialog dialog, DevicesViewModel dispositivo) {
+        if (api == null || dispositivo == null || dispositivo.getLoad() == null || dispositivo.getIdNode() == null) {
+            showSuccess("Dispositivo, serial y nodo vinculados exitosamente");
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+            return;
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("Serie", dispositivo.getSerie());
+        payload.put("DeviceType", dispositivo.getType() != null ? dispositivo.getType() : 0);
+        payload.put("IdNode", dispositivo.getIdNode());
+        payload.put("Load", dispositivo.getLoad());
+        payload.put("IdCustomer", dispositivo.getIdCustomer());
+
+        api.updateSerialLoad(payload).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    showSuccess("Dispositivo, serial, vínculo y load guardados exitosamente");
+                } else {
+                    showError("Vínculo creado, pero no se pudo actualizar load: " + response.code());
+                }
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showError("Vínculo creado, pero falló actualización de load: " + t.getMessage());
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
     }
 
     private void showError(String message) {

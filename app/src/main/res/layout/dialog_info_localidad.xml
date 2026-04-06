@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@android:color/white">
+
+    <!-- Título del diálogo -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Información de la Localidad"
+        android:textSize="20sp"
+        android:textColor="#2C3E50"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Información de la localidad -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/selector_background"
+        android:padding="16dp"
+        android:layout_marginBottom="20dp">
+
+        <!-- ID -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="ID Localidad:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoLocalidadId"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="1"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Nombre -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Nombre:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoLocalidadNombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="Localidad Principal"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+
+        <!-- Descripción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Descripción:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoLocalidadDescripcion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="Sin descripción"
+                android:textSize="14sp"
+                android:textColor="#2C3E50"
+                android:maxLines="3"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Coordenadas -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Coordenadas:"
+                android:textSize="14sp"
+                android:textColor="#7F8C8D"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInfoLocalidadCoordenadas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="—"
+                android:textSize="14sp"
+                android:textColor="#2C3E50" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Botones de acción -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnEditarLocalidadInfo"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="✏ Editar"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/btn_red_rounded" />
+
+        <Button
+            android:id="@+id/btnEliminarLocalidadInfo"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:text="🗑 Eliminar"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/btn_delete_background" />
+
+        <Button
+            android:id="@+id/btnCerrarInfoLocalidad"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Cerrar"
+            android:textColor="#2C3E50"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/selector_background" />
+    </LinearLayout>
+
+</LinearLayout>

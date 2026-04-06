@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Indicador de color (semáforo) -->
+    <View
+        android:id="@+id/viewIndicator"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/circle_indicator" />
+
+    <!-- Nombre y tipo -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#9AA5B4"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- Última conexión -->
+    <TextView
+        android:id="@+id/tvLastConnection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#9AA5B4"
+        android:textSize="11sp"
+        android:gravity="end" />
+
+</LinearLayout>

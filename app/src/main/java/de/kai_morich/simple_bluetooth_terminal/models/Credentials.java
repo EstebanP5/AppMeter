@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 /**
- * Modelo para el body de POST /api/octosunlux/login/login
+ * Modelo para el body de POST /api/ergoems/login/login
  *
  * JSON esperado:
  * {

@@ -18,7 +18,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiClient {
     private static final String TAG = "ApiClient";
 
-    // URL base para ErgoSolar API
+    // URL base para ErgoEMS API (host validado en Postman)
     private static final String BASE_URL = "https://ergometer.ddns.net/";
 
     private static Retrofit retrofit = null;

@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class CustomerViewModel implements Serializable {
-    @SerializedName("IdCustomer")
+    @SerializedName(value = "IdClient", alternate = {"IdCustomer"})
     private Integer id;
 
     @SerializedName("Name")

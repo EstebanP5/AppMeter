@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="#242E42"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header: ícono + nombre + badge + fecha -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvTypeIcon"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:background="@drawable/bg_energy_cell"
+                android:text="⚡" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvNodeName"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <View
+                        android:id="@+id/viewStatusBadge"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/circle_indicator" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvSerie"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#9AA5B4"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvLastUpdate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#9AA5B4"
+                android:textSize="10sp"
+                android:gravity="end"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#2A3645"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Body: valores en tiempo real -->
+        <!-- Potencia consumo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pot. Consumo"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvConW"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Potencia generación -->
+        <LinearLayout
+            android:id="@+id/layoutGenW"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pot. Generación"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvGenW"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFC107"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Energía hoy -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Energía hoy"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvEnergyDay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Voltaje -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Voltaje"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvVoltage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Corriente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Corriente"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvCurrent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Factor de potencia -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Factor de Pot."
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvPf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Botón Ver Histórico -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHistorico"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="VER HISTÓRICO"
+            android:textColor="#FF6B00"
+            android:textSize="12sp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#FF6B00"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

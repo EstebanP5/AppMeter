@@ -90,5 +90,52 @@
             android:name=".ActivityDevicesBluetooth"
             android:label="App Meter - Dispositivos Bluetooth" />
 
+        <!-- NUEVAS ACTIVIDADES -->
+        <activity
+            android:name=".activities.MisDispositivosActivity"
+            android:exported="false"
+            android:label="Mis Dispositivos"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".activities.AdminMedicionesActivity"
+            android:exported="false"
+            android:label="Mediciones Admin"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <!-- MedicionesActivity -->
+        <activity
+            android:name=".activities.MedicionesActivity"
+            android:exported="false"
+            android:label="Mediciones"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <!-- HistoricoActivity -->
+        <activity
+            android:name=".activities.HistoricoActivity"
+            android:exported="false"
+            android:label="Histórico"
+            android:parentActivityName=".activities.MedicionesActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MedicionesActivity" />
+        </activity>
+
     </application>
 </manifest>

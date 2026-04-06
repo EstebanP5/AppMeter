@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 /**
- * Modelo para la respuesta de POST /api/octosunlux/login/login
+ * Modelo para la respuesta de POST /api/ergoems/login/login
  *
  * Ejemplo de JSON devuelto:
  * {

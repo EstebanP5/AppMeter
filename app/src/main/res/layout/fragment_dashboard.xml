@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_color"
+    android:background="@color/dash_bg"
     android:padding="16dp">
 
     <LinearLayout
@@ -41,7 +41,7 @@
                         android:text="⚡ Home"
                         android:textSize="24sp"
                         android:textStyle="bold"
-                        android:textColor="#FFFFFF" />
+                        android:textColor="@color/dash_accent" />
 
                     <TextView
                         android:id="@+id/tvHoraDashboard"
@@ -50,7 +50,7 @@
                         android:text="--:--"
                         android:textSize="20sp"
                         android:textStyle="bold"
-                        android:textColor="#FFD700"
+                        android:textColor="@color/web_accent"
                         tools:text="14:30" />
                 </LinearLayout>
 
@@ -65,11 +65,36 @@
                         android:layout_height="wrap_content"
                         android:text="🏭 Cliente:"
                         android:textSize="14sp"
-                        android:textColor="#E0E0E0"
+                        android:textColor="@color/dash_text_secondary"
                         android:layout_marginEnd="12dp" />
 
                     <Spinner
                         android:id="@+id/spinnerCustomers"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="40dp"
+                        android:background="@drawable/spinner_white_background"
+                        android:padding="8dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📍 Localidad:"
+                        android:textSize="14sp"
+                        android:textColor="@color/dash_text_secondary"
+                        android:layout_marginEnd="12dp" />
+
+                    <Spinner
+                        android:id="@+id/spinnerLocations"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -86,13 +111,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
+            app:cardBackgroundColor="@color/dash_surface"
             app:cardElevation="4dp">
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="350dp"
                 android:padding="24dp"
-                android:background="#F8F9FA">
+                android:background="@color/dash_surface">
 
                 <!-- Componente Solar (superior izquierda) -->
                 <androidx.cardview.widget.CardView
@@ -101,6 +127,7 @@
                     android:layout_height="80dp"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentStart="true"
+                    app:cardBackgroundColor="@color/dash_surface"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="4dp"
                     android:clickable="true"
@@ -128,7 +155,7 @@
                             android:text="Solar"
                             android:textSize="12sp"
                             android:textStyle="bold"
-                            android:textColor="#333" />
+                            android:textColor="@color/dash_text_primary" />
 
                         <TextView
                             android:id="@+id/tvSolarValue"
@@ -136,7 +163,7 @@
                             android:layout_height="wrap_content"
                             android:text="0 kW"
                             android:textSize="10sp"
-                            android:textColor="#666"
+                            android:textColor="@color/dash_text_secondary"
                             tools:text="2.5 kW" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -148,6 +175,7 @@
                     android:layout_height="80dp"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentEnd="true"
+                    app:cardBackgroundColor="@color/dash_surface"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="4dp"
                     android:clickable="true"
@@ -175,7 +203,7 @@
                             android:text="CFE"
                             android:textSize="12sp"
                             android:textStyle="bold"
-                            android:textColor="#333" />
+                            android:textColor="@color/dash_text_primary" />
 
                         <TextView
                             android:id="@+id/tvCFEValue"
@@ -183,7 +211,7 @@
                             android:layout_height="wrap_content"
                             android:text="0 kW"
                             android:textSize="10sp"
-                            android:textColor="#666"
+                            android:textColor="@color/dash_text_secondary"
                             tools:text="1.8 kW" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -196,7 +224,7 @@
                     android:layout_centerInParent="true"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="6dp"
-                    app:cardBackgroundColor="#E3F2FD"
+                    app:cardBackgroundColor="@color/dash_surface"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground">
@@ -213,7 +241,7 @@
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:src="@drawable/ic_factory"
-                            app:tint="#1976D2"
+                            app:tint="@color/web_accent"
                             android:layout_marginBottom="4dp" />
 
                         <TextView
@@ -222,7 +250,7 @@
                             android:text="FÁBRICA"
                             android:textSize="12sp"
                             android:textStyle="bold"
-                            android:textColor="#1976D2"
+                            android:textColor="@color/web_accent"
                             android:gravity="center" />
 
                         <TextView
@@ -231,18 +259,19 @@
                             android:layout_height="wrap_content"
                             android:text="0 kW"
                             android:textSize="10sp"
-                            android:textColor="#666"
+                            android:textColor="@color/dash_text_secondary"
                             tools:text="4.8 kW" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Componente Diesel (inferior izquierda) -->
+                <!-- Componente Inyección (inferior izquierda) -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardDiesel"
                     android:layout_width="100dp"
                     android:layout_height="80dp"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentStart="true"
+                    app:cardBackgroundColor="@color/dash_surface"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="4dp"
                     android:clickable="true"
@@ -267,10 +296,10 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Diesel"
+                            android:text="Inyección"
                             android:textSize="12sp"
                             android:textStyle="bold"
-                            android:textColor="#333" />
+                            android:textColor="@color/dash_text_primary" />
 
                         <TextView
                             android:id="@+id/tvDieselValue"
@@ -278,7 +307,7 @@
                             android:layout_height="wrap_content"
                             android:text="0 kW"
                             android:textSize="10sp"
-                            android:textColor="#666"
+                            android:textColor="@color/dash_text_secondary"
                             tools:text="0.5 kW" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -290,6 +319,7 @@
                     android:layout_height="80dp"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentEnd="true"
+                    app:cardBackgroundColor="@color/dash_surface"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="4dp"
                     android:clickable="true"
@@ -317,7 +347,7 @@
                             android:text="Batería"
                             android:textSize="12sp"
                             android:textStyle="bold"
-                            android:textColor="#333" />
+                            android:textColor="@color/dash_text_primary" />
 
                         <TextView
                             android:id="@+id/tvBatteryValue"
@@ -325,7 +355,7 @@
                             android:layout_height="wrap_content"
                             android:text="0%"
                             android:textSize="10sp"
-                            android:textColor="#666"
+                            android:textColor="@color/dash_text_secondary"
                             tools:text="85%" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -422,7 +452,7 @@
                 android:text="☀️ Detalles del Sistema Solar"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#FF9800"
+                android:textColor="@color/web_accent"
                 android:layout_marginBottom="12dp" />
 
             <TextView
@@ -431,7 +461,7 @@
                 android:layout_height="wrap_content"
                 android:text="Generación: 0 kW"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -440,7 +470,7 @@
                 android:layout_height="wrap_content"
                 android:text="Eficiencia: 0%"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -449,7 +479,7 @@
                 android:layout_height="wrap_content"
                 android:text="Ahorro mensual: $0.00"
                 android:textSize="14sp"
-                android:textColor="#4CAF50"
+                android:textColor="@color/web_success"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -470,7 +500,7 @@
                 android:text="⚡ Detalles de Red CFE"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#2196F3"
+                android:textColor="@color/web_accent"
                 android:layout_marginBottom="12dp" />
 
             <TextView
@@ -479,7 +509,7 @@
                 android:layout_height="wrap_content"
                 android:text="Consumo: 0 kW"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -488,7 +518,7 @@
                 android:layout_height="wrap_content"
                 android:text="Inyección: 0 kW"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -497,10 +527,10 @@
                 android:layout_height="wrap_content"
                 android:text="Tarifa: $0.00/kWh"
                 android:textSize="14sp"
-                android:textColor="#666" />
+                android:textColor="@color/dash_text_secondary" />
         </LinearLayout>
 
-        <!-- Panel de detalles Diesel -->
+        <!-- Panel de detalles Inyección -->
         <LinearLayout
             android:id="@+id/panelDieselDetails"
             android:layout_width="match_parent"
@@ -514,19 +544,19 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🛢️ Detalles del Generador Diesel"
+                android:text="↗️ Detalles de Inyección a CFE"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#FF5722"
+                android:textColor="@color/web_accent"
                 android:layout_marginBottom="12dp" />
 
             <TextView
                 android:id="@+id/tvDieselConsumption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Generación: 0 kW"
+                android:text="Inyección: 0 kW"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -535,7 +565,7 @@
                 android:layout_height="wrap_content"
                 android:text="Horas: 0.0"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -544,7 +574,7 @@
                 android:layout_height="wrap_content"
                 android:text="Combustible: 0%"
                 android:textSize="14sp"
-                android:textColor="#666" />
+                android:textColor="@color/dash_text_secondary" />
         </LinearLayout>
 
         <!-- Panel de detalles Batería -->
@@ -564,7 +594,7 @@
                 android:text="🔋 Detalles del Sistema de Baterías"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#4CAF50"
+                android:textColor="@color/web_success"
                 android:layout_marginBottom="12dp" />
 
             <TextView
@@ -573,7 +603,7 @@
                 android:layout_height="wrap_content"
                 android:text="Nivel: 0%"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -582,7 +612,7 @@
                 android:layout_height="wrap_content"
                 android:text="Capacidad: 0 kWh"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -591,7 +621,7 @@
                 android:layout_height="wrap_content"
                 android:text="Estado: --"
                 android:textSize="14sp"
-                android:textColor="#666" />
+                android:textColor="@color/dash_text_secondary" />
         </LinearLayout>
 
         <!-- Panel de detalles Fábrica -->
@@ -611,7 +641,7 @@
                 android:text="🏭 Detalles de la Fábrica"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#1976D2"
+                android:textColor="@color/web_accent"
                 android:layout_marginBottom="12dp" />
 
             <TextView
@@ -620,7 +650,7 @@
                 android:layout_height="wrap_content"
                 android:text="Consumo: 0 kW"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -629,7 +659,7 @@
                 android:layout_height="wrap_content"
                 android:text="Eficiencia: 0%"
                 android:textSize="14sp"
-                android:textColor="#333"
+                android:textColor="@color/dash_text_primary"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -638,7 +668,7 @@
                 android:layout_height="wrap_content"
                 android:text="Dispositivos: 0 activos"
                 android:textSize="14sp"
-                android:textColor="#666" />
+                android:textColor="@color/dash_text_secondary" />
         </LinearLayout>
 
         <!-- Resumen de estado general -->
@@ -662,7 +692,7 @@
                     android:text="📊 Resumen del Sistema"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/dash_accent"
                     android:layout_marginBottom="8dp" />
 
                 <TextView
@@ -670,7 +700,7 @@
                     android:layout_height="wrap_content"
                     android:text="Sistema operando en modo automático"
                     android:textSize="14sp"
-                    android:textColor="#E0E0E0"
+                    android:textColor="@color/dash_text_secondary"
                     android:layout_marginBottom="4dp" />
 
                 <TextView
@@ -678,7 +708,7 @@
                     android:layout_height="wrap_content"
                     android:text="Última actualización: Tiempo real"
                     android:textSize="12sp"
-                    android:textColor="#BDBDBD" />
+                    android:textColor="@color/dash_text_secondary" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

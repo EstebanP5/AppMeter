@@ -641,11 +641,11 @@ public class OctoNetCommandEncoder {
 
         // Byte 11: WIRING_SET (Tipo de cableado)
         switch (meteringType) {
-            case 0: settingsData[index++] = (byte)0x00; break;  // 1PH, 2W
-            case 1: settingsData[index++] = (byte)0x01; break;  // 2PH, 3W
-            case 2: settingsData[index++] = (byte)0x02; break;  // 3PH, 3W
-            case 3: settingsData[index++] = (byte)0x03; break;  // 3PH, 4W
-            default: settingsData[index++] = (byte)0x03; break;  // Default 3PH, 4W
+            case 0: settingsData[index++] = (byte)0x00; break;  // 1PH_2W_4LOADS
+            case 1: settingsData[index++] = (byte)0x01; break;  // 1PH_3W_2LOAD
+            case 2: settingsData[index++] = (byte)0x02; break;  // 3PH_4W_1LOAD
+            case 3: settingsData[index++] = (byte)0x03; break;  // 3PH_4W_N_1LOAD
+            default: settingsData[index++] = (byte)0x02; break; // ✅ Default cambia a 3PH_4W_1LOAD
         }
 
         byte[] cmd = encodeCommand(CMD_WRITE, CMD_NODE_SETTINGS, settingsData);
@@ -691,14 +691,13 @@ public class OctoNetCommandEncoder {
 
     private static String getWiringSetName(int wiring) {
         switch (wiring) {
-            case 0: return "1PH, 2W (Monofásico)";
-            case 1: return "2PH, 3W (Bifásico)";
-            case 2: return "3PH, 3W (Trifásico sin neutro) ✅";
-            case 3: return "3PH, 4W (Trifásico con neutro) ✅";
+            case 0: return "1PH_2W_4LOADS ✅";
+            case 1: return "1PH_3W_2LOAD ✅";
+            case 2: return "3PH_4W_1LOAD ✅";
+            case 3: return "3PH_4W_N_1LOAD";
             default: return "Desconocido";
         }
     }
-
 
 
 

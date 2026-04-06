@@ -8,13 +8,41 @@
             android:icon="@android:drawable/ic_menu_view"
             android:title="@string/menu_dashboard" />
 
+        <!-- Solo visible para isInstallerAdmin() == true -->
         <item
             android:id="@+id/nav_clientes"
             android:icon="@android:drawable/ic_menu_myplaces"
-            android:title="@string/menu_clientes" />
+            android:title="@string/menu_clientes"
+            android:visible="false" />
 
+        <!-- Mediciones Admin: solo admin -->
+        <item
+            android:id="@+id/nav_mediciones_admin"
+            android:icon="@android:drawable/ic_menu_info_details"
+            android:title="Mediciones Admin"
+            android:visible="false" />
 
+        <!-- Mediciones: todos (admin ve clientes, user ve solo localidades) -->
+        <item
+            android:id="@+id/nav_mediciones"
+            android:icon="@android:drawable/ic_menu_compass"
+            android:title="Mediciones"
+            android:visible="false" />
 
+        <!-- Mis Dispositivos: deshabilitado
+        <item
+            android:id="@+id/nav_mis_dispositivos"
+            android:icon="@android:drawable/ic_menu_preferences"
+            android:title="Mis Dispositivos"
+            android:visible="false" />
+        -->
+
+        <!-- Configuración: todos (admin tiene tab extra Gateways) -->
+        <item
+            android:id="@+id/nav_configuracion"
+            android:icon="@android:drawable/ic_menu_edit"
+            android:title="Configuración"
+            android:visible="false" />
 
     </group>
 

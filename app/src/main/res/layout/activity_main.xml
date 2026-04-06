@@ -17,9 +17,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            android:background="@color/web_surface"
             android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
-            app:titleTextColor="@android:color/white">
+            app:titleTextColor="@color/web_text_primary">
 
             <!-- Botón de logout alineado a la derecha -->
             <ImageButton
@@ -30,7 +30,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Cerrar sesión"
                 android:src="@drawable/ic_logout"
-                android:tint="@android:color/white" />
+                android:tint="@color/web_text_primary" />
         </com.google.android.material.appbar.MaterialToolbar>
 
         <!-- Aquí se cargarán los fragments -->
@@ -46,7 +46,11 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="@color/web_surface"
         android:fitsSystemWindows="true"
+        app:itemBackground="@drawable/nav_item_background"
+        app:itemIconTint="@color/nav_item_tint"
+        app:itemTextColor="@color/nav_item_tint"
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/drawer_menu"/>
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -24,7 +24,7 @@ public class CircuitsViewModel {
     @SerializedName("kWhPrice")
     private Double kWhPrice;
 
-    @SerializedName("IdCustomer")
+    @SerializedName(value = "IdClient", alternate = {"IdCustomer"})
     private Integer idCustomer;
 
     // Constructor vacío

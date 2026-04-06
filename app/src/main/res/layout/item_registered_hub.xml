@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="#242E42"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header tocable -->
+        <LinearLayout
+            android:id="@+id/layoutHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="?attr/selectableItemBackground">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvSerie"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HUB"
+                        android:textColor="#FF6B00"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/chip_background_accent"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvCount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#9AA5B4"
+                    android:textSize="13sp"
+                    android:layout_marginTop="4dp" />
+
+            </LinearLayout>
+
+            <!-- Flecha expandir -->
+            <ImageView
+                android:id="@+id/ivExpand"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/arrow_down_float"
+                android:tint="#9AA5B4" />
+
+        </LinearLayout>
+
+        <!-- Contenedor de nodos (expandible) -->
+        <LinearLayout
+            android:id="@+id/nodesContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

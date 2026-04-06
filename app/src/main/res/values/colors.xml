@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="web_bg">#0F141B</color>
+    <color name="web_surface">#171E27</color>
+    <color name="web_surface_alt">#1E2733</color>
+    <color name="web_border">#2A3645</color>
+    <color name="web_text_primary">#EAF0F6</color>
+    <color name="web_text_secondary">#9BAAC0</color>
+    <color name="web_accent">#FF8A1C</color>
+    <color name="web_accent_dark">#E87400</color>
+    <color name="web_success">#4CAF50</color>
+
+    <!-- Dashboard theme: naranja, gris, negro -->
+    <color name="dash_bg">#1A1A1A</color>
+    <color name="dash_surface">#2A2A2A</color>
+    <color name="dash_text_primary">#E0E0E0</color>
+    <color name="dash_text_secondary">#9E9E9E</color>
+    <color name="dash_border">#3A3A3A</color>
+    <color name="dash_accent">#FF8A1C</color>
+
     <!-- Colores principales -->
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>

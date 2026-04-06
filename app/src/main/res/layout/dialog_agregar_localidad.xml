@@ -56,29 +56,38 @@
                 android:textColor="#2C3E50" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Campo Dirección/Ubicación -->
+        <!-- Coordenadas (lat, lon) en un solo campo -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Dirección/Ubicación"
+            android:layout_marginBottom="4dp"
+            android:hint="Coordenadas (ej. 19.4326, -99.1332)"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etLocalidadUbicacion"
+                android:id="@+id/etLocalidadCoordenadas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPostalAddress"
+                android:inputType="text"
                 android:textSize="16sp"
                 android:textColor="#2C3E50" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Coordenadas Layout -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ingresa latitud y longitud separadas por coma"
+            android:textSize="12sp"
+            android:textColor="#7F8C8D"
+            android:layout_marginBottom="24dp"
+            android:layout_marginStart="4dp" />
+
+        <!-- Campo Latitud (oculto, se mantiene por compatibilidad) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:visibility="gone">
 
             <!-- Campo Latitud -->
             <com.google.android.material.textfield.TextInputLayout

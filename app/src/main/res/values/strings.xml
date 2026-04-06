@@ -138,4 +138,37 @@
         <item>3000 A</item>
     </string-array>
 
+    <!-- ========== NUEVAS PANTALLAS ========== -->
+    <string name="menu_mis_dispositivos">Mis Dispositivos</string>
+    <string name="menu_mediciones_admin">Mediciones Admin</string>
+    <string name="menu_configuracion">Configuración</string>
+    <string name="tab_gateways">GATEWAYS</string>
+
+    <!-- Mis Dispositivos -->
+    <string name="serial_vinculado">VINCULADO</string>
+    <string name="serial_libre">LIBRE</string>
+    <string name="btn_editar_load">EDITAR LOAD</string>
+    <string name="btn_eliminar_serial">ELIMINAR</string>
+    <string name="btn_registrar_serial">REGISTRAR</string>
+    <string name="hint_numero_serie">Número de serie (máx. 12 chars)</string>
+    <string name="label_tipo_dispositivo">Tipo de dispositivo</string>
+    <string name="filter_todos">TODOS</string>
+    <string name="filter_meter">METER</string>
+    <string name="filter_hub">HUB</string>
+
+    <!-- Gateways -->
+    <string name="btn_eliminar_hub">ELIMINAR HUB</string>
+    <string name="btn_asignar_nodo">+ NODO</string>
+    <string name="btn_desasignar">DESASIGNAR</string>
+    <string name="gateway_sin_nodos">Sin nodos asignados</string>
+    <string name="gateway_sin_serial">Sin serial</string>
+
+    <!-- Mediciones Admin -->
+    <string name="label_solar">☀ Solar</string>
+    <string name="label_cfe">⚡ CFE</string>
+    <string name="label_consumo">🏭 CONSUMO</string>
+    <string name="label_inyeccion">🔻 Inyección</string>
+    <string name="label_bateria">🔋 Batería</string>
+    <string name="ultima_conexion">Última: </string>
+
 </resources>

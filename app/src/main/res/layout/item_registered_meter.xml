@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="#242E42"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Fila superior: Serie + chips -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvSerie"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipLoad"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:textColor="#FFFFFF"
+                app:chipBackgroundColor="#2A3645" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- NodeType -->
+        <TextView
+            android:id="@+id/tvNodeType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#9AA5B4"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Detalles (visible si vinculado) -->
+        <LinearLayout
+            android:id="@+id/layoutDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvNodeName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvAsignado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvVinculado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#9AA5B4"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+        <!-- Botones de acción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditLoad"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:text="EDITAR LOAD"
+                android:textSize="11sp"
+                app:backgroundTint="#FF6B00" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="ELIMINAR"
+                android:textSize="11sp"
+                android:visibility="gone"
+                app:backgroundTint="#F44336" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

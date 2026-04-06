@@ -87,7 +87,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="24dp"
             android:hint="Descripción"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
@@ -97,57 +97,6 @@
                 android:layout_height="wrap_content"
                 android:inputType="textMultiLine"
                 android:maxLines="3"
-                android:textSize="16sp"
-                android:textColor="#2C3E50" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Campo Tarifa -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Tarifa"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditarCircuitoTarifa"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:textSize="16sp"
-                android:textColor="#2C3E50" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Campo RPU -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="RPU"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditarCircuitoRPU"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:textSize="16sp"
-                android:textColor="#2C3E50" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Campo Precio kWh -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:hint="Precio kWh"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditarCircuitoPrecioKwh"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
                 android:textSize="16sp"
                 android:textColor="#2C3E50" />
         </com.google.android.material.textfield.TextInputLayout>

@@ -29,16 +29,6 @@
             android:textColor="#2C3E50"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvClienteId"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ID: 1"
-            android:textSize="12sp"
-            android:textColor="#7F8C8D"
-            android:background="#ECF0F1"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="2dp" />
     </LinearLayout>
 
     <!-- Email -->
