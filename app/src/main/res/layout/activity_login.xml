@@ -3,24 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F8FAFC"
     android:gravity="center"
+    android:orientation="vertical"
     android:padding="24dp">
 
-    <!-- ✅ TEXTO "METER" CON MISMO ESTILO QUE "NUBE" -->
+    <!-- TEXTO "METER" -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="start"
+        android:letterSpacing="0.15"
         android:text="METER"
         android:textColor="#64748B"
-        android:textSize="14sp"
-        android:fontFamily="sans-serif-medium"
-        android:letterSpacing="0.15"
-        android:gravity="start"
-        android:layout_marginBottom="8dp" />
+        android:textSize="14sp" />
 
-    <!-- ✅ IMAGEN ERGOMETER COMO BOTÓN (ANCHO COMPLETO) -->
+    <!-- IMAGEN ERGOMETER COMO BOTÓN (ANCHO COMPLETO) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cvErgometer"
         android:layout_width="match_parent"
@@ -44,26 +44,26 @@
 
     </androidx.cardview.widget.CardView>
 
-    <!-- ✅ TEXTO "NUBE" -->
+    <!-- TEXTO "NUBE" -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="start"
+        android:letterSpacing="0.15"
         android:text="NUBE"
         android:textColor="#64748B"
-        android:textSize="14sp"
-        android:fontFamily="sans-serif-medium"
-        android:letterSpacing="0.15"
-        android:gravity="start"
-        android:layout_marginBottom="8dp" />
+        android:textSize="14sp" />
 
-    <!-- ✅ LOGIN CARD -->
+    <!-- LOGIN CARD -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
+        app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="16dp"
-        app:cardElevation="12dp"
-        app:cardBackgroundColor="@android:color/white">
+        app:cardElevation="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -174,8 +174,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        android:visibility="gone"
-        android:indeterminateTint="#FF6B35" />
+        android:indeterminateTint="#FF6B35"
+        android:visibility="gone" />
 
     <!-- Error Message -->
     <androidx.cardview.widget.CardView
@@ -184,22 +184,22 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:visibility="gone"
+        app:cardBackgroundColor="#FEF2F2"
         app:cardCornerRadius="8dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="#FEF2F2">
+        app:cardElevation="2dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="16dp">
 
             <View
                 android:layout_width="4dp"
                 android:layout_height="match_parent"
-                android:background="#EF4444"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="12dp"
+                android:background="#EF4444" />
 
             <TextView
                 android:id="@+id/tvError"
@@ -214,4 +214,17 @@
 
     </androidx.cardview.widget.CardView>
 
+    <!-- Versión de la app -->
+    <TextView
+        android:id="@+id/tvVersion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:text="METER APP V2.0.2"
+        android:textColor="#94A3B8"
+        android:textSize="12sp"
+        android:letterSpacing="0.1"
+        android:fontFamily="sans-serif-medium" />
+ 
 </LinearLayout>

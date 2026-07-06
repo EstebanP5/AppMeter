@@ -836,7 +836,7 @@ public class    AgregarClienteFragment extends Fragment {
                         if (etCoordenadas != null) etCoordenadas.setError("Formato inválido. Usa: lat, lon");
                         return;
                     }
-                } else {
+                } else { 
                     if (etCoordenadas != null) etCoordenadas.setError("Formato inválido. Usa: lat, lon");
                     return;
                 }

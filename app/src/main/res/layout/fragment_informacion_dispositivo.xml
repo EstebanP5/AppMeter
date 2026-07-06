@@ -6,24 +6,60 @@
 
     <TextView
         android:id="@+id/tvSerial"
-        android:text="SERIAL:"
-        android:textSize="18sp"
+        android:text="SERIAL: —"
+        android:textSize="16sp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/tvFechaFab"
+        android:text="Fecha fab.: —"
+        android:textSize="16sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/tvHoraFab"
+        android:text="Hora fab.: —"
+        android:textSize="16sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/tvKeyCode"
+        android:text="Código llave: —"
+        android:textSize="16sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
 
     <TextView
         android:id="@+id/tvHwVersion"
-        android:text="HW_VERSION:"
-        android:textSize="18sp"
+        android:text="HW Version: —"
+        android:textSize="16sp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
 
     <TextView
         android:id="@+id/tvFmVersion"
-        android:text="FM_VERSION:"
-        android:textSize="18sp"
+        android:text="FW Version: —"
+        android:textSize="16sp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/tvComandoHex"
+        android:text="Comando: —"
+        android:textSize="13sp"
+        android:textColor="#888888"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"/>
 
     <Button
         android:id="@+id/btnRefrescar"

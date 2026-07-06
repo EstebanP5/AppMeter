@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 /**
  * Codificador/Decodificador COMPLETO para protocolo OctoNet
- * CORREGIDO según implementación C# original - VERSION FINAL
  */
 public class OctoNetCommandEncoder {
 
@@ -20,9 +19,12 @@ public class OctoNetCommandEncoder {
     private static final byte CMD_DEVICE_TIME = 0x01;
     private static final byte CMD_NODE_SETTINGS = 0x20;
     private static final byte CMD_NODE_CURRENT = 0x21;
-    private static final byte CMD_SETTINGS_WIFI = (byte)0xE3; // ✅ AGREGADO para WiFi
+    private static final byte CMD_NODE_REC_INFO = 0x22;
+    private static final byte CMD_NODE_REC_ERASE = 0x25;
+    private static final byte CMD_SETTINGS_WIFI = (byte)0xE3;
+    private static final byte CMD_SETTINGS_SUB1G = (byte)0xE4;
 
-    // IDs de configuración según las tablas
+    // IDs de configuración s
     private static final byte ID_METER_SETTINGS = (byte)0xEA;
     private static final byte ID_CELL_SETTINGS = (byte)0xCA;
     private static final byte ID_ENERGY_3PHA_LOAD = (byte)0xC3;
@@ -30,7 +32,9 @@ public class OctoNetCommandEncoder {
     // Tamaños de estructura
     private static final int METER_SETTINGS_SIZE = 12;
     private static final int ENERGY_3PHA_PAGE_SIZE = 64;
-    private static final int WIFI_SETTINGS_SIZE = 247; // ✅ AGREGADO según Tabla 28
+    private static final int WIFI_SETTINGS_SIZE = 247;
+    private static final int SUB1G_SETTINGS_SIZE = 16;   // Tabla 23 - SETTINGS_SUB1G_STRC
+    private static final byte ID_SUB1G_SETTINGS = (byte)0xA4;
 
 
 
@@ -54,8 +58,9 @@ public class OctoNetCommandEncoder {
     public enum CmdType {
         READ((byte)0x52),
         WRITE((byte)0x77),
+        ERASE((byte)0x73),
         CONFIRMATION((byte)0x43),
-        INFORMATION((byte)0x49),
+        INFORMATION((byte)0x69), // 69h según protocolo
         ERROR((byte)0x45);
 
         private final byte value;
@@ -69,7 +74,10 @@ public class OctoNetCommandEncoder {
         DEVICE_TIME((byte)0x01),
         NODE_SETTINGS((byte)0x20),
         NODE_CURRENT((byte)0x21),
-        SETTINGS_WIFI((byte)0xE3), // ✅ AGREGADO
+        NODE_REC_INFO((byte)0x22),
+        NODE_REC_ERASE((byte)0x25),
+        SETTINGS_WIFI((byte)0xE3),
+        SETTINGS_SUB1G((byte)0xE4),
         NOT_SUPPORTED((byte)0xFF);
 
         private final byte value;
@@ -94,21 +102,28 @@ public class OctoNetCommandEncoder {
         DEVICE_TIME_READ(0x5201),
         NODE_SETTINGS_READ(0x5220),
         NODE_CURRENT_READ(0x5221),
-        SETTINGS_WIFI_READ(0x52E3), // ✅ AGREGADO
+        NODE_REC_INFO_READ(0x5222),
+        SETTINGS_WIFI_READ(0x52E3),
+        SETTINGS_SUB1G_READ(0x52E4),
 
         // Comandos de escritura
         DEVICE_ID_WRITE(0x7700),
         DEVICE_TIME_WRITE(0x7701),
         NODE_SETTINGS_WRITE(0x7720),
         NODE_CURRENT_WRITE(0x7721),
-        SETTINGS_WIFI_WRITE(0x77E3), // ✅ AGREGADO
+        NODE_REC_ERASE_WRITE(0x7725),
+        SETTINGS_WIFI_WRITE(0x77E3),
+        SETTINGS_SUB1G_WRITE(0x77E4),
 
         // Respuestas de confirmación
         DEVICE_ID_CONFIRMATION(0x4300),
         DEVICE_TIME_CONFIRMATION(0x4301),
         NODE_SETTINGS_CONFIRMATION(0x4320),
         NODE_CURRENT_CONFIRMATION(0x4321),
-        SETTINGS_WIFI_CONFIRMATION(0x43E3), // ✅ AGREGADO
+        NODE_REC_INFO_CONFIRMATION(0x4322),
+        NODE_REC_ERASE_CONFIRMATION(0x4325),
+        SETTINGS_WIFI_CONFIRMATION(0x43E3),
+        SETTINGS_SUB1G_CONFIRMATION(0x43E4),
 
         // Errores
         TYPE_INVALID_ERROR(0x0001),
@@ -242,6 +257,7 @@ public class OctoNetCommandEncoder {
 
             if (currentByte == CmdType.READ.getValue() ||
                     currentByte == CmdType.WRITE.getValue() ||
+                    currentByte == CmdType.ERASE.getValue() ||
                     currentByte == CmdType.CONFIRMATION.getValue() ||
                     currentByte == CmdType.INFORMATION.getValue() ||
                     currentByte == CmdType.ERROR.getValue()) {
@@ -265,9 +281,11 @@ public class OctoNetCommandEncoder {
         private void handleCommandState(byte[] buffer) {
             byte currentByte = buffer[decode.tcpIndex];
 
-            // ✅ CORRECCIÓN: Incluir SETTINGS_WIFI en comandos soportados
             if ((currentByte & 0xFF) < CmdList.NOT_SUPPORTED.getValue() ||
-                    (currentByte & 0xFF) == CMD_SETTINGS_WIFI) {
+                    (currentByte & 0xFF) == (CMD_NODE_REC_INFO & 0xFF) ||
+                    (currentByte & 0xFF) == (CMD_NODE_REC_ERASE & 0xFF) ||
+                    (currentByte & 0xFF) == (CMD_SETTINGS_WIFI & 0xFF) ||
+                    (currentByte & 0xFF) == (CMD_SETTINGS_SUB1G & 0xFF)) {
 
                 // Almacena el byte "Command"
                 decode.data[decode.ind++] = currentByte;
@@ -802,6 +820,155 @@ public class OctoNetCommandEncoder {
     }
 
     // =================================================================
+    // SETTINGS_SUB1G (E4h) - Tabla 23
+    // =================================================================
+
+    // Comando para LEER la configuración Sub-1G
+    public static byte[] createSub1gSettingsReadCommand() {
+        byte[] cmd = encodeCommand(CMD_READ, CMD_SETTINGS_SUB1G, null);
+        System.out.println("🔍 SETTINGS_SUB1G read generado: " + bytesToHexString(cmd));
+        return cmd;
+    }
+
+    // Comando para LEER la información de grabaciones (NODE_REC_INFO - 22h)
+    public static byte[] createNodeRecInfoReadCommand() {
+        byte[] cmd = encodeCommand(CMD_READ, CMD_NODE_REC_INFO, null);
+        System.out.println("🔍 NODE_REC_INFO read generado: " + bytesToHexString(cmd));
+        return cmd;
+    }
+
+    // Comando para BORRAR la memoria (NODE_REC_ERASE - 25h), formateo rápido = 0x01
+    public static byte[] createNodeRecEraseCommand() {
+        byte[] cmd = encodeCommand(CMD_WRITE, CMD_NODE_REC_ERASE, new byte[]{0x01});
+        System.out.println("🔍 NODE_REC_ERASE write generado: " + bytesToHexString(cmd));
+        return cmd;
+    }
+
+    public static NodeRecInfo processNodeRecInfoResponse(byte[] data) {
+        NodeRecInfo info = new NodeRecInfo();
+        if (data == null || data.length < 20) return info;
+        try {
+            info.newRecords   = ((data[0] & 0xFFL))       | ((data[1] & 0xFFL) << 8)
+                              | ((data[2] & 0xFFL) << 16) | ((data[3] & 0xFFL) << 24);
+            info.totalRecords = ((data[4] & 0xFFL))       | ((data[5] & 0xFFL) << 8)
+                              | ((data[6] & 0xFFL) << 16) | ((data[7] & 0xFFL) << 24);
+            info.firstDate = String.format("%02d/%02d/20%02d",
+                    data[10] & 0xFF, data[9] & 0xFF, data[8] & 0xFF);
+            info.firstTime = String.format("%02d:%02d:%02d",
+                    data[11] & 0xFF, data[12] & 0xFF, data[13] & 0xFF);
+            info.lastDate  = String.format("%02d/%02d/20%02d",
+                    data[16] & 0xFF, data[15] & 0xFF, data[14] & 0xFF);
+            info.lastTime  = String.format("%02d:%02d:%02d",
+                    data[17] & 0xFF, data[18] & 0xFF, data[19] & 0xFF);
+        } catch (Exception e) { /* leave defaults */ }
+        return info;
+    }
+
+    public static class NodeRecInfo {
+        public long newRecords = 0;
+        public long totalRecords = 0;
+        public String firstDate = "N/A";
+        public String firstTime = "N/A";
+        public String lastDate  = "N/A";
+        public String lastTime  = "N/A";
+    }
+
+    /**
+     * Comando para ESCRIBIR la configuración Sub-1G (SETTINGS_SUB1G_STRC, 16 bytes / Tabla 23).
+     *
+     * @param modem        00h = GFSK 915MHz, 01h = LoRa 915MHz
+     * @param channel      CHANNEL - se usa como multiplicador BW_F
+     * @param hopSchema     Esquema de salto (00h/01h/02h)
+     * @param broadcastAddr Dirección Broadcast
+     * @param unicastAddr   Dirección Unicast
+     * @param gfskBr        Configuración del Modem en GFSK (00h-03h)
+     * @param loraBr        Configuración del Modem en LoRa (00h-05h)
+     */
+    public static byte[] createSub1gSettingsWriteCommand(int modem, int channel, int hopSchema,
+                                                         int broadcastAddr, int unicastAddr,
+                                                         int gfskBr, int loraBr) {
+        byte[] data = new byte[SUB1G_SETTINGS_SIZE];
+
+        // Byte 0: ID (A4h - Identificador de ajuste Sub-1G)
+        data[0] = ID_SUB1G_SETTINGS;
+
+        // Byte 1: MODEM (00h GFSK / 01h LoRa)
+        data[1] = (byte)(modem & 0xFF);
+
+        // Bytes 2-7: Fecha y hora del último cambio (YY/MM/DD - HH:MM:SS)
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        data[2] = (byte)(cal.get(java.util.Calendar.YEAR) % 100);   // Año (00h-63h)
+        data[3] = (byte)(cal.get(java.util.Calendar.MONTH) + 1);    // Mes (01h-0Ch)
+        data[4] = (byte)cal.get(java.util.Calendar.DAY_OF_MONTH);   // Día (01h-1Fh)
+        data[5] = (byte)cal.get(java.util.Calendar.HOUR_OF_DAY);    // Hora (00h-17h)
+        data[6] = (byte)cal.get(java.util.Calendar.MINUTE);         // Minuto (00h-3Bh)
+        data[7] = (byte)cal.get(java.util.Calendar.SECOND);         // Segundo (00h-3Bh)
+
+        // Byte 8: CHANNEL (multiplicador BW_F)
+        data[8] = (byte)(channel & 0xFF);
+
+        // Byte 9: HOP_SCHEMA
+        data[9] = (byte)(hopSchema & 0xFF);
+
+        // Byte 10: BROADCAST_ADDR
+        data[10] = (byte)(broadcastAddr & 0xFF);
+
+        // Byte 11: UNICAST_ADDR
+        data[11] = (byte)(unicastAddr & 0xFF);
+
+        // Byte 12: GFKS_BR
+        data[12] = (byte)(gfskBr & 0xFF);
+
+        // Byte 13: LORA_BR
+        data[13] = (byte)(loraBr & 0xFF);
+
+        // Bytes 14-15: DUMMY (futuro uso) - quedan en 0
+
+        byte[] cmd = encodeCommand(CMD_WRITE, CMD_SETTINGS_SUB1G, data);
+        System.out.println("🔍 SETTINGS_SUB1G write generado: " + bytesToHexString(cmd));
+        System.out.printf("   Sub1G - MODEM:%d CHANNEL:%d HOP:%d BCAST:%d UCAST:%d GFSK_BR:%d LORA_BR:%d%n",
+                modem, channel, hopSchema, broadcastAddr, unicastAddr, gfskBr, loraBr);
+
+        return cmd;
+    }
+
+    /**
+     * Procesa la respuesta de configuración Sub-1G (SETTINGS_SUB1G_STRC, Tabla 23).
+     */
+    public static Sub1gSettings processSub1gSettingsResponse(byte[] sub1gData) {
+        Sub1gSettings settings = new Sub1gSettings();
+
+        if (sub1gData == null || sub1gData.length < 14) {
+            System.err.println("❌ Datos Sub-1G insuficientes: " + (sub1gData != null ? sub1gData.length : 0) + " bytes");
+            return settings;
+        }
+
+        try {
+            settings.id            = sub1gData[0] & 0xFF;
+            settings.modem         = sub1gData[1] & 0xFF;
+            settings.year          = sub1gData[2] & 0xFF;
+            settings.month         = sub1gData[3] & 0xFF;
+            settings.day           = sub1gData[4] & 0xFF;
+            settings.hour          = sub1gData[5] & 0xFF;
+            settings.minute        = sub1gData[6] & 0xFF;
+            settings.second        = sub1gData[7] & 0xFF;
+            settings.channel       = sub1gData[8] & 0xFF;
+            settings.hopSchema     = sub1gData[9] & 0xFF;
+            settings.broadcastAddr = sub1gData[10] & 0xFF;
+            settings.unicastAddr   = sub1gData[11] & 0xFF;
+            settings.gfskBr        = sub1gData[12] & 0xFF;
+            settings.loraBr        = sub1gData[13] & 0xFF;
+
+            System.out.println("✅ Configuración Sub-1G procesada: " + settings);
+
+        } catch (Exception e) {
+            System.err.printf("❌ Error procesando configuración Sub-1G: %s%n", e.getMessage());
+        }
+
+        return settings;
+    }
+
+    // =================================================================
     // MÉTODOS DE PROCESAMIENTO DE RESPUESTAS
     // =================================================================
 
@@ -1061,6 +1228,30 @@ public class OctoNetCommandEncoder {
         }
     }
 
+    // ✅ NUEVA: Clase para configuración Sub-1G (Tabla 23)
+    public static class Sub1gSettings {
+        public int id = 0;
+        public int modem = 0;          // 00h GFSK / 01h LoRa
+        public int year = 0;
+        public int month = 0;
+        public int day = 0;
+        public int hour = 0;
+        public int minute = 0;
+        public int second = 0;
+        public int channel = 0;        // multiplicador BW_F
+        public int hopSchema = 0;
+        public int broadcastAddr = 0;
+        public int unicastAddr = 0;
+        public int gfskBr = 0;
+        public int loraBr = 0;
+
+        @Override
+        public String toString() {
+            return String.format("Sub1gSettings{MODEM=%d, CHANNEL=%d, HOP=%d, BCAST=%d, UCAST=%d, GFSK_BR=%d, LORA_BR=%d}",
+                    modem, channel, hopSchema, broadcastAddr, unicastAddr, gfskBr, loraBr);
+        }
+    }
+
     /**
      * Decodifica fecha/hora del dispositivo
      */
@@ -1186,13 +1377,21 @@ public class OctoNetCommandEncoder {
             return new byte[0];
         }
 
-        // Estructura: STX + TYPE + CMD + SIZE + [DATA...] + CHECKSUM + ETX
-        int dataSize = fullCommand[3] & 0xFF;
+        // Estructura: STX + TYPE + CMD + NDATA + [DATA...] + CHECKSUM + ETX
+        // Según protocolo: bytes de datos = NDATA + 1
+        int ndata = fullCommand[3] & 0xFF;
+        int dataSize = ndata + 1; // NDATA es el conteo real - 1
 
-        // VALIDACIÓN MEJORADA según C# original
-        int expectedLength = 4 + dataSize + 2; // STX+TYPE+CMD+SIZE + DATA + CHECKSUM+ETX
-        if (dataSize == 0 || fullCommand.length < expectedLength) {
-            return new byte[0];
+        // VALIDACIÓN: STX+TYPE+CMD+NDATA + dataSize bytes + CHECKSUM+ETX
+        int expectedLength = 4 + dataSize + 2;
+        if (fullCommand.length < expectedLength) {
+            // Fallback: intentar con dataSize = ndata (por si el dispositivo no sigue la convención)
+            if (ndata == 0 || fullCommand.length < 4 + ndata + 2) {
+                return new byte[0];
+            }
+            byte[] fallback = new byte[ndata];
+            System.arraycopy(fullCommand, 4, fallback, 0, ndata);
+            return fallback;
         }
 
         byte[] data = new byte[dataSize];
@@ -1320,6 +1519,7 @@ public class OctoNetCommandEncoder {
         // Validar tipo de comando
         byte type = command[1];
         if (type != CMD_READ && type != CMD_WRITE &&
+                type != CmdType.ERASE.getValue() &&
                 type != CmdType.CONFIRMATION.getValue() &&
                 type != CmdType.INFORMATION.getValue() &&
                 type != CmdType.ERROR.getValue()) {
@@ -1330,7 +1530,8 @@ public class OctoNetCommandEncoder {
         byte cmd = command[2];
         if (cmd != CMD_DEVICE_ID && cmd != CMD_DEVICE_TIME &&
                 cmd != CMD_NODE_SETTINGS && cmd != CMD_NODE_CURRENT &&
-                cmd != CMD_SETTINGS_WIFI) { // ✅ AGREGADO
+                cmd != CMD_NODE_REC_INFO && cmd != CMD_NODE_REC_ERASE &&
+                cmd != CMD_SETTINGS_WIFI && cmd != CMD_SETTINGS_SUB1G) {
             return false;
         }
 

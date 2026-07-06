@@ -29,6 +29,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 
@@ -64,10 +65,12 @@ public class FasoresActivity extends AppCompatActivity {
     private Spinner spinnerCableado, spinnerAmperes;
     private ImageView imageDiagram;
     private ImageButton btnPlay, btnRec;
+    private android.widget.TextView tvRecLabel;
     private LinearLayout btnBackToMenu;
-    private Button btnDeviceId, btnConfigWifi;
+    private Button btnDeviceId, btnConfigWifi, btnConfigSub1g, btnMemoria;
     private Handler handler = new Handler(Looper.getMainLooper());
     private boolean isRecording = false;
+    private Runnable recLabelBlinker;
 
     // ===== FASORES =====
     private FasorView fasorVoltaje, fasorCorriente;
@@ -76,6 +79,8 @@ public class FasoresActivity extends AppCompatActivity {
     private View diagramModal;
     private ImageView modalDiagramImage;
     private boolean isModalVisible = false;
+
+    private TextView tvV4, tvA4, tvW4, tvHz4, tvpF4, tvCH4;
 
     private View fasorModal;
     private FasorView modalFasorVoltaje, modalFasorCorriente;
@@ -89,6 +94,7 @@ public class FasoresActivity extends AppCompatActivity {
     private TextView tvV1, tvV2, tvV3, tvA1, tvA2, tvA3, tvW1, tvW2, tvW3, tvHz1, tvHz2, tvHz3;
     private TextView tvpF1, tvpF2, tvpF3;
     private TextView tvCH1, tvCH2, tvCH3;
+    private LinearLayout measurementTableLayout;
 
     // ===== CONEXIÓN TCP =====
     private Socket socket;
@@ -122,6 +128,7 @@ public class FasoresActivity extends AppCompatActivity {
     private float[] frecuencias = {0.0f, 0.0f, 0.0f};
     private float[] angulos = {0.0f, 120.0f, 240.0f};
     private OctoNetCommandEncoder.WiFiSettings lastReadWifiSettings = null;
+    private OctoNetCommandEncoder.Sub1gSettings lastReadSub1gSettings = null;
 
     // ===== ESTADO =====
     private long tiempoInicio;
@@ -134,6 +141,9 @@ public class FasoresActivity extends AppCompatActivity {
     private ZoomableImageView zoomableModalImage;
 
     private DeviceIdInfo lastReadDeviceIdInfo;
+    private OctoNetCommandEncoder.NodeRecInfo lastNodeRecInfo;
+    private boolean pendingRecordingAfterErase = false;
+    private Runnable eraseTimeoutRunnable;
 
     private static class DeviceIdInfo {
         String serial = "N/A", facDate = "N/A", facHour = "N/A",
@@ -187,12 +197,15 @@ public class FasoresActivity extends AppCompatActivity {
         imageDiagram = findViewById(R.id.imageDiagram);
         btnRec = findViewById(R.id.btnRec);
         btnPlay = findViewById(R.id.btnPlay);
+        tvRecLabel = findViewById(R.id.tvRecLabel);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
         btnDeviceId = findViewById(R.id.btnDeviceId);
         btnConfigWifi = findViewById(R.id.btnConfigWifi);
+        btnConfigSub1g = findViewById(R.id.btnConfigSub1g);
+        btnMemoria = findViewById(R.id.btnMemoria);
 
         if (btnRec != null) {
-            btnRec.setImageResource(android.R.drawable.presence_invisible);
+            btnRec.setImageResource(R.drawable.ic_rec);
             recordingConfig = false;
         }
 
@@ -219,26 +232,9 @@ public class FasoresActivity extends AppCompatActivity {
             fasorCorriente.setVoltageMode(false);
         }
 
-        tvV1 = findViewById(R.id.tvV1);
-        tvV2 = findViewById(R.id.tvV2);
-        tvV3 = findViewById(R.id.tvV3);
-        tvA1 = findViewById(R.id.tvA1);
-        tvA2 = findViewById(R.id.tvA2);
-        tvA3 = findViewById(R.id.tvA3);
-        tvW1 = findViewById(R.id.tvW1);
-        tvW2 = findViewById(R.id.tvW2);
-        tvW3 = findViewById(R.id.tvW3);
-        tvHz1 = findViewById(R.id.tvHz1);
-        tvHz2 = findViewById(R.id.tvHz2);
-        tvHz3 = findViewById(R.id.tvHz3);
-        tvpF1 = findViewById(R.id.tvpF1);
-        tvpF2 = findViewById(R.id.tvpF2);
-        tvpF3 = findViewById(R.id.tvpF3);
-        tvCH1 = findViewById(R.id.tvCH1);
-        tvCH2 = findViewById(R.id.tvCH2);
-        tvCH3 = findViewById(R.id.tvCH3);
-
-        initializeDisplayValues();
+        measurementTableLayout = findViewById(R.id.measurementTableLayout);
+        // TextViews are built dynamically — see rebuildMeasurementTable()
+        rebuildMeasurementTable();
 
         // ✅ CONFIGURAR LISTENERS PARA MODALES
         View fasorVoltajeContainer = findViewById(R.id.fasorVoltajeContainer);
@@ -457,6 +453,7 @@ public class FasoresActivity extends AppCompatActivity {
         skipSpinnerEvents = false;
 
         setSpinnersEnabled(false);
+        setControlsEnabled(false);
     }
 
     private void setupSpinnerAdapter(Spinner spinner, String[] items) {
@@ -502,6 +499,7 @@ public class FasoresActivity extends AppCompatActivity {
 
                     // ✅ Actualizar imagen DESPUÉS de actualizar meteringTypeConfig
                     updateDiagram();
+                    rebuildMeasurementTable();
 
                     handler.postDelayed(() -> {
                         if (!isWaitingResponse) {
@@ -525,7 +523,11 @@ public class FasoresActivity extends AppCompatActivity {
                 showToast("⏳ Esperando sincronización...");
                 return;
             }
-            toggleRecording();
+            if (isRecording) {
+                toggleRecording(); // detener — sin modal
+            } else {
+                showRecordingModeModal();
+            }
         });
 
         btnPlay.setOnClickListener(v -> {
@@ -553,6 +555,38 @@ public class FasoresActivity extends AppCompatActivity {
 
         btnDeviceId.setOnClickListener(v -> showDeviceIdModal());
         btnConfigWifi.setOnClickListener(v -> showNetworkScanForValidation());
+        btnConfigSub1g.setOnClickListener(v -> showSub1gModal());
+        btnMemoria.setOnClickListener(v -> showMemoriaModal());
+    }
+
+    private void showRecordingModeModal() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("▶ Iniciar Grabación")
+                .setMessage("¿Cómo deseas iniciar la grabación?")
+                .setPositiveButton("Continuar Nodo", (d, w) -> toggleRecording())
+                .setNeutralButton("Nuevo Nodo", (d, w) -> confirmNuevoNodo())
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void confirmNuevoNodo() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("⚠️ Advertencia — Nuevo Nodo")
+                .setMessage("Se borrarán TODOS los datos almacenados en la memoria antes de iniciar la grabación.\n\nEsta acción no se puede deshacer.\n\n¿Continuar?")
+                .setPositiveButton("Borrar y Grabar", (d, w) -> {
+                    pendingRecordingAfterErase = true;
+                    sendTcpCommandIndependent(OctoNetCommandEncoder.createNodeRecEraseCommand());
+                    showToast("🗑 Borrando memoria...");
+                    eraseTimeoutRunnable = () -> {
+                        if (pendingRecordingAfterErase) {
+                            pendingRecordingAfterErase = false;
+                            toggleRecording();
+                        }
+                    };
+                    handler.postDelayed(eraseTimeoutRunnable, 10000);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     private void setupAutoReadTask() {
@@ -925,6 +959,168 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     // =========================================================================
+    // ===== CONFIGURACIÓN SUB-1G (E4h / Tabla 23) ============================
+    // =========================================================================
+
+    // Opciones de los campos enumerados (índice = valor que se envía al dispositivo)
+    private static final String[] SUB1G_MODEM_OPTIONS = {
+            "GFSK 915MHz",
+            "LoRa 915MHz"
+    };
+    private static final String[] SUB1G_HOP_OPTIONS = {
+            "Canales: 0, 1, 2, 3, 4",
+            "Canales: 10, 11, 12, 13, 14",
+            "Canales: 20, 21, 22, 23, 24"
+    };
+    private static final String[] SUB1G_GFSK_BR_OPTIONS = {
+            "BW:166.2kHz FDA:40kHz BR:38.4kbps",
+            "BW:23.4kHz FDA:5kHz BR:4.8kbps",
+            "BW:19.5kHz FDA:5kHz BR:1.2kbps",
+            "BW:4.8kHz FDA:0.8kHz BR:0.6kbps"
+    };
+    private static final String[] SUB1G_LORA_BR_OPTIONS = {
+            "BW:250kHz SF:5 CR:4:5 BR:31.25kbps",
+            "BW:250kHz SF:7 CR:4:5 BR:10.94kbps",
+            "BW:250kHz SF:9 CR:4:5 BR:3.52kbps",
+            "BW:125kHz SF:5 CR:4:5 BR:15.63kbps",
+            "BW:125kHz SF:7 CR:4:5 BR:5.47kbps",
+            "BW:125kHz SF:9 CR:4:5 BR:1.76kbps"
+    };
+
+    private void showSub1gModal() {
+        if (!isConnectedToDevice) {
+            showToast("❌ No hay conexión");
+            return;
+        }
+
+        // Pedir la configuración actual al dispositivo y mostrar el modal con esos datos
+        sendSub1gReadCommand();
+        showToast("📡 Leyendo configuración Sub-1G...");
+        handler.postDelayed(this::displaySub1gConfigDialog, 2000);
+    }
+
+    private void displaySub1gConfigDialog() {
+        OctoNetCommandEncoder.Sub1gSettings current = lastReadSub1gSettings;
+
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(pad, pad, pad, pad);
+
+        // MODEM
+        Spinner spModem = addSub1gSpinner(layout, "Modulación (MODEM)", SUB1G_MODEM_OPTIONS,
+                current != null ? current.modem : 0);
+
+        // CHANNEL
+        android.widget.EditText etChannel = addSub1gNumberField(layout, "Channel (multiplicador BW_F)",
+                current != null ? current.channel : 0);
+
+        // HOP_SCHEMA
+        Spinner spHop = addSub1gSpinner(layout, "Esquema de salto (HOP_SCHEMA)", SUB1G_HOP_OPTIONS,
+                current != null ? current.hopSchema : 0);
+
+        // BROADCAST_ADDR
+        android.widget.EditText etBroadcast = addSub1gNumberField(layout, "Dirección Broadcast",
+                current != null ? current.broadcastAddr : 0);
+
+        // UNICAST_ADDR
+        android.widget.EditText etUnicast = addSub1gNumberField(layout, "Dirección Unicast",
+                current != null ? current.unicastAddr : 0);
+
+        // GFKS_BR
+        Spinner spGfsk = addSub1gSpinner(layout, "Config. Modem GFSK (GFKS_BR)", SUB1G_GFSK_BR_OPTIONS,
+                current != null ? current.gfskBr : 0);
+
+        // LORA_BR
+        Spinner spLora = addSub1gSpinner(layout, "Config. Modem LoRa (LORA_BR)", SUB1G_LORA_BR_OPTIONS,
+                current != null ? current.loraBr : 0);
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(layout);
+
+        String title = (current == null)
+                ? "📶 Configurar Sub-1G (sin lectura)"
+                : "📶 Configurar Sub-1G";
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setView(scroll)
+                .setPositiveButton("📤 Enviar", (dialog, which) -> {
+                    int modem    = spModem.getSelectedItemPosition();
+                    int channel  = parseByteField(etChannel, 0);
+                    int hop      = spHop.getSelectedItemPosition();
+                    int bcast    = parseByteField(etBroadcast, 0);
+                    int ucast    = parseByteField(etUnicast, 0);
+                    int gfskBr   = spGfsk.getSelectedItemPosition();
+                    int loraBr   = spLora.getSelectedItemPosition();
+
+                    byte[] command = OctoNetCommandEncoder.createSub1gSettingsWriteCommand(
+                            modem, channel, hop, bcast, ucast, gfskBr, loraBr);
+                    sendTcpCommandIndependent(command);
+                    showToast("📤 Configuración Sub-1G enviada");
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private Spinner addSub1gSpinner(LinearLayout parent, String label, String[] options, int selected) {
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextColor(Color.parseColor("#666666"));
+        tv.setTypeface(null, Typeface.BOLD);
+        tv.setTextSize(12);
+        int topMargin = (int) (12 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = topMargin;
+        tv.setLayoutParams(lp);
+        parent.addView(tv);
+
+        Spinner spinner = new Spinner(this);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, options);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        if (selected >= 0 && selected < options.length) {
+            spinner.setSelection(selected);
+        }
+        parent.addView(spinner);
+        return spinner;
+    }
+
+    private android.widget.EditText addSub1gNumberField(LinearLayout parent, String label, int value) {
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextColor(Color.parseColor("#666666"));
+        tv.setTypeface(null, Typeface.BOLD);
+        tv.setTextSize(12);
+        int topMargin = (int) (12 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = topMargin;
+        tv.setLayoutParams(lp);
+        parent.addView(tv);
+
+        android.widget.EditText et = new android.widget.EditText(this);
+        et.setInputType(InputType.TYPE_CLASS_NUMBER);
+        et.setText(String.valueOf(value));
+        parent.addView(et);
+        return et;
+    }
+
+    // Convierte el texto a un valor de 0-255 (un byte), con valor por defecto si es inválido
+    private int parseByteField(android.widget.EditText et, int defaultValue) {
+        try {
+            int v = Integer.parseInt(et.getText().toString().trim());
+            if (v < 0) v = 0;
+            if (v > 255) v = 255;
+            return v;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    // =========================================================================
     // ===== CONFIGURACIÓN ====================================================
     // =========================================================================
 
@@ -1037,10 +1233,12 @@ public class FasoresActivity extends AppCompatActivity {
 
         if (isRecording) {
             btnRec.setBackgroundResource(R.drawable.button_rec_recording);
+            btnRec.setImageResource(R.drawable.ic_stop);
             showToast("⏺ Grabación iniciada");
             startRecordingAnimation();
         } else {
             btnRec.setBackgroundResource(R.drawable.button_rec);
+            btnRec.setImageResource(R.drawable.ic_rec);
             showToast("⏸ Grabación pausada");
             stopRecordingAnimation();
         }
@@ -1083,40 +1281,72 @@ public class FasoresActivity extends AppCompatActivity {
 
             // Revertir estado visual
             isRecording = !isRecording;
-            btnRec.setBackgroundResource(
-                    isRecording ? R.drawable.button_rec_recording : R.drawable.button_rec
-            );
+            if (isRecording) {
+                btnRec.setBackgroundResource(R.drawable.button_rec_recording);
+                btnRec.setImageResource(R.drawable.ic_stop);
+            } else {
+                btnRec.setBackgroundResource(R.drawable.button_rec);
+                btnRec.setImageResource(R.drawable.ic_rec);
+            }
         }
     }
 
     private void startRecordingAnimation() {
         if (btnRec == null) return;
 
+        // Pulso en el botón
         btnRec.animate()
-                .alpha(0.7f)
-                .setDuration(2000)
-                .setInterpolator(new DecelerateInterpolator(2.5f))
+                .scaleX(1.15f).scaleY(1.15f)
+                .setDuration(600)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
                 .withEndAction(() -> {
                     if (isRecording && btnRec != null) {
                         btnRec.animate()
-                                .alpha(1.0f)
-                                .setDuration(2000)
-                                .setInterpolator(new AccelerateInterpolator(2.5f))
+                                .scaleX(1.0f).scaleY(1.0f)
+                                .setDuration(600)
+                                .setInterpolator(new AccelerateDecelerateInterpolator())
                                 .withEndAction(() -> {
-                                    if (isRecording) {
-                                        startRecordingAnimation();
-                                    }
+                                    if (isRecording) startRecordingAnimation();
                                 })
                                 .start();
                     }
                 })
                 .start();
+
+        // Parpadeo del label "● GRABANDO"
+        if (tvRecLabel != null) {
+            tvRecLabel.setText("● GRABANDO");
+            tvRecLabel.setTextColor(android.graphics.Color.RED);
+        }
+        recLabelBlinker = new Runnable() {
+            boolean visible = true;
+            @Override
+            public void run() {
+                if (!isRecording || tvRecLabel == null) return;
+                tvRecLabel.setVisibility(visible
+                        ? android.view.View.VISIBLE
+                        : android.view.View.INVISIBLE);
+                visible = !visible;
+                handler.postDelayed(this, 600);
+            }
+        };
+        handler.post(recLabelBlinker);
     }
 
     private void stopRecordingAnimation() {
         if (btnRec == null) return;
         btnRec.clearAnimation();
+        btnRec.setScaleX(1.0f);
+        btnRec.setScaleY(1.0f);
         btnRec.setAlpha(1.0f);
+
+        // Restablecer label
+        handler.removeCallbacks(recLabelBlinker);
+        if (tvRecLabel != null) {
+            tvRecLabel.setVisibility(android.view.View.VISIBLE);
+            tvRecLabel.setText("GRABAR");
+            tvRecLabel.setTextColor(android.graphics.Color.parseColor("#666666"));
+        }
     }
 
     // =========================================================================
@@ -1523,24 +1753,43 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void updateInfoTableContent() {
         if (infoTableContainer == null) return;
-
         infoTableContainer.removeAllViews();
 
-        for (int i = 0; i < 3; i++) {
-            String phaseName = "L" + (i + 1) + "-N";
-            LinearLayout phaseTable = createPhaseTable(i, phaseName);
-            infoTableContainer.addView(phaseTable);
+        switch (tipoCableado) {
+            case 0: // 1PH-2W-4LOADS: 4 fases
+                String[] labels4 = {"L1-N", "L2-N", "L3-N", "L4-N"};
+                for (int i = 0; i < 4; i++) {
+                    infoTableContainer.addView(createPhaseTable(i % 3, labels4[i]));
+                    if (i < 3) infoTableContainer.addView(makeDivider());
+                }
+                break;
 
-            if (i < 2) {
-                View divider = new View(this);
-                LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, 2);
-                dividerParams.setMargins(0, 20, 0, 20);
-                divider.setLayoutParams(dividerParams);
-                divider.setBackgroundColor(Color.rgb(200, 200, 200));
-                infoTableContainer.addView(divider);
-            }
+            case 1: // 1PH-3W-2LOADS: 2 fases
+                String[] labels2 = {"L1-N", "L2-N"};
+                for (int i = 0; i < 2; i++) {
+                    infoTableContainer.addView(createPhaseTable(i, labels2[i]));
+                    if (i < 1) infoTableContainer.addView(makeDivider());
+                }
+                break;
+
+            default: // 3PH-4W-1LOAD: 3 fases
+                String[] labels3 = {"L1-N", "L2-N", "L3-N"};
+                for (int i = 0; i < 3; i++) {
+                    infoTableContainer.addView(createPhaseTable(i, labels3[i]));
+                    if (i < 2) infoTableContainer.addView(makeDivider());
+                }
+                break;
         }
+    }
+
+    private View makeDivider() {
+        View divider = new View(this);
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 2);
+        dividerParams.setMargins(0, 20, 0, 20);
+        divider.setLayoutParams(dividerParams);
+        divider.setBackgroundColor(Color.rgb(200, 200, 200));
+        return divider;
     }
 
     private LinearLayout createPhaseTable(int phaseIndex, String phaseName) {
@@ -1554,33 +1803,38 @@ public class FasoresActivity extends AppCompatActivity {
         phaseTitle.setGravity(Gravity.CENTER);
         phaseTitle.setPadding(0, 0, 0, 20);
 
+        // ✅ Colores: negro, rojo, azul, gris (para L4 en modo 4LOADS)
         int[] phaseColors = {
                 Color.rgb(66, 66, 66),
                 Color.rgb(255, 50, 50),
-                Color.rgb(70, 130, 255)
+                Color.rgb(70, 130, 255),
+                Color.rgb(120, 120, 120)
         };
-        phaseTitle.setTextColor(phaseColors[phaseIndex]);
+        phaseTitle.setTextColor(phaseColors[Math.min(phaseIndex, phaseColors.length - 1)]);
         phaseContainer.addView(phaseTitle);
 
         LinearLayout grid = new LinearLayout(this);
         grid.setOrientation(LinearLayout.VERTICAL);
         grid.setPadding(15, 15, 15, 15);
 
-        grid.addView(createInfoRow("⚡ Voltaje:", String.format("%.2f V", voltajes[phaseIndex])));
-        grid.addView(createInfoRow("🔌 Corriente:", String.format("%.3f A", corrientes[phaseIndex])));
-        grid.addView(createInfoRow("💡 Potencia:", String.format("%.2f W", potencias[phaseIndex])));
-        grid.addView(createInfoRow("📊 Frecuencia:", String.format("%.2f Hz", frecuencias[phaseIndex])));
+        // ✅ Usar índice real del arreglo (L4 usa mismos datos que L1 en 4LOADS)
+        int dataIndex = Math.min(phaseIndex, 2);
 
-        float deviceAngle = angulos[phaseIndex];
-        while (deviceAngle > 180f) deviceAngle -= 360f;
+        grid.addView(createInfoRow("⚡ Voltaje:",    String.format("%.2f V",  voltajes[dataIndex])));
+        grid.addView(createInfoRow("🔌 Corriente:",  String.format("%.3f A",  corrientes[dataIndex])));
+        grid.addView(createInfoRow("💡 Potencia:",   String.format("%.2f W",  potencias[dataIndex])));
+        grid.addView(createInfoRow("📊 Frecuencia:", String.format("%.2f Hz", frecuencias[dataIndex])));
+
+        float deviceAngle = angulos[dataIndex];
+        while (deviceAngle >  180f) deviceAngle -= 360f;
         while (deviceAngle < -180f) deviceAngle += 360f;
         grid.addView(createInfoRow("📐 Ángulo:", String.format("%.1f°", deviceAngle)));
 
         float pf = 0.0f;
-        if (voltajes[phaseIndex] > 0 && corrientes[phaseIndex] > 0) {
-            float potenciaAparente = voltajes[phaseIndex] * corrientes[phaseIndex];
+        if (voltajes[dataIndex] > 0 && corrientes[dataIndex] > 0) {
+            float potenciaAparente = voltajes[dataIndex] * corrientes[dataIndex];
             if (potenciaAparente > 0) {
-                pf = potencias[phaseIndex] / potenciaAparente;
+                pf = potencias[dataIndex] / potenciaAparente;
                 pf = Math.max(-1.0f, Math.min(1.0f, pf));
             }
         }
@@ -1795,6 +2049,11 @@ public class FasoresActivity extends AppCompatActivity {
         sendTcpCommandIndependent(command);
     }
 
+    private void sendSub1gReadCommand() {
+        byte[] command = OctoNetCommandEncoder.createSub1gSettingsReadCommand();
+        sendTcpCommandIndependent(command);
+    }
+
     private void sendTimeWriteCommand() {
         executor.execute(() -> {
             try {
@@ -1907,8 +2166,24 @@ public class FasoresActivity extends AppCompatActivity {
                     case 0x21:
                         if (dataSize > 0) processCurrentDataResponseIndependent(data);
                         break;
+                    case 0x22:
+                        processNodeRecInfoResponse(data);
+                        break;
+                    case 0x25:
+                        showToast("✅ Memoria borrada");
+                        if (pendingRecordingAfterErase) {
+                            pendingRecordingAfterErase = false;
+                            if (eraseTimeoutRunnable != null) {
+                                handler.removeCallbacks(eraseTimeoutRunnable);
+                            }
+                            toggleRecording();
+                        }
+                        break;
                     case 0xE3:
                         if (dataSize > 0) processWiFiSettingsResponse(data);
+                        break;
+                    case 0xE4:
+                        if (dataSize > 0) processSub1gSettingsResponse(data);
                         break;
                 }
             }
@@ -1977,6 +2252,117 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
+    private void processSub1gSettingsResponse(byte[] response) {
+        try {
+            byte[] sub1gData = OctoNetCommandEncoder.extractCommandData(response);
+            if (sub1gData == null || sub1gData.length < 14) return;
+
+            lastReadSub1gSettings = OctoNetCommandEncoder.processSub1gSettingsResponse(sub1gData);
+        } catch (Exception e) {
+        }
+    }
+
+    private void processNodeRecInfoResponse(byte[] response) {
+        try {
+            byte[] recData = OctoNetCommandEncoder.extractCommandData(response);
+            if (recData == null || recData.length < 20) return;
+            lastNodeRecInfo = OctoNetCommandEncoder.processNodeRecInfoResponse(recData);
+        } catch (Exception e) {
+        }
+    }
+
+    // =========================================================================
+    // ===== MEMORIA REC ======================================================
+    // =========================================================================
+
+    private void showMemoriaModal() {
+        if (!isConnectedToDevice) {
+            showToast("❌ No hay conexión");
+            return;
+        }
+        lastNodeRecInfo = null;
+        byte[] cmd = OctoNetCommandEncoder.createNodeRecInfoReadCommand();
+        sendTcpCommandIndependent(cmd);
+        showToast("📂 Leyendo memoria...");
+        handler.postDelayed(this::displayMemoriaModal, 2000);
+    }
+
+    private void displayMemoriaModal() {
+        OctoNetCommandEncoder.NodeRecInfo info = lastNodeRecInfo;
+
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(pad, pad, pad, pad);
+
+        if (info == null || info.totalRecords == 0) {
+            TextView tvEmpty = new TextView(this);
+            tvEmpty.setText("Sin mediciones en memoria");
+            tvEmpty.setTextSize(16f);
+            tvEmpty.setGravity(Gravity.CENTER);
+            tvEmpty.setPadding(0, 32, 0, 32);
+            layout.addView(tvEmpty);
+        } else {
+            addModalRow(layout, "Registros totales:", String.valueOf(info.totalRecords));
+            addModalRow(layout, "Registros nuevos:", String.valueOf(info.newRecords));
+
+            View divider = new View(this);
+            LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 2);
+            dp.setMargins(0, 16, 0, 16);
+            divider.setLayoutParams(dp);
+            divider.setBackgroundColor(Color.rgb(200, 200, 200));
+            layout.addView(divider);
+
+            addModalRow(layout, "Primera medición:", info.firstDate + "  " + info.firstTime);
+            addModalRow(layout, "Última medición:",  info.lastDate  + "  " + info.lastTime);
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("📂 Memoria de Grabación")
+                .setView(layout)
+                .setPositiveButton("🗑 Formateo Rápido", (dialog, which) -> {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("⚠️ Confirmar borrado")
+                            .setMessage("¿Borrar la tabla de contenido de la memoria?\n(Formateo rápido)")
+                            .setPositiveButton("Borrar", (d2, w2) -> {
+                                byte[] eraseCmd = OctoNetCommandEncoder.createNodeRecEraseCommand();
+                                sendTcpCommandIndependent(eraseCmd);
+                                lastNodeRecInfo = null;
+                            })
+                            .setNegativeButton("Cancelar", null)
+                            .show();
+                })
+                .setNegativeButton("Cerrar", null)
+                .show();
+    }
+
+    private void addModalRow(LinearLayout parent, String label, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, 10, 0, 10);
+
+        TextView tvLabel = new TextView(this);
+        tvLabel.setText(label);
+        tvLabel.setTextSize(14f);
+        tvLabel.setTextColor(Color.rgb(80, 80, 80));
+        tvLabel.setTypeface(null, Typeface.BOLD);
+        tvLabel.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        row.addView(tvLabel);
+
+        TextView tvValue = new TextView(this);
+        tvValue.setText(value);
+        tvValue.setTextSize(14f);
+        tvValue.setTextColor(Color.rgb(33, 33, 33));
+        tvValue.setGravity(Gravity.END);
+        tvValue.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        row.addView(tvValue);
+
+        parent.addView(row);
+    }
+
     private void processConfigurationResponseIndependent(byte[] data) {
         try {
             byte[] configData = OctoNetCommandEncoder.extractCommandData(data);
@@ -1996,6 +2382,9 @@ public class FasoresActivity extends AppCompatActivity {
             sensorsConfig = sensors;
             meteringTypeConfig = wiringSet;
             periodConfig = period;
+            // Reflejar estado de grabación del dispositivo sin modificarlo
+            isRecording = recording;
+            recordingConfig = recording;
 
             // ✅ Calcular posición spinner Amperes
             skipSpinnerEvents = true;
@@ -2020,6 +2409,7 @@ public class FasoresActivity extends AppCompatActivity {
             final int finalSpinnerPos  = spinnerPos;
             final int finalCableadoPos = cableadoPos;
 
+            final boolean finalRecording = recording;
             handler.post(() -> {
                 if (spinnerAmperes != null) {
                     spinnerAmperes.setSelection(finalSpinnerPos);
@@ -2028,7 +2418,26 @@ public class FasoresActivity extends AppCompatActivity {
                     spinnerCableado.setSelection(finalCableadoPos);
                 }
                 skipSpinnerEvents = false;
+                // Actualizar botón REC según estado real del dispositivo
+                if (btnRec != null) {
+                    if (finalRecording) {
+                        btnRec.setBackgroundResource(R.drawable.button_rec_recording);
+                        btnRec.setImageResource(R.drawable.ic_stop);
+                        startRecordingAnimation();
+                    } else {
+                        btnRec.setBackgroundResource(R.drawable.button_rec);
+                        btnRec.setImageResource(R.drawable.ic_rec);
+                        stopRecordingAnimation();
+                    }
+                }
+                if (tvRecLabel != null) {
+                    tvRecLabel.setText(finalRecording ? "● GRABANDO" : "GRABAR");
+                    tvRecLabel.setTextColor(finalRecording
+                            ? android.graphics.Color.RED
+                            : android.graphics.Color.parseColor("#666666"));
+                }
                 updateDiagram(); // ✅ Actualizar imagen con la config recibida
+                rebuildMeasurementTable(); // ✅ Reconstruir tabla según cableado recibido
             });
 
             System.out.println("✅ sensorsConfig actualizado: " + sensorsConfig);
@@ -2057,9 +2466,30 @@ public class FasoresActivity extends AppCompatActivity {
             System.arraycopy(response, 4, energyData, 0, realDataSize);
 
             if (energyData.length >= 64) {
-                if (energyData.length >= 40) processChannel64Bytes(energyData, 28, 0, "CH1");
-                if (energyData.length >= 52) processChannel64Bytes(energyData, 40, 1, "CH2");
-                if (energyData.length >= 64) processChannel64Bytes(energyData, 52, 2, "CH3");
+                int deviceId = energyData[0] & 0xFF;
+                boolean is4Wire = (deviceId == 0x34); // 3PH_4W_1LOAD: METER_BASIC_STRC format
+
+                if (is4Wire && energyData.length >= 112) {
+                    // METER_BASIC_STRC: channels 1,2,3 correspond to L1,L2,L3
+                    // V_RMS[4]  at bytes 80-87  (Uint16 × 4, 0.1 V)
+                    // C_RMS[4]  at bytes 88-95  (Uint16 × 4, 0.1 Arms)
+                    // HZ[4]     at bytes 96-103 (Uint16 × 4, 0.1 Hz)
+                    // ANGL_F[4] at bytes 104-111(Uint16 × 4, 0.1 °)
+                    // W_WR[4]   at bytes 16-31  (Int32  × 4, 0.1 W)
+                    for (int i = 0; i < 3; i++) {
+                        int ch = i + 1; // channel index: 0=N, 1=L1, 2=L2, 3=L3
+                        voltajes[i]    = readUInt16LE(energyData, 80 + ch * 2) * 0.1f;
+                        corrientes[i]  = readUInt16LE(energyData, 88 + ch * 2) * 0.1f;
+                        frecuencias[i] = readUInt16LE(energyData, 96 + ch * 2) * 0.1f;
+                        angulos[i]     = readUInt16LE(energyData, 104 + ch * 2) * 0.1f;
+                        potencias[i]   = (int) readInt32LE(energyData, 16 + ch * 4) * 0.1f;
+                    }
+                } else {
+                    // ENERGY_3PHA_PAGE_STRC: channels at offsets 28, 40, 52
+                    if (energyData.length >= 40) processChannel64Bytes(energyData, 28, 0, "CH1");
+                    if (energyData.length >= 52) processChannel64Bytes(energyData, 40, 1, "CH2");
+                    if (energyData.length >= 64) processChannel64Bytes(energyData, 52, 2, "CH3");
+                }
 
                 handler.post(() -> {
                     updateTextViews();
@@ -2126,44 +2556,73 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void updateTextViews() {
         try {
-            if (tvV1 != null) tvV1.setText(String.format("%.2f V", voltajes[0]));
-            if (tvV2 != null) tvV2.setText(String.format("%.2f V", voltajes[1]));
-            if (tvV3 != null) tvV3.setText(String.format("%.2f V", voltajes[2]));
+            // Voltajes
+            if (tvV1 != null) tvV1.setText(String.format("%.2f V",   voltajes[0]));
+            if (tvV2 != null) tvV2.setText(String.format("%.2f V",   voltajes[1]));
+            if (tvV3 != null) tvV3.setText(String.format("%.2f V",   voltajes[2]));
+            if (tvV4 != null) tvV4.setText(String.format("%.2f V",   voltajes[0])); // Load4 repite L1 en 4LOADS
 
-            if (tvA1 != null) tvA1.setText(String.format("%.3f A", corrientes[0]));
-            if (tvA2 != null) tvA2.setText(String.format("%.3f A", corrientes[1]));
-            if (tvA3 != null) tvA3.setText(String.format("%.3f A", corrientes[2]));
+            // Corrientes
+            if (tvA1 != null) tvA1.setText(String.format("%.3f A",   corrientes[0]));
+            if (tvA2 != null) tvA2.setText(String.format("%.3f A",   corrientes[1]));
+            if (tvA3 != null) tvA3.setText(String.format("%.3f A",   corrientes[2]));
+            if (tvA4 != null) tvA4.setText(String.format("%.3f A",   corrientes[0]));
 
-            if (tvW1 != null) tvW1.setText(String.format("%.2f W", potencias[0]));
-            if (tvW2 != null) tvW2.setText(String.format("%.2f W", potencias[1]));
-            if (tvW3 != null) tvW3.setText(String.format("%.2f W", potencias[2]));
+            // Potencias
+            if (tvW1 != null) tvW1.setText(String.format("%.2f W",   potencias[0]));
+            if (tvW2 != null) tvW2.setText(String.format("%.2f W",   potencias[1]));
+            if (tvW3 != null) tvW3.setText(String.format("%.2f W",   potencias[2]));
+            if (tvW4 != null) tvW4.setText(String.format("%.2f W",   potencias[0]));
 
+            // Frecuencias
             if (tvHz1 != null) tvHz1.setText(String.format("%.2f Hz", frecuencias[0]));
             if (tvHz2 != null) tvHz2.setText(String.format("%.2f Hz", frecuencias[1]));
             if (tvHz3 != null) tvHz3.setText(String.format("%.2f Hz", frecuencias[2]));
+            if (tvHz4 != null) tvHz4.setText(String.format("%.2f Hz", frecuencias[0]));
 
+            // Ángulos (convertidos a ±180°)
             for (int i = 0; i < 3; i++) {
-                float deviceAngle = angulos[i];
-                while (deviceAngle > 180f) deviceAngle -= 360f;
-                while (deviceAngle < -180f) deviceAngle += 360f;
+                float angle = angulos[i];
+                while (angle >  180f) angle -= 360f;
+                while (angle < -180f) angle += 360f;
+                String angleText = String.format("%.0f°", angle);
 
-                String angleText = String.format("%.0f°", deviceAngle);
-                if (i == 0 && tvpF1 != null) tvpF1.setText(angleText);
-                if (i == 1 && tvpF2 != null) tvpF2.setText(angleText);
-                if (i == 2 && tvpF3 != null) tvpF3.setText(angleText);
+                if (i == 0) { if (tvpF1 != null) tvpF1.setText(angleText); }
+                if (i == 1) { if (tvpF2 != null) tvpF2.setText(angleText); }
+                if (i == 2) { if (tvpF3 != null) tvpF3.setText(angleText); }
+            }
+            // Canal 4 repite el ángulo de L1
+            if (tvpF4 != null) {
+                float angle = angulos[0];
+                while (angle >  180f) angle -= 360f;
+                while (angle < -180f) angle += 360f;
+                tvpF4.setText(String.format("%.0f°", angle));
             }
 
-        } catch (Exception e) {
-        }
+        } catch (Exception e) { }
+
     }
 
     private void updateChannelLabels() {
         try {
-            if (tvCH1 != null) tvCH1.setText("L1-N");
-            if (tvCH2 != null) tvCH2.setText("L2-N");
-            if (tvCH3 != null) tvCH3.setText("L3-N");
-        } catch (Exception e) {
-        }
+            switch (tipoCableado) {
+                case 0: // 1PH-2W-4LOADS
+                    if (tvCH1 != null) tvCH1.setText("L1-N");
+                    if (tvCH2 != null) tvCH2.setText("L2-N");
+                    if (tvCH3 != null) tvCH3.setText("L3-N");
+                    if (tvCH4 != null) tvCH4.setText("L4-N");
+                    break;
+                case 1: // 1PH-3W-2LOADS
+                    if (tvCH1 != null) tvCH1.setText("L1-N");
+                    if (tvCH2 != null) tvCH2.setText("L2-N");
+                    break;
+                default: // 3PH-4W-1LOAD
+                    if (tvCH1 != null) tvCH1.setText("L1-N");
+                    if (tvCH2 != null) tvCH2.setText("L2-N");
+                    if (tvCH3 != null) tvCH3.setText("L3-N");
+                    break;
+            }
+        } catch (Exception e) { }
     }
 
     private void updateFasores() {
@@ -2178,6 +2637,234 @@ public class FasoresActivity extends AppCompatActivity {
 
         } catch (Exception e) {
         }
+    }
+
+    // =========================================================================
+    // ===== TABLA DE MEDICIÓN DINÁMICA =======================================
+    // =========================================================================
+
+    private void rebuildMeasurementTable() {
+        if (measurementTableLayout == null) return;
+        measurementTableLayout.removeAllViews();
+        // Reset TV refs so updateTextViews() doesn't write to stale views
+        tvV1 = tvV2 = tvV3 = tvV4 = null;
+        tvA1 = tvA2 = tvA3 = tvA4 = null;
+        tvW1 = tvW2 = tvW3 = tvW4 = null;
+        tvHz1 = tvHz2 = tvHz3 = tvHz4 = null;
+        tvpF1 = tvpF2 = tvpF3 = tvpF4 = null;
+        tvCH1 = tvCH2 = tvCH3 = tvCH4 = null;
+
+        switch (tipoCableado) {
+            case 0: buildTable_1PH_2W_4LOADS(); break;
+            case 1: buildTable_1PH_3W_2LOADS(); break;
+            default: buildTable_3PH_4W_1LOAD(); break;
+        }
+        initializeDisplayValues();
+    }
+
+    /** 3PH-4W-1LOAD: tabla única Variable | PH1 | PH2 | PH3 */
+    private void buildTable_3PH_4W_1LOAD() {
+        // Fila de encabezados de columna (L1 negro, L2 rojo, L3 azul)
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        headerRow.addView(makeColHeader("L1", Color.BLACK,             Color.WHITE));
+        headerRow.addView(makeColHeader("L2", Color.parseColor("#FF0000"), Color.WHITE));
+        headerRow.addView(makeColHeader("L3", Color.parseColor("#007BFF"), Color.WHITE));
+        measurementTableLayout.addView(headerRow);
+
+        // Tres columnas de datos
+        LinearLayout colsRow = new LinearLayout(this);
+        colsRow.setOrientation(LinearLayout.HORIZONTAL);
+        colsRow.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout col1 = makeDataColumn(Color.parseColor("#424242"));
+        tvV1  = addValueCell(col1, "0.00 V");
+        tvA1  = addValueCell(col1, "0.000 A");
+        tvW1  = addValueCell(col1, "0.00 W");
+        tvHz1 = addValueCell(col1, "0.00 Hz");
+        tvpF1 = addValueCell(col1, "0°");
+
+        LinearLayout col2 = makeDataColumn(Color.parseColor("#FF0000"));
+        tvV2  = addValueCell(col2, "0.00 V");
+        tvA2  = addValueCell(col2, "0.000 A");
+        tvW2  = addValueCell(col2, "0.00 W");
+        tvHz2 = addValueCell(col2, "0.00 Hz");
+        tvpF2 = addValueCell(col2, "0°");
+
+        LinearLayout col3 = makeDataColumn(Color.parseColor("#007BFF"));
+        tvV3  = addValueCell(col3, "0.00 V");
+        tvA3  = addValueCell(col3, "0.000 A");
+        tvW3  = addValueCell(col3, "0.00 W");
+        tvHz3 = addValueCell(col3, "0.00 Hz");
+        tvpF3 = addValueCell(col3, "0°");
+
+        LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        colLp.setMargins(0, 0, dp(2), 0);
+        colsRow.addView(col1, colLp);
+        LinearLayout.LayoutParams colLp2 = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        colLp2.setMargins(dp(1), 0, dp(1), 0);
+        colsRow.addView(col2, colLp2);
+        colsRow.addView(col3, new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        measurementTableLayout.addView(colsRow);
+    }
+
+    /** 1PH-3W-2LOADS: 2 columnas L1(oscuro) y L2(rojo), sin L3 */
+    private void buildTable_1PH_3W_2LOADS() {
+        // Encabezados
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        headerRow.addView(makeColHeader("L1", Color.BLACK,             Color.WHITE));
+        headerRow.addView(makeColHeader("L2", Color.parseColor("#FF0000"), Color.WHITE));
+        measurementTableLayout.addView(headerRow);
+
+        // Dos columnas
+        LinearLayout colsRow = new LinearLayout(this);
+        colsRow.setOrientation(LinearLayout.HORIZONTAL);
+        colsRow.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout col1 = makeDataColumn(Color.parseColor("#424242"));
+        tvV1  = addValueCell(col1, "0.00 V");
+        tvA1  = addValueCell(col1, "0.000 A");
+        tvW1  = addValueCell(col1, "0.00 W");
+        tvHz1 = addValueCell(col1, "0.00 Hz");
+        tvpF1 = addValueCell(col1, "0°");
+
+        LinearLayout col2 = makeDataColumn(Color.parseColor("#FF0000"));
+        tvV2  = addValueCell(col2, "0.00 V");
+        tvA2  = addValueCell(col2, "0.000 A");
+        tvW2  = addValueCell(col2, "0.00 W");
+        tvHz2 = addValueCell(col2, "0.00 Hz");
+        tvpF2 = addValueCell(col2, "0°");
+
+        LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        colLp.setMargins(0, 0, dp(2), 0);
+        colsRow.addView(col1, colLp);
+        colsRow.addView(col2, new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        measurementTableLayout.addView(colsRow);
+    }
+
+    /** 1PH-2W-4LOADS: 4 bloques de carga, colores alternos negro/rojo */
+    private void buildTable_1PH_2W_4LOADS() {
+        int[] bgColors   = {Color.parseColor("#424242"), Color.parseColor("#FF0000"),
+                            Color.parseColor("#424242"), Color.parseColor("#FF0000")};
+        String[] chLabels   = {"L1-N", "L2-N", "L3-N", "L4-N"};
+        String[] loadLabels = {"Load 1", "Load 2", "Load 3", "Load 4"};
+
+        // 4 columnas en una sola fila horizontal para que todas sean visibles
+        LinearLayout allCols = new LinearLayout(this);
+        allCols.setOrientation(LinearLayout.HORIZONTAL);
+        allCols.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+
+        for (int li = 0; li < 4; li++) {
+            LinearLayout col = makeDataColumn(bgColors[li]);
+
+            // Load label header cell
+            TextView tvLoad = new TextView(this);
+            tvLoad.setText(loadLabels[li]);
+            tvLoad.setTextColor(Color.WHITE);
+            tvLoad.setTextSize(9f);
+            tvLoad.setTypeface(null, Typeface.BOLD);
+            tvLoad.setGravity(Gravity.CENTER);
+            tvLoad.setPadding(dp(2), dp(3), dp(2), dp(3));
+            tvLoad.setBackgroundColor(Color.parseColor("#1A1A1A"));
+            tvLoad.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            col.addView(tvLoad);
+
+            TextView tvCH = addChannelCell(col, chLabels[li]);
+            TextView tvV  = addValueCell(col, "0.00 V");
+            TextView tvA  = addValueCell(col, "0.000 A");
+            TextView tvW  = addValueCell(col, "0.00 W");
+            TextView tvHz = addValueCell(col, "0.00 Hz");
+            TextView tvPF = addValueCell(col, "0°");
+
+            switch (li) {
+                case 0: tvCH1=tvCH; tvV1=tvV; tvA1=tvA; tvW1=tvW; tvHz1=tvHz; tvpF1=tvPF; break;
+                case 1: tvCH2=tvCH; tvV2=tvV; tvA2=tvA; tvW2=tvW; tvHz2=tvHz; tvpF2=tvPF; break;
+                case 2: tvCH3=tvCH; tvV3=tvV; tvA3=tvA; tvW3=tvW; tvHz3=tvHz; tvpF3=tvPF; break;
+                case 3: tvCH4=tvCH; tvV4=tvV; tvA4=tvA; tvW4=tvW; tvHz4=tvHz; tvpF4=tvPF; break;
+            }
+
+            LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+            if (li < 3) colLp.setMargins(0, 0, dp(2), 0);
+            allCols.addView(col, colLp);
+        }
+        measurementTableLayout.addView(allCols, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+    }
+
+    /** Columna de datos (vertical, fondo de color) */
+    private LinearLayout makeDataColumn(int bgColor) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setBackgroundColor(bgColor);
+        col.setPadding(dp(4), dp(4), dp(4), dp(4));
+        return col;
+    }
+
+    /** Celda de encabezado de columna (nombre de fase: L1, L2, L3) */
+    private TextView makeColHeader(String text, int bgColor, int textColor) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextColor(textColor);
+        tv.setTextSize(13f);
+        tv.setTypeface(null, Typeface.BOLD);
+        tv.setGravity(Gravity.CENTER);
+        tv.setBackgroundColor(bgColor);
+        tv.setPadding(dp(4), dp(6), dp(4), dp(6));
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        return tv;
+    }
+
+    /** Celda de canal (L1-N, L2-N…) dentro de una columna */
+    private TextView addChannelCell(LinearLayout col, String text) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextColor(Color.WHITE);
+        tv.setTextSize(10f);
+        tv.setTypeface(null, Typeface.BOLD);
+        tv.setGravity(Gravity.CENTER);
+        tv.setPadding(dp(2), dp(3), dp(2), dp(3));
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        col.addView(tv);
+        return tv;
+    }
+
+    /** Celda de valor eléctrico dentro de una columna */
+    private TextView addValueCell(LinearLayout col, String defaultText) {
+        TextView tv = new TextView(this);
+        tv.setText(defaultText);
+        tv.setTextColor(Color.WHITE);
+        tv.setTextSize(10f);
+        tv.setTypeface(null, Typeface.BOLD);
+        tv.setGravity(Gravity.CENTER);
+        tv.setBackgroundColor(0xAA000000);
+        tv.setPadding(dp(2), dp(4), dp(2), dp(4));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, dp(1), 0, 0);
+        tv.setLayoutParams(lp);
+        col.addView(tv);
+        return tv;
+    }
+
+    private int dp(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private void initializeDisplayValues() {
@@ -2204,6 +2891,13 @@ public class FasoresActivity extends AppCompatActivity {
         if (tvCH1 != null) tvCH1.setText("L1");
         if (tvCH2 != null) tvCH2.setText("L2");
         if (tvCH3 != null) tvCH3.setText("L3");
+
+        if (tvV4  != null) tvV4.setText("0.00 V");
+        if (tvA4  != null) tvA4.setText("0.000 A");
+        if (tvW4  != null) tvW4.setText("0.00 W");
+        if (tvHz4 != null) tvHz4.setText("0.00 Hz");
+        if (tvpF4 != null) tvpF4.setText("0°");
+        if (tvCH4 != null) tvCH4.setText("L4-N");
     }
 
     private void startDataAcquisition() {
@@ -2283,6 +2977,7 @@ public class FasoresActivity extends AppCompatActivity {
             if (btnRec != null) btnRec.setEnabled(enabled);
             if (btnDeviceId != null) btnDeviceId.setEnabled(enabled);
             if (btnConfigWifi != null) btnConfigWifi.setEnabled(enabled);
+            if (btnConfigSub1g != null) btnConfigSub1g.setEnabled(enabled);
         });
     }
 

@@ -1,6 +1,8 @@
 package de.kai_morich.simple_bluetooth_terminal.activities;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -10,71 +12,161 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.android.material.button.MaterialButton;
+import java.util.ArrayList;
+import java.util.List;
 
+import de.kai_morich.simple_bluetooth_terminal.FasoresActivity;
+import de.kai_morich.simple_bluetooth_terminal.MainActivity;
 import de.kai_morich.simple_bluetooth_terminal.R;
-import de.kai_morich.simple_bluetooth_terminal.WiFiSetupActivity;
 import de.kai_morich.simple_bluetooth_terminal.api.ApiClient;
 import de.kai_morich.simple_bluetooth_terminal.api.TokenManager;
 import de.kai_morich.simple_bluetooth_terminal.models.LoginResponse;
 import de.kai_morich.simple_bluetooth_terminal.viewmodels.LoginViewModel;
-import de.kai_morich.simple_bluetooth_terminal.MainActivity;
-import de.kai_morich.simple_bluetooth_terminal.TcpClientActivity;
-import de.kai_morich.simple_bluetooth_terminal.FasoresActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
+    private static final int REQUEST_PERMISSIONS = 100;
 
     private EditText etEmail, etPassword;
     private Button btnLogin;
-    private CardView cvErgometer; // ✅ NUEVO: CardView de la imagen
+    private CardView cvErgometer;
     private ProgressBar progressBar;
     private LoginViewModel loginViewModel;
+
+    // =========================================================================
+    // ===== PERMISOS ==========================================================
+    // =========================================================================
+
+    private String[] getRequiredPermissions() {
+        List<String> perms = new ArrayList<>();
+
+        // Ubicación
+        perms.add(android.Manifest.permission.ACCESS_FINE_LOCATION);
+        perms.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        // Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            perms.add(android.Manifest.permission.BLUETOOTH_SCAN);
+            perms.add(android.Manifest.permission.BLUETOOTH_CONNECT);
+        }
+
+        // Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            perms.add(android.Manifest.permission.NEARBY_WIFI_DEVICES);
+            perms.add(android.Manifest.permission.POST_NOTIFICATIONS); // ✅ NUEVO
+        }
+
+        return perms.toArray(new String[0]);
+    }
+
+    private boolean hasAllPermissions() {
+        for (String perm : getRequiredPermissions()) {
+            if (ContextCompat.checkSelfPermission(this, perm)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void requestPermissions() {
+        String[] perms = getRequiredPermissions();
+
+        // Verificar si debemos mostrar explicación primero
+        boolean shouldShowRationale = false;
+        for (String perm : perms) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+                shouldShowRationale = true;
+                break;
+            }
+        }
+        
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode != REQUEST_PERMISSIONS) return;
+
+        List<String> denied = new ArrayList<>();
+        for (int i = 0; i < permissions.length; i++) {
+            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                denied.add(permissions[i]);
+            }
+        }
+
+        if (!denied.isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permisos denegados")
+                    .setMessage(
+                            "Algunos permisos fueron denegados. La app puede no funcionar " +
+                                    "correctamente sin ellos.\n\nPuedes activarlos manualmente desde " +
+                                    "Ajustes → Aplicaciones → METER APP → Permisos."
+                    )
+                    .setPositiveButton("OK", null)
+                    .show();
+        }
+    }
+
+    // =========================================================================
+    // ===== CICLO DE VIDA =====================================================
+    // =========================================================================
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Inicializar ApiClient (incluye TokenManager)
         ApiClient.init(getApplicationContext());
 
         initializeViews();
         setupObservers();
         setupClickListeners();
+
+        // Pedir permisos al iniciar
+        if (!hasAllPermissions()) {
+            requestPermissions();
+        }
     }
 
+    // =========================================================================
+    // ===== INICIALIZACIÓN ====================================================
+    // =========================================================================
+
     private void initializeViews() {
-        etEmail = findViewById(R.id.etEmail);
+        etEmail    = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
-        btnLogin = findViewById(R.id.btnLogin);
-        cvErgometer = findViewById(R.id.cvErgometer); // ✅ NUEVO
+        btnLogin   = findViewById(R.id.btnLogin);
+        cvErgometer = findViewById(R.id.cvErgometer);
         progressBar = findViewById(R.id.progressBar);
 
         loginViewModel = new ViewModelProvider(this).get(LoginViewModel.class);
     }
 
     private void setupObservers() {
-        // Observer de loginResult
         loginViewModel.getLoginResult().observe(this, new Observer<LoginResponse>() {
             @Override
             public void onChanged(LoginResponse loginResponse) {
                 if (loginResponse != null) {
                     String token = loginResponse.getToken();
-                    String roll = loginResponse.getRoll();
-                    Log.d(TAG, "LoginResponse recibido: Token=" + token + ", Roll=" + roll);
+                    String roll  = loginResponse.getRoll();
+                    Log.d(TAG, "LoginResponse: Token=" + token + ", Roll=" + roll);
 
                     if (!TextUtils.isEmpty(token)) {
-                        // Guardar token en SharedPreferences
                         new TokenManager(LoginActivity.this).saveToken(token);
-
                         Toast.makeText(LoginActivity.this, "Login exitoso", Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
@@ -88,49 +180,37 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        // Observer de error
         loginViewModel.getError().observe(this, new Observer<String>() {
             @Override
             public void onChanged(String errorMsg) {
                 if (errorMsg != null) {
-                    Log.e(TAG, "Error recibido del ViewModel: " + errorMsg);
+                    Log.e(TAG, "Error del ViewModel: " + errorMsg);
                     Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-        // Observer de loading
         loginViewModel.getLoading().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean isLoading) {
-                progressBar.setVisibility(isLoading != null && isLoading ? View.VISIBLE : View.GONE);
+                progressBar.setVisibility(isLoading != null && isLoading
+                        ? View.VISIBLE : View.GONE);
                 btnLogin.setEnabled(isLoading == null || !isLoading);
             }
         });
     }
 
     private void setupClickListeners() {
-        // ✅ Listener del botón Login
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                attemptLogin();
-            }
-        });
+        btnLogin.setOnClickListener(v -> attemptLogin());
 
-        // ✅ NUEVO: Listener de la imagen ErgoMeter
-        cvErgometer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Ir directamente a FasoresActivity
-                Intent intent = new Intent(LoginActivity.this, FasoresActivity.class);
-                startActivity(intent);
-            }
-        });
+        cvErgometer.setOnClickListener(v ->
+                startActivity(new Intent(LoginActivity.this, FasoresActivity.class)));
     }
 
+
+
     private void attemptLogin() {
-        String email = etEmail.getText().toString().trim();
+        String email    = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -138,9 +218,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Limpiar estados previos
+        ApiClient.clearToken(); // Limpiar el token antes de iniciar el login
+
         loginViewModel.clearState();
-        // Iniciar llamada a la API
         loginViewModel.loginUser(email, password);
     }
 }
