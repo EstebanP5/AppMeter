@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
@@ -81,17 +80,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void requestPermissions() {
-        String[] perms = getRequiredPermissions();
-
-        // Verificar si debemos mostrar explicación primero
-        boolean shouldShowRationale = false;
-        for (String perm : perms) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
-                shouldShowRationale = true;
-                break;
-            }
-        }
-        
+        ActivityCompat.requestPermissions(this, getRequiredPermissions(), REQUEST_PERMISSIONS);
     }
 
     @Override
@@ -101,24 +90,6 @@ public class LoginActivity extends AppCompatActivity {
 
         if (requestCode != REQUEST_PERMISSIONS) return;
 
-        List<String> denied = new ArrayList<>();
-        for (int i = 0; i < permissions.length; i++) {
-            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                denied.add(permissions[i]);
-            }
-        }
-
-        if (!denied.isEmpty()) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permisos denegados")
-                    .setMessage(
-                            "Algunos permisos fueron denegados. La app puede no funcionar " +
-                                    "correctamente sin ellos.\n\nPuedes activarlos manualmente desde " +
-                                    "Ajustes → Aplicaciones → METER APP → Permisos."
-                    )
-                    .setPositiveButton("OK", null)
-                    .show();
-        }
     }
 
     // =========================================================================
@@ -129,6 +100,10 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        // La versión sale de build.gradle (versionName), no se toca a mano
+        ((android.widget.TextView) findViewById(R.id.tvVersion)).setText(
+                "METER APP V" + de.kai_morich.simple_bluetooth_terminal.BuildConfig.VERSION_NAME);
 
         ApiClient.init(getApplicationContext());
 

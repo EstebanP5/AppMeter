@@ -127,7 +127,6 @@ public class WiFiSetupActivity extends AppCompatActivity {
     private AlertDialog validationProgressDialog;
 
     // ===== CONSTANTES =====
-    private static final String ESP_NETWORK_PREFIX = "ESP";
     private static final String DEVICE_IP = "192.168.4.1";
     private static final int DEVICE_PORT = 333;
 
@@ -315,12 +314,6 @@ public class WiFiSetupActivity extends AppCompatActivity {
         for (String permission : REQUIRED_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 missingPermissions.add(permission);
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                missingPermissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
             }
         }
 
@@ -1274,10 +1267,10 @@ public class WiFiSetupActivity extends AppCompatActivity {
                     currentNetworkName = ssid.replace("\"", "");
                     textNetworkName.setText("Red actual: " + currentNetworkName);
 
-                    isESPNetwork = currentNetworkName.startsWith(ESP_NETWORK_PREFIX);
+                    isESPNetwork = Constants.isMeterAp(currentNetworkName);
 
                     if (isESPNetwork) {
-                        textNetworkStatus.setText("✅ Red ESP detectada - Listo para conectar");
+                        textNetworkStatus.setText("✅ Red del medidor detectada - Listo para conectar");
                         textNetworkStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
                     } else {
                         textNetworkStatus.setText("📱 Conexión manual disponible");
@@ -1351,8 +1344,8 @@ public class WiFiSetupActivity extends AppCompatActivity {
 
         updateUI();
         progressSetup.setVisibility(View.VISIBLE);
-        final String deviceIp = DEVICE_IP; // ✅ AGREGAR final
-        final int devicePort = DEVICE_PORT; // ✅ AGREGAR final
+        final String deviceIp = DEVICE_IP; //  AGREGAR final
+        final int devicePort = DEVICE_PORT; //  AGREGAR final
 
         textSetupStatus.setText("🔍 Conectando a " + deviceIp + ":" + devicePort);
 
@@ -1406,7 +1399,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                 .setTitle("🔌 " + title)
                 .setMessage(message)
                 .setPositiveButton("Reintentar", (dialog, which) -> {
-                    connectAndSetup(); // ✅ Esto ya no dará error
+                    connectAndSetup(); // Esto ya no dará error
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
@@ -1451,7 +1444,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                     nextSetupStep();
                     isSetupInProgress = false;
                     progressSetup.setVisibility(View.GONE);
-                    textSetupStatus.setText("✅ Setup completado - Dispositivo configurado");
+                    textSetupStatus.setText(" Setup completado - Dispositivo configurado");
                     showAllInfoSections();
                     showToast("🎉 Setup completado exitosamente");
 
@@ -1507,7 +1500,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
     private void setAutoSendNetwork(WiFiValidationModule.ValidatedNetwork network) {
         pendingNetworkToSend = network;
         autoSendEnabled = true;
-        showToast("🔄 Red preparada para envío automático: " + network.ssid);
+        showToast(" Red preparada para envío automático: " + network.ssid);
     }
 
     private void checkAndSendPendingNetwork() {
@@ -1579,7 +1572,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
 
                         System.out.println("📨 Datos recibidos: " + bytesToHexString(data));
 
-                        // ✅ USAR VALIDACIÓN Y PROCESAMIENTO COMO EN TU CÓDIGO ANTERIOR
+                     
                         if (OctoNetCommandEncoder.validateCommandStructure(data)) {
                             OctoNetCommandEncoder.CmdSet commandType = OctoNetCommandEncoder.getCommandType(data);
                             byte[] commandData = OctoNetCommandEncoder.extractCommandData(data);
@@ -1647,17 +1640,17 @@ public class WiFiSetupActivity extends AppCompatActivity {
 
             System.out.println("🔍 Procesando DEVICE_ID con " + data.length + " bytes");
 
-            // ✅ USAR EL MISMO MÉTODO QUE EN TU CÓDIGO ANTERIOR
+         
             String deviceInfo = new String(data, "UTF-8").trim();
             System.out.println("📄 Datos como string: " + deviceInfo);
 
             // Variables para almacenar información
             String serial = "--", fabDate = "--", fabHour = "--", actCode = "--", hwVersion = "--", fwVersion = "--";
 
-            // ✅ LÓGICA IGUAL A TU CÓDIGO ANTERIOR QUE FUNCIONABA
+       
             String[] lines = deviceInfo.split("\n");
 
-            // Si es una sola línea larga (formato concatenado)
+      
             if (lines.length == 1 && deviceInfo.length() >= 30) {
                 System.out.println("🔍 Formato concatenado detectado, parseando...");
 
@@ -1729,7 +1722,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                 }
             }
 
-            // ✅ CREAR VARIABLES FINALES PARA LAMBDA
+            //  CREAR VARIABLES FINALES PARA LAMBDA
             final String finalSerial = serial;
             final String finalFabDate = fabDate;
             final String finalFabHour = fabHour;
@@ -1739,7 +1732,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
 
             System.out.println("✅ Datos parseados exitosamente");
 
-            // ✅ ACTUALIZAR UI EN HILO PRINCIPAL
+            // ACTUALIZAR UI EN HILO PRINCIPAL
             handler.post(() -> {
                 try {
                     if (textDeviceSerial != null) {
@@ -1805,7 +1798,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
 
             int year, month, day, hour, minute, second;
 
-            // ✅ USAR LA MISMA LÓGICA DE TU CÓDIGO ANTERIOR QUE FUNCIONABA
+            //USAR LA MISMA LÓGICA DE TU CÓDIGO ANTERIOR QUE FUNCIONABA
             try {
                 // Intentar usar el decodificador oficial primero
                 if (data.length >= 6) {
@@ -1817,7 +1810,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                     minute = decodedTime.minute;
                     second = decodedTime.second;
 
-                    System.out.println("✅ Decodificación exitosa con OctoNetCommandEncoder");
+                    System.out.println(" Decodificación exitosa con OctoNetCommandEncoder");
                 } else {
                     throw new Exception("Datos insuficientes para decodificador oficial");
                 }
@@ -1825,7 +1818,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
             } catch (Exception decoderError) {
                 System.out.println("⚠️ Decodificador oficial falló, usando interpretación manual");
 
-                // ✅ INTERPRETACIÓN MANUAL IGUAL A TU CÓDIGO ANTERIOR
+                // INTERPRETACIÓN MANUAL 
                 year = 2000 + (data[0] & 0xFF);  // Byte 0: año
 
                 // Byte 1: Día de semana (4 bits altos) + Mes (4 bits bajos)
@@ -1847,7 +1840,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                 System.out.println("   Segundo: " + second);
             }
 
-            // ✅ VALIDACIONES IGUALES A TU CÓDIGO ANTERIOR
+        
             if (year < 2020 || year > 2030) {
                 System.out.println("⚠️ Año inválido (" + year + "), corrigiendo a 2025");
                 year = 2025;
@@ -1876,13 +1869,13 @@ public class WiFiSetupActivity extends AppCompatActivity {
                 second = Math.min(59, second);
             }
 
-            // ✅ FORMATEAR IGUAL A TU CÓDIGO ANTERIOR
+       
             final String dateTimeStr = String.format("%02d/%02d/%04d %02d:%02d:%02d",
                     day, month, year, hour, minute, second);
 
             System.out.println("✅ Resultado final: " + dateTimeStr);
 
-            // ✅ ACTUALIZAR UI
+            //  ACTUALIZAR UI
             handler.post(() -> {
                 try {
                     if (textDeviceDateTime != null) {
@@ -1908,7 +1901,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
         }
     }
 
-    // 5. NUEVO método processWifiSettingsDataFixed() - CORREGIDO
+    // 5. NUEVO método processWifiSettingsDataFixed() 
     private void processWifiSettingsDataFixed(byte[] data) {
         try {
             System.out.println("🔍 Procesando WIFI_SETTINGS con " + (data != null ? data.length : 0) + " bytes");
@@ -1929,7 +1922,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                 return;
             }
 
-            // ✅ USAR EL PROCESADOR DE OctoNetCommandEncoder
+            //  USAR EL PROCESADOR DE OctoNetCommandEncoder
             OctoNetCommandEncoder.WiFiSettings wifiSettings = OctoNetCommandEncoder.processWiFiSettingsResponse(data);
 
             System.out.println("✅ WiFi Settings parseados:");
@@ -1937,7 +1930,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
             System.out.println("   IP: " + wifiSettings.ip);
             System.out.println("   RSSI: " + wifiSettings.rssi);
 
-            // ✅ ACTUALIZAR UI
+            //  ACTUALIZAR UI
             handler.post(() -> {
                 try {
                     // Actualizar red configurada
@@ -1947,7 +1940,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
                         System.out.println("✅ Red actualizada: " + networkText);
                     }
 
-                    // ✅ MANTENER LA CONTRASEÑA QUE CONFIGURAMOS NOSOTROS
+                    //  MANTENER LA CONTRASEÑA QUE CONFIGURAMOS NOSOTROS
                     if (textConfiguredPassword != null) {
                         if (!lastConfiguredPassword.isEmpty()) {
                             // Mantener la contraseña que acabamos de configurar
@@ -2075,7 +2068,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
         }
     }
 
-    // MÉTODO AUXILIAR para DEBUG - Agregar al final de la clase
+    // MÉTODO AUXILIAR para DEBUG 
     private void logDeviceResponse(String type, String message) {
         System.out.println("==========================================");
         System.out.println("📋 RESPUESTA " + type + ":");
@@ -2084,7 +2077,7 @@ public class WiFiSetupActivity extends AppCompatActivity {
         System.out.println("==========================================");
     }
 
-    // MÉTODO PARA VALIDAR RESPUESTAS - Agregar al final de la clase
+    // MÉTODO PARA VALIDAR RESPUESTAS 
     private boolean validateResponseFormat(String message, String expectedType, int expectedFields) {
         if (message == null || message.isEmpty()) {
             System.out.println("❌ Mensaje vacío para " + expectedType);

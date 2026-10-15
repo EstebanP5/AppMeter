@@ -30,6 +30,9 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 
@@ -46,7 +49,10 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -70,7 +76,6 @@ public class FasoresActivity extends AppCompatActivity {
     private Button btnDeviceId, btnConfigWifi, btnConfigSub1g, btnMemoria;
     private Handler handler = new Handler(Looper.getMainLooper());
     private boolean isRecording = false;
-    private Runnable recLabelBlinker;
 
     // ===== FASORES =====
     private FasorView fasorVoltaje, fasorCorriente;
@@ -105,6 +110,10 @@ public class FasoresActivity extends AppCompatActivity {
     private int devicePort = 333;
     private boolean isConnectedToDevice = false;
 
+    // ===== SENSORES (índice = valor 01h..05h - 1) =====
+    private static final String[] SENSOR_LABELS = {"CT-50A", "CT-200A", "CT-1000A", "RoGo-2000A", "RoGo-4000A"};
+    private static final int[]    SENSOR_AMPS   = {50, 200, 1000, 2000, 4000};
+
     // ===== CONFIGURACIÓN =====
     private int periodConfig = 1;           // 1 = 5 MINUTOS
     private int sensorsConfig = 2;          // 2 = CT-200A (valor inicial)
@@ -113,7 +122,11 @@ public class FasoresActivity extends AppCompatActivity {
     // ===== ESTADO =====
     private volatile boolean shouldStopReceiving = false;
     private int rangoAmperes = 200;         // Valor inicial en la UI
-    private int tipoCableado = 2;
+
+    // Android acepta 4 escaneos WiFi cada 2 minutos; pasado ese limite devuelve
+    // los resultados viejos sin avisar.
+    private static final long SCAN_COOLDOWN_MS = 10000;
+    private long ultimoEscaneoMs = 0;
 
     // ===== AUTO-LECTURA =====
     private boolean autoReadEnabled = false;
@@ -122,11 +135,12 @@ public class FasoresActivity extends AppCompatActivity {
     private Handler autoReadHandler = new Handler(Looper.getMainLooper());
 
     // ===== DATOS DEL MEDIDOR =====
-    private float[] voltajes = {0.0f, 0.0f, 0.0f};
-    private float[] corrientes = {0.0f, 0.0f, 0.0f};
-    private float[] potencias = {0.0f, 0.0f, 0.0f};
-    private float[] frecuencias = {0.0f, 0.0f, 0.0f};
-    private float[] angulos = {0.0f, 120.0f, 240.0f};
+    // 4 canales: en 4LOADS son Load1..Load4; en trifasico se usan los 3 primeros
+    private float[] voltajes = {0.0f, 0.0f, 0.0f, 0.0f};
+    private float[] corrientes = {0.0f, 0.0f, 0.0f, 0.0f};
+    private float[] potencias = {0.0f, 0.0f, 0.0f, 0.0f};
+    private float[] frecuencias = {0.0f, 0.0f, 0.0f, 0.0f};
+    private float[] angulos = {0.0f, 120.0f, 240.0f, 0.0f};
     private OctoNetCommandEncoder.WiFiSettings lastReadWifiSettings = null;
     private OctoNetCommandEncoder.Sub1gSettings lastReadSub1gSettings = null;
 
@@ -151,11 +165,12 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     // ===== HELPERS =====
-    private long readInt32LE(byte[] data, int offset) {
-        return ((data[offset] & 0xFFL)) |
-                ((data[offset + 1] & 0xFFL) << 8) |
-                ((data[offset + 2] & 0xFFL) << 16) |
-                ((data[offset + 3] & 0xFFL) << 24);
+    // Int32 con signo (Tabla 15): la potencia puede ser negativa cuando hay inyección
+    private int readInt32LE(byte[] data, int offset) {
+        return ((data[offset] & 0xFF)) |
+                ((data[offset + 1] & 0xFF) << 8) |
+                ((data[offset + 2] & 0xFF) << 16) |
+                (data[offset + 3] << 24);
     }
 
     private int readUInt16LE(byte[] data, int offset) {
@@ -236,7 +251,7 @@ public class FasoresActivity extends AppCompatActivity {
         // TextViews are built dynamically — see rebuildMeasurementTable()
         rebuildMeasurementTable();
 
-        // ✅ CONFIGURAR LISTENERS PARA MODALES
+        //  CONFIGURAR LISTENERS PARA MODALES
         View fasorVoltajeContainer = findViewById(R.id.fasorVoltajeContainer);
         if (fasorVoltajeContainer != null) {
             fasorVoltajeContainer.setOnClickListener(v -> showFasorModal());
@@ -297,18 +312,18 @@ public class FasoresActivity extends AppCompatActivity {
                             float newSpacing = getSpacing(event);
                             float spacingDiff = newSpacing - lastSpacing;
 
-                            // ✅ Factor muy gradual
+                            //  Factor muy gradual
                             if (Math.abs(spacingDiff) > 1f) {
                                 float[] values = new float[9];
                                 matrix.getValues(values);
                                 float currentScale = values[android.graphics.Matrix.MSCALE_X];
 
-                                // ✅ Zoom gradual: cada pixel = muy poco cambio
+                                //  Zoom gradual: cada pixel = muy poco cambio
                                 float scaleDelta = 1f + (spacingDiff * 0.005f);
 
                                 float newScale = currentScale * scaleDelta;
 
-                                // ✅ Limitar escala
+                                //  Limitar escala
                                 if (newScale < MIN_SCALE) scaleDelta = MIN_SCALE / currentScale;
                                 else if (newScale > MAX_SCALE) scaleDelta = MAX_SCALE / currentScale;
 
@@ -316,7 +331,7 @@ public class FasoresActivity extends AppCompatActivity {
                                 fixTranslation();
                                 setImageMatrix(matrix);
                                 savedMatrix.set(matrix);
-                                lastSpacing = newSpacing; // ✅ frame a frame
+                                lastSpacing = newSpacing; //  frame a frame
                             }
 
                         } else if (mode == DRAG && event.getPointerCount() == 1) {
@@ -365,7 +380,7 @@ public class FasoresActivity extends AppCompatActivity {
                 float dW = d.getIntrinsicWidth(), dH = d.getIntrinsicHeight();
                 if (dW == 0 || dH == 0) return;
 
-                // ✅ Al abrir: escala 1:1
+                //  Al abrir: escala 1:1
                 float scale = 1.0f;
                 float dx = (vW - dW * scale) / 2f;
                 float dy = (vH - dH * scale) / 2f;
@@ -386,7 +401,7 @@ public class FasoresActivity extends AppCompatActivity {
                 float dW = d.getIntrinsicWidth(), dH = d.getIntrinsicHeight();
                 if (dW == 0 || dH == 0) return;
 
-                // ✅ Reset: ajustar para que quepa completa
+                //  Reset: ajustar para que quepa completa
                 float scale = Math.min(vW / dW, vH / dH);
                 float dx = (vW - dW * scale) / 2f;
                 float dy = (vH - dH * scale) / 2f;
@@ -438,18 +453,17 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void setupSpinners() {
-        // ✅ NUEVAS opciones de cableado
+        // NUEVAS opciones de cableado
         String[] cableadoOptions = {"1-Fase 4-Cargas", "2-Fases 2-Cargas", "3-Fases 1-Carga"};
         setupSpinnerAdapter(spinnerCableado, cableadoOptions);
 
-        String[] amperesOptions = {"50A", "200A", "1000A", "3000A"};
-        setupSpinnerAdapter(spinnerAmperes, amperesOptions);
+        setupSpinnerAdapter(spinnerAmperes, SENSOR_LABELS);
 
         setupSpinnerListeners();
 
         skipSpinnerEvents = true;
         spinnerAmperes.setSelection(1);   // 200A por defecto
-        spinnerCableado.setSelection(2);  // ✅ 3PH 4W 1-LOAD por defecto (índice 2)
+        spinnerCableado.setSelection(2);  // 3PH 4W 1-LOAD por defecto (índice 2)
         skipSpinnerEvents = false;
 
         setSpinnersEnabled(false);
@@ -468,7 +482,7 @@ public class FasoresActivity extends AppCompatActivity {
         spinnerAmperes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (!skipSpinnerEvents && configurationSynced) {
+                if (!skipSpinnerEvents && configurationSynced && position + 1 != sensorsConfig) {
                     System.out.println("📊 SPINNER AMPERES - posición: " + position);
                     updateAmperesRange(position); // actualiza rangoAmperes
                     handler.postDelayed(() -> {
@@ -485,19 +499,18 @@ public class FasoresActivity extends AppCompatActivity {
         spinnerCableado.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (!skipSpinnerEvents && configurationSynced) {
+                if (!skipSpinnerEvents && configurationSynced && position != meteringTypeConfig) {
                     System.out.println("📊 SPINNER CABLEADO - posición: " + position);
 
-                    // ✅ Actualizar meteringTypeConfig PRIMERO
+                    //  Actualizar meteringTypeConfig PRIMERO
                     switch (position) {
                         case 0: meteringTypeConfig = 0; break;
                         case 1: meteringTypeConfig = 1; break;
                         case 2: meteringTypeConfig = 2; break;
                         default: meteringTypeConfig = 2; break;
                     }
-                    tipoCableado = meteringTypeConfig;
 
-                    // ✅ Actualizar imagen DESPUÉS de actualizar meteringTypeConfig
+                    //  Actualizar imagen DESPUÉS de actualizar meteringTypeConfig
                     updateDiagram();
                     rebuildMeasurementTable();
 
@@ -685,20 +698,22 @@ public class FasoresActivity extends AppCompatActivity {
             @SuppressLint("MissingPermission")
             String currentSsid = wifiManager.getConnectionInfo().getSSID().replace("\"", "");
 
-            if (!currentSsid.startsWith("ESP")) {
+            if (!Constants.isMeterAp(currentSsid)) {
                 new MaterialAlertDialogBuilder(this)
                         .setTitle("⚠️ Advertencia")
                         .setMessage("No estás conectado a la red del medidor.\n\n¿Continuar?")
-                        .setPositiveButton("Continuar", (dialog, which) -> {
-                            userRequestedWifiScan = true;
-                            wifiManager.startScan();
-                        })
+                        .setPositiveButton("Continuar", (dialog, which) -> escanearRedes())
                         .setNegativeButton("Cancelar", null)
                         .show();
                 return;
             }
         }
 
+        escanearRedes();
+    }
+
+    private void escanearRedes() {
+        ultimoEscaneoMs = System.currentTimeMillis();
         userRequestedWifiScan = true;
         wifiManager.startScan();
     }
@@ -710,120 +725,143 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void displayNetworkSelectionForValidation() {
-        if (availableNetworks.isEmpty()) {
-            showToast("❌ No se encontraron redes WiFi");
-            return;
+        // Una sola entrada por SSID (el escaneo repite la misma red por cada AP): nos
+        // quedamos con la antena mas fuerte y ordenamos de mejor a peor senal.
+        Map<String, ScanResult> porSsid = new LinkedHashMap<>();
+        for (ScanResult red : availableNetworks) {
+            if (red.SSID == null || red.SSID.isEmpty()) continue;
+            if (Constants.isMeterAp(red.SSID)) continue;   // el AP del propio medidor
+            if (!is24GHzNetwork(red)) continue;            // el medidor solo hace 2.4GHz
+
+            ScanResult previa = porSsid.get(red.SSID);
+            if (previa == null || red.level > previa.level) porSsid.put(red.SSID, red);
         }
 
-        List<String> networkNames = new ArrayList<>();
-        List<String> networkSSIDs = new ArrayList<>();
+        List<ScanResult> redes = new ArrayList<>(porSsid.values());
+        Collections.sort(redes, (a, b) -> b.level - a.level);
 
-        for (ScanResult result : availableNetworks) {
-            if (result.SSID != null && !result.SSID.isEmpty() && !result.SSID.startsWith("ESP")) {
-                if (is24GHzNetwork(result)) {
-                    networkNames.add(result.SSID + " (2.4GHz)");
-                    networkSSIDs.add(result.SSID);
-                }
-            }
-        }
-
-        if (networkNames.isEmpty()) {
+        if (redes.isEmpty()) {
             showToast("❌ Sin redes 2.4GHz disponibles");
             return;
         }
 
-        // ✅ Construir vista personalizada con botón de refrescar destacado
-        LinearLayout mainLayout = new LinearLayout(this);
-        mainLayout.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout lista = new LinearLayout(this);
+        lista.setOrientation(LinearLayout.VERTICAL);
 
-        // ✅ BOTÓN REFRESCAR DESTACADO
-        Button btnRefrescar = new Button(this);
-        btnRefrescar.setText("🔄  REFRESCAR REDES");
-        btnRefrescar.setTextColor(Color.WHITE);
-        btnRefrescar.setTextSize(15f);
-        btnRefrescar.setTypeface(null, Typeface.BOLD);
-        btnRefrescar.setAllCaps(false);
+        final AlertDialog[] dialogRef = new AlertDialog[1];
 
-        GradientDrawable btnBackground = new GradientDrawable();
-        btnBackground.setShape(GradientDrawable.RECTANGLE);
-        btnBackground.setColor(Color.rgb(33, 150, 243)); // azul
-        btnBackground.setCornerRadius(12f);
-        btnRefrescar.setBackground(btnBackground);
-
-        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        btnParams.setMargins(24, 20, 24, 8);
-        btnRefrescar.setLayoutParams(btnParams);
-        btnRefrescar.setPadding(0, 28, 0, 28);
-
-        mainLayout.addView(btnRefrescar);
-
-        // ✅ SEPARADOR CON TEXTO
-        TextView separador = new TextView(this);
-        separador.setText("── Redes disponibles ──");
-        separador.setTextColor(Color.rgb(150, 150, 150));
-        separador.setTextSize(12f);
-        separador.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams sepParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        sepParams.setMargins(0, 8, 0, 4);
-        separador.setLayoutParams(sepParams);
-        mainLayout.addView(separador);
-
-        // ✅ LISTA DE REDES
-        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
-        LinearLayout listaRedes = new LinearLayout(this);
-        listaRedes.setOrientation(LinearLayout.VERTICAL);
-        listaRedes.setPadding(0, 0, 0, 16);
-
-        for (int i = 0; i < networkNames.size(); i++) {
-            final String ssid = networkSSIDs.get(i);
-
-            TextView redItem = new TextView(this);
-            redItem.setText("📶  " + networkNames.get(i));
-            redItem.setTextSize(14f);
-            redItem.setTextColor(Color.rgb(33, 33, 33));
-            redItem.setPadding(48, 28, 48, 28);
-
-            // alternar fondo para mejor legibilidad
-            if (i % 2 == 0) {
-                redItem.setBackgroundColor(Color.rgb(245, 245, 245));
-            } else {
-                redItem.setBackgroundColor(Color.WHITE);
-            }
-
-            redItem.setOnClickListener(v -> {
+        for (int i = 0; i < redes.size(); i++) {
+            if (i > 0) lista.addView(makeListDivider());
+            final String ssid = redes.get(i).SSID;
+            View fila = makeNetworkRow(redes.get(i));
+            fila.setOnClickListener(v -> {
+                if (dialogRef[0] != null) dialogRef[0].dismiss();
                 showPasswordDialogForValidation(ssid);
             });
-
-            listaRedes.addView(redItem);
+            lista.addView(fila);
         }
 
-        scrollView.addView(listaRedes);
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0);
-        scrollParams.weight = 1;
-        scrollView.setLayoutParams(scrollParams);
-        mainLayout.addView(scrollView);
-
-        // ✅ Construir y mostrar el dialog
-        final androidx.appcompat.app.AlertDialog[] dialogRef = new androidx.appcompat.app.AlertDialog[1];
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(lista);
 
         dialogRef[0] = new MaterialAlertDialogBuilder(this)
-                .setTitle("📡 Redes 2.4GHz (" + networkNames.size() + ")")
-                .setView(mainLayout)
+                .setTitle("Red WiFi para el medidor")
+                .setMessage("Elegí la red a la que se va a conectar (solo 2,4 GHz)")
+                .setView(scroll)
+                // El refrescar vive en la barra de botones del dialogo: ahi se lee
+                // como boton sin necesidad de disfrazarlo.
+                .setNeutralButton("🔄  Refrescar", (dialog, which) -> {
+                    showToast("🔄 Buscando redes...");
+                    escanearRedes();
+                })
                 .setNegativeButton("Cancelar", null)
                 .show();
 
-        // ✅ Acción del botón refrescar — cerrar dialog y re-escanear
-        btnRefrescar.setOnClickListener(v -> {
-            if (dialogRef[0] != null) dialogRef[0].dismiss();
-            showToast("🔄 Buscando redes...");
-            userRequestedWifiScan = true;
-            wifiManager.startScan();
-        });
+        aplicarCooldownRefrescar(dialogRef[0].getButton(AlertDialog.BUTTON_NEUTRAL));
+    }
+
+    /** Deshabilita Refrescar hasta que se pueda escanear de nuevo, con la cuenta regresiva. */
+    private void aplicarCooldownRefrescar(Button boton) {
+        if (boton == null) return;
+
+        long restante = SCAN_COOLDOWN_MS - (System.currentTimeMillis() - ultimoEscaneoMs);
+        if (restante <= 0) {
+            boton.setEnabled(true);
+            boton.setText("🔄  Refrescar");
+            return;
+        }
+
+        boton.setEnabled(false);
+        boton.setText("🔄  " + (restante / 1000 + 1) + " s");
+        handler.postDelayed(() -> aplicarCooldownRefrescar(boton), 1000);
+    }
+
+    /** Fila de la lista de redes: nombre, seguridad y barras de senal */
+    private View makeNetworkRow(ScanResult red) {
+        LinearLayout fila = new LinearLayout(this);
+        fila.setOrientation(LinearLayout.HORIZONTAL);
+        fila.setGravity(Gravity.CENTER_VERTICAL);
+        fila.setPadding(dp(20), dp(14), dp(20), dp(14));
+        fila.setClickable(true);
+        fila.setFocusable(true);
+
+        // Fondo con ripple del tema: deja claro que la fila se toca
+        android.util.TypedValue fondo = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, fondo, true);
+        fila.setBackgroundResource(fondo.resourceId);
+
+        LinearLayout textos = new LinearLayout(this);
+        textos.setOrientation(LinearLayout.VERTICAL);
+        textos.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView nombre = new TextView(this);
+        nombre.setText(red.SSID);
+        nombre.setTextSize(16f);
+        nombre.setTextColor(Color.rgb(33, 33, 33));
+        nombre.setTypeface(null, Typeface.BOLD);
+        textos.addView(nombre);
+
+        boolean protegida = red.capabilities != null
+                && (red.capabilities.contains("WPA") || red.capabilities.contains("WEP")
+                    || red.capabilities.contains("PSK") || red.capabilities.contains("SAE"));
+
+        TextView detalle = new TextView(this);
+        detalle.setText("2,4 GHz  ·  " + (protegida ? "🔒 Protegida" : "Abierta"));
+        detalle.setTextSize(12f);
+        detalle.setTextColor(Color.rgb(120, 120, 120));
+        textos.addView(detalle);
+
+        fila.addView(textos);
+
+        int barras = nivelSenal(red.level);
+        TextView senal = new TextView(this);
+        StringBuilder marcas = new StringBuilder();
+        for (int i = 0; i < barras; i++) marcas.append("▮");
+        senal.setText(marcas.toString());
+        senal.setTextSize(15f);
+        senal.setTextColor(barras >= 3 ? Color.rgb(46, 160, 67)
+                         : barras == 2 ? Color.rgb(230, 160, 30)
+                                       : Color.rgb(200, 80, 80));
+        fila.addView(senal);
+
+        return fila;
+    }
+
+    /** RSSI en dBm a 1-4 barras */
+    private int nivelSenal(int rssi) {
+        if (rssi >= -55) return 4;
+        if (rssi >= -67) return 3;
+        if (rssi >= -78) return 2;
+        return 1;
+    }
+
+    private View makeListDivider() {
+        View linea = new View(this);
+        linea.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, dp(1) / 2)));
+        linea.setBackgroundColor(Color.rgb(232, 232, 232));
+        return linea;
     }
 
     private boolean is24GHzNetwork(ScanResult result) {
@@ -901,7 +939,7 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void sendWiFiCredentialsToDevice(WiFiValidationModule.ValidatedNetwork network) {
-        // ✅ Si la contraseña es vacía o solo espacios, enviar 0x20 (un espacio)
+        //  Si la contraseña es vacía o solo espacios, enviar 0x20 (un espacio)
         String passwordToSend = (network.password == null || network.password.trim().isEmpty())
                 ? " "   // 0x20 en ASCII
                 : network.password;
@@ -973,18 +1011,18 @@ public class FasoresActivity extends AppCompatActivity {
             "Canales: 20, 21, 22, 23, 24"
     };
     private static final String[] SUB1G_GFSK_BR_OPTIONS = {
-            "BW:166.2kHz FDA:40kHz BR:38.4kbps",
-            "BW:23.4kHz FDA:5kHz BR:4.8kbps",
-            "BW:19.5kHz FDA:5kHz BR:1.2kbps",
-            "BW:4.8kHz FDA:0.8kHz BR:0.6kbps"
+            "BR:38.4kbps BW:166.2kHz",
+            "BR:4.8kbps BW:23.4kHz",
+            "BR:1.2kbps BW:19.5kHz",
+            "BR:0.6kbps BW:4.8kHz"
     };
     private static final String[] SUB1G_LORA_BR_OPTIONS = {
-            "BW:250kHz SF:5 CR:4:5 BR:31.25kbps",
-            "BW:250kHz SF:7 CR:4:5 BR:10.94kbps",
-            "BW:250kHz SF:9 CR:4:5 BR:3.52kbps",
-            "BW:125kHz SF:5 CR:4:5 BR:15.63kbps",
-            "BW:125kHz SF:7 CR:4:5 BR:5.47kbps",
-            "BW:125kHz SF:9 CR:4:5 BR:1.76kbps"
+            "BR:31.25kbps BW:250kHz",
+            "BR:10.94kbps BW:250kHz",
+            "BR:3.52kbps BW:250kHz",
+            "BR:15.63kbps BW:125kHz",
+            "BR:5.47kbps BW:125kHz",
+            "BR:1.76kbps BW:125kHz"
     };
 
     private void showSub1gModal() {
@@ -1012,7 +1050,7 @@ public class FasoresActivity extends AppCompatActivity {
                 current != null ? current.modem : 0);
 
         // CHANNEL
-        android.widget.EditText etChannel = addSub1gNumberField(layout, "Channel (multiplicador BW_F)",
+        android.widget.EditText etChannel = addSub1gNumberField(layout, "Channel",
                 current != null ? current.channel : 0);
 
         // HOP_SCHEMA
@@ -1034,6 +1072,21 @@ public class FasoresActivity extends AppCompatActivity {
         // LORA_BR
         Spinner spLora = addSub1gSpinner(layout, "Config. Modem LoRa (LORA_BR)", SUB1G_LORA_BR_OPTIONS,
                 current != null ? current.loraBr : 0);
+
+        // Sólo se edita el modem seleccionado (0 = GFSK, 1 = LoRa)
+        spModem.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                boolean lora = (position == 1);
+                setSpinnerAvailable(spGfsk, !lora);
+                setSpinnerAvailable(spLora, lora);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        boolean loraInicial = spModem.getSelectedItemPosition() == 1;
+        setSpinnerAvailable(spGfsk, !loraInicial);
+        setSpinnerAvailable(spLora, loraInicial);
 
         android.widget.ScrollView scroll = new android.widget.ScrollView(this);
         scroll.addView(layout);
@@ -1061,6 +1114,11 @@ public class FasoresActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+    }
+
+    private void setSpinnerAvailable(Spinner spinner, boolean available) {
+        spinner.setEnabled(available);
+        spinner.setAlpha(available ? 1f : 0.35f);
     }
 
     private Spinner addSub1gSpinner(LinearLayout parent, String label, String[] options, int selected) {
@@ -1130,23 +1188,23 @@ public class FasoresActivity extends AppCompatActivity {
         executor.execute(() -> {
             try {
                 sendTimeWriteCommand();
-                Thread.sleep(1000); // ✅ más tiempo
+                Thread.sleep(1000); // más tiempo
 
                 sendWiFiReadCommand();
-                Thread.sleep(1000); // ✅ más tiempo
+                Thread.sleep(1000); //  más tiempo
 
                 readDeviceConfigurationIndependent();
-                Thread.sleep(1500); // ✅ más tiempo para config
+                Thread.sleep(1500); //  más tiempo para config
 
-                sendDeviceIdReadCommand(); // ✅ agregar aquí para tenerlo listo
+                sendDeviceIdReadCommand(); // agregar aquí para tenerlo listo
                 Thread.sleep(1000);
 
                 handler.post(() -> {
                     configurationSynced = true;
                     setControlsEnabled(true);
                     setSpinnersEnabled(true);
-                    isWaitingResponse = false; // ✅ asegurar que queda en false
-                    updateDiagram();           // ✅ actualizar imagen al arrancar
+                    isWaitingResponse = false; //  asegurar que queda en false
+                    updateDiagram();           //  actualizar imagen al arrancar
                 });
 
             } catch (Exception e) {
@@ -1161,10 +1219,8 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void updateAmperesRange(int sensorIndex) {
-        int[] amperesValues = {50, 200, 1000, 3000};
-
-        if (sensorIndex >= 0 && sensorIndex < amperesValues.length) {
-            rangoAmperes = amperesValues[sensorIndex];
+        if (sensorIndex >= 0 && sensorIndex < SENSOR_AMPS.length) {
+            rangoAmperes = SENSOR_AMPS[sensorIndex];
             updateDiagram();
             System.out.println("📊 Rango UI actualizado a: " + rangoAmperes + "A");
         }
@@ -1175,13 +1231,9 @@ public class FasoresActivity extends AppCompatActivity {
 
         try {
             int spinnerPosition = spinnerAmperes.getSelectedItemPosition();
-            switch (spinnerPosition) {
-                case 0: sensorsConfig = 1; rangoAmperes = 50;   break;
-                case 1: sensorsConfig = 2; rangoAmperes = 200;  break;
-                case 2: sensorsConfig = 4; rangoAmperes = 1000; break;
-                case 3: sensorsConfig = 5; rangoAmperes = 3000; break;
-                default: sensorsConfig = 2; rangoAmperes = 200; break;
-            }
+            if (spinnerPosition < 0 || spinnerPosition >= SENSOR_AMPS.length) spinnerPosition = 1;
+            sensorsConfig = spinnerPosition + 1;   // posición 0 = sensor 01h
+            rangoAmperes  = SENSOR_AMPS[spinnerPosition];
 
             System.out.println("📤 Enviando AMPERES: " + rangoAmperes + "A (sensor=" + sensorsConfig + ")");
 
@@ -1253,7 +1305,7 @@ public class FasoresActivity extends AppCompatActivity {
         }
 
         try {
-            // ✅ CRÍTICO: Usar sensorsConfig actual sin modificar rangoAmperes
+            //  CRÍTICO: Usar sensorsConfig actual sin modificar rangoAmperes
             System.out.println("📤 Enviando REC con configuración actual:");
             System.out.println("   Recording: " + recording);
             System.out.println("   Sensor: " + sensorsConfig);
@@ -1262,7 +1314,7 @@ public class FasoresActivity extends AppCompatActivity {
             byte[] command = OctoNetCommandEncoder.createNodeSettingsWriteCommand(
                     recording,
                     periodConfig,
-                    sensorsConfig,  // ✅ Mantener sensor actual
+                    sensorsConfig,  //  Mantener sensor actual
                     meteringTypeConfig
             );
 
@@ -1291,58 +1343,47 @@ public class FasoresActivity extends AppCompatActivity {
         }
     }
 
+    // ponytail: animaciones que se repiten solas (REVERSE + INFINITE).
+    // La versión anterior se re-lanzaba a sí misma cada ciclo y acumulaba
+    // parpadeadores, por eso el label terminaba titilando cada vez más rápido.
     private void startRecordingAnimation() {
         if (btnRec == null) return;
 
         // Pulso en el botón
-        btnRec.animate()
-                .scaleX(1.15f).scaleY(1.15f)
-                .setDuration(600)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .withEndAction(() -> {
-                    if (isRecording && btnRec != null) {
-                        btnRec.animate()
-                                .scaleX(1.0f).scaleY(1.0f)
-                                .setDuration(600)
-                                .setInterpolator(new AccelerateDecelerateInterpolator())
-                                .withEndAction(() -> {
-                                    if (isRecording) startRecordingAnimation();
-                                })
-                                .start();
-                    }
-                })
-                .start();
+        ScaleAnimation pulso = new ScaleAnimation(
+                1f, 1.15f, 1f, 1.15f,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f);
+        pulso.setDuration(600);
+        pulso.setInterpolator(new AccelerateDecelerateInterpolator());
+        pulso.setRepeatMode(Animation.REVERSE);
+        pulso.setRepeatCount(Animation.INFINITE);
+        btnRec.startAnimation(pulso);
 
         // Parpadeo del label "● GRABANDO"
         if (tvRecLabel != null) {
             tvRecLabel.setText("● GRABANDO");
             tvRecLabel.setTextColor(android.graphics.Color.RED);
+
+            AlphaAnimation parpadeo = new AlphaAnimation(1f, 0.15f);
+            parpadeo.setDuration(600);
+            parpadeo.setRepeatMode(Animation.REVERSE);
+            parpadeo.setRepeatCount(Animation.INFINITE);
+            tvRecLabel.startAnimation(parpadeo);
         }
-        recLabelBlinker = new Runnable() {
-            boolean visible = true;
-            @Override
-            public void run() {
-                if (!isRecording || tvRecLabel == null) return;
-                tvRecLabel.setVisibility(visible
-                        ? android.view.View.VISIBLE
-                        : android.view.View.INVISIBLE);
-                visible = !visible;
-                handler.postDelayed(this, 600);
-            }
-        };
-        handler.post(recLabelBlinker);
     }
 
     private void stopRecordingAnimation() {
-        if (btnRec == null) return;
-        btnRec.clearAnimation();
-        btnRec.setScaleX(1.0f);
-        btnRec.setScaleY(1.0f);
-        btnRec.setAlpha(1.0f);
+        if (btnRec != null) {
+            btnRec.clearAnimation();
+            btnRec.setScaleX(1.0f);
+            btnRec.setScaleY(1.0f);
+            btnRec.setAlpha(1.0f);
+        }
 
         // Restablecer label
-        handler.removeCallbacks(recLabelBlinker);
         if (tvRecLabel != null) {
+            tvRecLabel.clearAnimation();
             tvRecLabel.setVisibility(android.view.View.VISIBLE);
             tvRecLabel.setText("GRABAR");
             tvRecLabel.setTextColor(android.graphics.Color.parseColor("#666666"));
@@ -1379,7 +1420,7 @@ public class FasoresActivity extends AppCompatActivity {
         zoomHint.setPadding(0, 0, 0, 16);
         modalContent.addView(zoomHint);
 
-        // ✅ Contenedor de imagen
+        // Contenedor de imagen
         FrameLayout imageContainer = new FrameLayout(this);
         LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0);
@@ -1389,7 +1430,7 @@ public class FasoresActivity extends AppCompatActivity {
         imageContainer.setBackground(createRoundedBackground());
         imageContainer.setClipToOutline(true);
 
-        // ✅ Usar ZoomableImageView
+        //  Usar ZoomableImageView
         zoomableModalImage = new ZoomableImageView(this);
         modalDiagramImage = zoomableModalImage;
 
@@ -1401,7 +1442,7 @@ public class FasoresActivity extends AppCompatActivity {
         imageContainer.addView(modalDiagramImage);
         modalContent.addView(imageContainer);
 
-        // ✅ Fila de botones
+        //  Fila de botones
         LinearLayout buttonsRow = new LinearLayout(this);
         buttonsRow.setOrientation(LinearLayout.HORIZONTAL);
         buttonsRow.setGravity(Gravity.CENTER);
@@ -1444,10 +1485,10 @@ public class FasoresActivity extends AppCompatActivity {
         buttonsRow.addView(closeButton);
         modalContent.addView(buttonsRow);
 
-        // ✅ Reset zoom
+        //  Reset zoom
         resetZoomButton.setOnClickListener(v -> {
             if (zoomableModalImage != null) {
-                zoomableModalImage.resetMatrix(); // ✅ antes decía initMatrix()
+                zoomableModalImage.resetMatrix(); // antes decía initMatrix()
             }
         });
 
@@ -1664,16 +1705,7 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void updateModalFasores() {
-        if (modalFasorVoltaje == null || modalFasorCorriente == null) return;
-
-        try {
-            modalFasorVoltaje.setMagnitudes(voltajes[0], voltajes[2], voltajes[1]);
-            modalFasorVoltaje.setAngles(0.0f, 120.0f, 240.0f);
-
-            modalFasorCorriente.setMagnitudes(corrientes[0], corrientes[1], corrientes[2]);
-            modalFasorCorriente.setAngles(angulos[0], angulos[1], angulos[2]);
-        } catch (Exception e) {
-        }
+        aplicarFasores(modalFasorVoltaje, modalFasorCorriente);
     }
 
     // ===== MODAL TABLA INFO =====
@@ -1755,30 +1787,33 @@ public class FasoresActivity extends AppCompatActivity {
         if (infoTableContainer == null) return;
         infoTableContainer.removeAllViews();
 
-        switch (tipoCableado) {
-            case 0: // 1PH-2W-4LOADS: 4 fases
-                String[] labels4 = {"L1-N", "L2-N", "L3-N", "L4-N"};
-                for (int i = 0; i < 4; i++) {
-                    infoTableContainer.addView(createPhaseTable(i % 3, labels4[i]));
-                    if (i < 3) infoTableContainer.addView(makeDivider());
-                }
-                break;
+        String[] labels;
+        int[] canales;   // canal de datos que muestra cada bloque
+        int[] colores;   // indice de color: agrupa los bloques de una misma carga
 
-            case 1: // 1PH-3W-2LOADS: 2 fases
-                String[] labels2 = {"L1-N", "L2-N"};
-                for (int i = 0; i < 2; i++) {
-                    infoTableContainer.addView(createPhaseTable(i, labels2[i]));
-                    if (i < 1) infoTableContainer.addView(makeDivider());
-                }
+        switch (meteringTypeConfig) {
+            case 0:  // 1PH-2W-4LOADS
+                labels  = new String[]{"Load 1 (L1-N)", "Load 2 (L2-N)",
+                                       "Load 3 (L3-N)", "Load 4 (L4-N)"};
+                canales = new int[]{0, 1, 2, 3};
+                colores = new int[]{0, 1, 2, 3};
                 break;
+            case 1:  // 1PH-3W-2LOADS: los dos sensores de cada carga van juntos
+                labels  = new String[]{"LOAD_0 · CT-0", "LOAD_0 · CT-2",
+                                       "LOAD_1 · CT-1", "LOAD_1 · CT-3"};
+                canales = new int[]{0, 2, 1, 3};
+                colores = new int[]{0, 0, 1, 1};
+                break;
+            default: // 3PH-4W-1LOAD
+                labels  = new String[]{"L1-N", "L2-N", "L3-N"};
+                canales = new int[]{0, 1, 2};
+                colores = new int[]{0, 1, 2};
+                break;
+        }
 
-            default: // 3PH-4W-1LOAD: 3 fases
-                String[] labels3 = {"L1-N", "L2-N", "L3-N"};
-                for (int i = 0; i < 3; i++) {
-                    infoTableContainer.addView(createPhaseTable(i, labels3[i]));
-                    if (i < 2) infoTableContainer.addView(makeDivider());
-                }
-                break;
+        for (int i = 0; i < labels.length; i++) {
+            if (i > 0) infoTableContainer.addView(makeDivider());
+            infoTableContainer.addView(createPhaseTable(canales[i], colores[i], labels[i]));
         }
     }
 
@@ -1792,7 +1827,7 @@ public class FasoresActivity extends AppCompatActivity {
         return divider;
     }
 
-    private LinearLayout createPhaseTable(int phaseIndex, String phaseName) {
+    private LinearLayout createPhaseTable(int dataIndex, int colorIndex, String phaseName) {
         LinearLayout phaseContainer = new LinearLayout(this);
         phaseContainer.setOrientation(LinearLayout.VERTICAL);
 
@@ -1803,22 +1838,19 @@ public class FasoresActivity extends AppCompatActivity {
         phaseTitle.setGravity(Gravity.CENTER);
         phaseTitle.setPadding(0, 0, 0, 20);
 
-        // ✅ Colores: negro, rojo, azul, gris (para L4 en modo 4LOADS)
+        //  Colores: negro, rojo, azul, gris (para L4 en modo 4LOADS)
         int[] phaseColors = {
                 Color.rgb(66, 66, 66),
                 Color.rgb(255, 50, 50),
                 Color.rgb(70, 130, 255),
                 Color.rgb(120, 120, 120)
         };
-        phaseTitle.setTextColor(phaseColors[Math.min(phaseIndex, phaseColors.length - 1)]);
+        phaseTitle.setTextColor(phaseColors[Math.min(colorIndex, phaseColors.length - 1)]);
         phaseContainer.addView(phaseTitle);
 
         LinearLayout grid = new LinearLayout(this);
         grid.setOrientation(LinearLayout.VERTICAL);
         grid.setPadding(15, 15, 15, 15);
-
-        // ✅ Usar índice real del arreglo (L4 usa mismos datos que L1 en 4LOADS)
-        int dataIndex = Math.min(phaseIndex, 2);
 
         grid.addView(createInfoRow("⚡ Voltaje:",    String.format("%.2f V",  voltajes[dataIndex])));
         grid.addView(createInfoRow("🔌 Corriente:",  String.format("%.3f A",  corrientes[dataIndex])));
@@ -1984,7 +2016,7 @@ public class FasoresActivity extends AppCompatActivity {
             } catch (Exception e) {
             }
 
-            // ✅ No intentar reconectar si estamos cerrando
+            //  No intentar reconectar si estamos cerrando
             if (isConnectedToDevice && !shouldStopReceiving) {
                 handler.post(() -> {
                     isConnectedToDevice = false;
@@ -2368,6 +2400,17 @@ public class FasoresActivity extends AppCompatActivity {
             byte[] configData = OctoNetCommandEncoder.extractCommandData(data);
             if (configData == null || configData.length < 12) return;
 
+            // Tabla 11: el byte 0 SIEMPRE es EAh. El medidor tambien contesta 43/20 con
+            // otra estructura (payload que arranca en 20h); si se parsea como ajustes
+            // salen valores inventados en sensors/wiring.
+            int idAjustes = configData[0] & 0xFF;
+            if (idAjustes != 0xEA) {
+                System.out.println("📥 Respuesta 43/20 que no es METER_SETTINGS (ID=0x"
+                        + String.format("%02X", idAjustes) + "), ignorada");
+                System.out.println("   📦 Trama cruda: " + OctoNetCommandEncoder.bytesToHexString(data));
+                return;
+            }
+
             boolean recording = (configData[8] & 0xFF) == 0x01;
             int period = configData[9] & 0xFF;
             int sensors = configData[10] & 0xFF;
@@ -2378,36 +2421,30 @@ public class FasoresActivity extends AppCompatActivity {
             System.out.println("   Sensor: " + sensors);
             System.out.println("   WiringSet: " + wiringSet);
 
-            // ✅ Actualizar variables de configuración
+            // Trama corrupta: antes se aceptaba igual y el default del switch
+            // terminaba tirando el spinner a 3 fases. Mejor ignorarla.
+            if (sensors < 1 || sensors > SENSOR_AMPS.length
+                    || wiringSet < 0 || wiringSet > 2) {
+                System.out.println("   ⚠️ Valores fuera de rango, trama descartada");
+                System.out.println("   📦 Trama cruda: " + OctoNetCommandEncoder.bytesToHexString(data));
+                return;
+            }
+
+            if (period != OctoNetCommandEncoder.PERIOD_5_MIN) {
+                System.out.println("   ⚠️ PERIOD " + period + " no soportado, se usa 5 minutos");
+            }
+
+            //  Actualizar variables de configuración
             sensorsConfig = sensors;
             meteringTypeConfig = wiringSet;
-            periodConfig = period;
+            periodConfig = OctoNetCommandEncoder.PERIOD_5_MIN;  // unico valor valido
             // Reflejar estado de grabación del dispositivo sin modificarlo
             isRecording = recording;
             recordingConfig = recording;
 
-            // ✅ Calcular posición spinner Amperes
             skipSpinnerEvents = true;
-            int spinnerPos;
-            switch (sensors) {
-                case 1:  spinnerPos = 0; break; // CT-50A
-                case 2:  spinnerPos = 1; break; // CT-200A
-                case 4:  spinnerPos = 2; break; // RoGo-1000A
-                case 5:  spinnerPos = 3; break; // RoGo-3000A
-                default: spinnerPos = 1; break; // Default 200A
-            }
-
-            // ✅ Calcular posición spinner Cableado
-            int cableadoPos;
-            switch (wiringSet) {
-                case 0:  cableadoPos = 0; break; // 1PH_2W_4LOADS
-                case 1:  cableadoPos = 1; break; // 1PH_3W_2LOAD
-                case 2:  cableadoPos = 2; break; // 3PH_4W_1LOAD
-                default: cableadoPos = 2; break;
-            }
-
-            final int finalSpinnerPos  = spinnerPos;
-            final int finalCableadoPos = cableadoPos;
+            final int finalSpinnerPos  = sensors - 1;   // sensor 01h..05h -> posicion 0..4
+            final int finalCableadoPos = wiringSet;     // 0/1/2 coinciden con el spinner
 
             final boolean finalRecording = recording;
             handler.post(() -> {
@@ -2417,7 +2454,14 @@ public class FasoresActivity extends AppCompatActivity {
                 if (spinnerCableado != null) {
                     spinnerCableado.setSelection(finalCableadoPos);
                 }
-                skipSpinnerEvents = false;
+                // setSelection() entrega onItemSelected en el siguiente layout, no aca:
+                // soltar el guard en esta misma linea hacia que el cambio programatico
+                // se leyera como toque del usuario y disparara otro write.
+                if (spinnerCableado != null) {
+                    spinnerCableado.post(() -> skipSpinnerEvents = false);
+                } else {
+                    skipSpinnerEvents = false;
+                }
                 // Actualizar botón REC según estado real del dispositivo
                 if (btnRec != null) {
                     if (finalRecording) {
@@ -2436,8 +2480,8 @@ public class FasoresActivity extends AppCompatActivity {
                             ? android.graphics.Color.RED
                             : android.graphics.Color.parseColor("#666666"));
                 }
-                updateDiagram(); // ✅ Actualizar imagen con la config recibida
-                rebuildMeasurementTable(); // ✅ Reconstruir tabla según cableado recibido
+                updateDiagram(); //  Actualizar imagen con la config recibida
+                rebuildMeasurementTable(); //  Reconstruir tabla según cableado recibido
             });
 
             System.out.println("✅ sensorsConfig actualizado: " + sensorsConfig);
@@ -2467,28 +2511,46 @@ public class FasoresActivity extends AppCompatActivity {
 
             if (energyData.length >= 64) {
                 int deviceId = energyData[0] & 0xFF;
-                boolean is4Wire = (deviceId == 0x34); // 3PH_4W_1LOAD: METER_BASIC_STRC format
 
-                if (is4Wire && energyData.length >= 112) {
-                    // METER_BASIC_STRC: channels 1,2,3 correspond to L1,L2,L3
-                    // V_RMS[4]  at bytes 80-87  (Uint16 × 4, 0.1 V)
-                    // C_RMS[4]  at bytes 88-95  (Uint16 × 4, 0.1 Arms)
-                    // HZ[4]     at bytes 96-103 (Uint16 × 4, 0.1 Hz)
-                    // ANGL_F[4] at bytes 104-111(Uint16 × 4, 0.1 °)
-                    // W_WR[4]   at bytes 16-31  (Int32  × 4, 0.1 W)
-                    for (int i = 0; i < 3; i++) {
-                        int ch = i + 1; // channel index: 0=N, 1=L1, 2=L2, 3=L3
+                // Tabla 15 - METER_BASIC_STRC. El byte ID dice el cableado, y de ahí
+                // salen cuántos canales trae la trama y desde cuál arranca.
+                int canales, canalBase;
+                switch (deviceId) {
+                    case 0x12: canales = 4; canalBase = 0; break; // 1PH_2W_4LOADS  -> Load0..Load3
+                    case 0x13: canales = 4; canalBase = 0; break; // 1PH_3W_2LOADS  -> CT-0..CT-3 (2 por carga)
+                    case 0x34:                                    // 3PH_4W_1LOAD
+                    case 0x44: canales = 3; canalBase = 1; break; // 3PH_1N_4W_1LOAD -> canal 0 = N
+                    default:
+                        canales = 0; canalBase = 0;   // ID fuera de Tabla 15 -> formato viejo
+                        System.out.println("⚠️ NODE_CURRENT con ID 0x"
+                                + String.format("%02X", deviceId) + " (no es Tabla 15)");
+                        break;
+                }
+
+                if (canales > 0 && energyData.length >= 112) {
+                    // W_WB[4]   bytes 16-31   (Int32  x4, 0.1 W)
+                    // V_RMS[4]  bytes 80-87   (Uint16 x4, 0.1 Vrms)
+                    // C_RMS[4]  bytes 88-95   (Uint16 x4, 0.1 Arms)
+                    // HZ[4]     bytes 96-103  (Uint16 x4, 0.1 Hz)
+                    // ANGLE[4]  bytes 104-111 (Uint16 x4, 0.1 grados)
+                    for (int i = 0; i < voltajes.length; i++) {
+                        if (i >= canales) {   // canal no usado por este cableado
+                            voltajes[i] = corrientes[i] = potencias[i] = frecuencias[i] = angulos[i] = 0f;
+                            continue;
+                        }
+                        int ch = canalBase + i;
                         voltajes[i]    = readUInt16LE(energyData, 80 + ch * 2) * 0.1f;
                         corrientes[i]  = readUInt16LE(energyData, 88 + ch * 2) * 0.1f;
                         frecuencias[i] = readUInt16LE(energyData, 96 + ch * 2) * 0.1f;
                         angulos[i]     = readUInt16LE(energyData, 104 + ch * 2) * 0.1f;
-                        potencias[i]   = (int) readInt32LE(energyData, 16 + ch * 4) * 0.1f;
+                        potencias[i]   = readInt32LE(energyData, 16 + ch * 4) * 0.1f;
                     }
                 } else {
                     // ENERGY_3PHA_PAGE_STRC: channels at offsets 28, 40, 52
                     if (energyData.length >= 40) processChannel64Bytes(energyData, 28, 0, "CH1");
                     if (energyData.length >= 52) processChannel64Bytes(energyData, 40, 1, "CH2");
                     if (energyData.length >= 64) processChannel64Bytes(energyData, 52, 2, "CH3");
+                    voltajes[3] = corrientes[3] = potencias[3] = frecuencias[3] = angulos[3] = 0f;
                 }
 
                 handler.post(() -> {
@@ -2515,8 +2577,7 @@ public class FasoresActivity extends AppCompatActivity {
     private void processChannel64Bytes(byte[] data, int offset, int channelIndex, String channelName) {
         try {
             if (data.length >= offset + 4) {
-                long powerRaw = readInt32LE(data, offset);
-                potencias[channelIndex] = (int) powerRaw * 0.1f;
+                potencias[channelIndex] = readInt32LE(data, offset) * 0.1f;
             }
 
             if (data.length >= offset + 6) {
@@ -2560,25 +2621,25 @@ public class FasoresActivity extends AppCompatActivity {
             if (tvV1 != null) tvV1.setText(String.format("%.2f V",   voltajes[0]));
             if (tvV2 != null) tvV2.setText(String.format("%.2f V",   voltajes[1]));
             if (tvV3 != null) tvV3.setText(String.format("%.2f V",   voltajes[2]));
-            if (tvV4 != null) tvV4.setText(String.format("%.2f V",   voltajes[0])); // Load4 repite L1 en 4LOADS
+            if (tvV4 != null) tvV4.setText(String.format("%.2f V",   voltajes[3]));
 
             // Corrientes
             if (tvA1 != null) tvA1.setText(String.format("%.3f A",   corrientes[0]));
             if (tvA2 != null) tvA2.setText(String.format("%.3f A",   corrientes[1]));
             if (tvA3 != null) tvA3.setText(String.format("%.3f A",   corrientes[2]));
-            if (tvA4 != null) tvA4.setText(String.format("%.3f A",   corrientes[0]));
+            if (tvA4 != null) tvA4.setText(String.format("%.3f A",   corrientes[3]));
 
             // Potencias
             if (tvW1 != null) tvW1.setText(String.format("%.2f W",   potencias[0]));
             if (tvW2 != null) tvW2.setText(String.format("%.2f W",   potencias[1]));
             if (tvW3 != null) tvW3.setText(String.format("%.2f W",   potencias[2]));
-            if (tvW4 != null) tvW4.setText(String.format("%.2f W",   potencias[0]));
+            if (tvW4 != null) tvW4.setText(String.format("%.2f W",   potencias[3]));
 
             // Frecuencias
             if (tvHz1 != null) tvHz1.setText(String.format("%.2f Hz", frecuencias[0]));
             if (tvHz2 != null) tvHz2.setText(String.format("%.2f Hz", frecuencias[1]));
             if (tvHz3 != null) tvHz3.setText(String.format("%.2f Hz", frecuencias[2]));
-            if (tvHz4 != null) tvHz4.setText(String.format("%.2f Hz", frecuencias[0]));
+            if (tvHz4 != null) tvHz4.setText(String.format("%.2f Hz", frecuencias[3]));
 
             // Ángulos (convertidos a ±180°)
             for (int i = 0; i < 3; i++) {
@@ -2591,9 +2652,8 @@ public class FasoresActivity extends AppCompatActivity {
                 if (i == 1) { if (tvpF2 != null) tvpF2.setText(angleText); }
                 if (i == 2) { if (tvpF3 != null) tvpF3.setText(angleText); }
             }
-            // Canal 4 repite el ángulo de L1
             if (tvpF4 != null) {
-                float angle = angulos[0];
+                float angle = angulos[3];
                 while (angle >  180f) angle -= 360f;
                 while (angle < -180f) angle += 360f;
                 tvpF4.setText(String.format("%.0f°", angle));
@@ -2605,16 +2665,18 @@ public class FasoresActivity extends AppCompatActivity {
 
     private void updateChannelLabels() {
         try {
-            switch (tipoCableado) {
+            switch (meteringTypeConfig) {
                 case 0: // 1PH-2W-4LOADS
                     if (tvCH1 != null) tvCH1.setText("L1-N");
                     if (tvCH2 != null) tvCH2.setText("L2-N");
                     if (tvCH3 != null) tvCH3.setText("L3-N");
                     if (tvCH4 != null) tvCH4.setText("L4-N");
                     break;
-                case 1: // 1PH-3W-2LOADS
-                    if (tvCH1 != null) tvCH1.setText("L1-N");
-                    if (tvCH2 != null) tvCH2.setText("L2-N");
+                case 1: // 1PH-3W-2LOADS: 2 sensores por carga
+                    if (tvCH1 != null) tvCH1.setText("CT-0");
+                    if (tvCH2 != null) tvCH2.setText("CT-1");
+                    if (tvCH3 != null) tvCH3.setText("CT-2");
+                    if (tvCH4 != null) tvCH4.setText("CT-3");
                     break;
                 default: // 3PH-4W-1LOAD
                     if (tvCH1 != null) tvCH1.setText("L1-N");
@@ -2626,14 +2688,33 @@ public class FasoresActivity extends AppCompatActivity {
     }
 
     private void updateFasores() {
-        if (fasorVoltaje == null || fasorCorriente == null) return;
+        aplicarFasores(fasorVoltaje, fasorCorriente);
+    }
+
+    /** Canales que mide el cableado actual: 4 cargas / 2 cargas / 3 fases */
+    private int canalesActivos() {
+        switch (meteringTypeConfig) {
+            case 0:  return 4;   // 1PH_2W_4LOADS
+            case 1:  return 2;   // 1PH_3W_2LOADS
+            default: return 3;   // 3PH_4W_1LOAD
+        }
+    }
+
+    private void aplicarFasores(FasorView vistaVoltaje, FasorView vistaCorriente) {
+        if (vistaVoltaje == null || vistaCorriente == null) return;
 
         try {
-            fasorVoltaje.setMagnitudes(voltajes[0], voltajes[2], voltajes[1]);
-            fasorVoltaje.setAngles(0.0f, 120.0f, 240.0f);
+            int n = canalesActivos();
+            String canales = (n == 3) ? null : " (" + n + " canales)";
 
-            fasorCorriente.setMagnitudes(corrientes[0], corrientes[1], corrientes[2]);
-            fasorCorriente.setAngles(angulos[0], angulos[1], angulos[2]);
+            // El equipo no manda ángulo de tensión: cada fasor se dibuja sobre su propio eje
+            vistaVoltaje.setChannelCount(n);
+            vistaVoltaje.setTitle(canales == null ? "Voltajes Trifásicos" : "Voltajes" + canales);
+            vistaVoltaje.setValues(voltajes, new float[n]);
+
+            vistaCorriente.setChannelCount(n);
+            vistaCorriente.setTitle(canales == null ? "Corrientes Trifásicas" : "Corrientes" + canales);
+            vistaCorriente.setValues(corrientes, angulos);
 
         } catch (Exception e) {
         }
@@ -2654,7 +2735,7 @@ public class FasoresActivity extends AppCompatActivity {
         tvpF1 = tvpF2 = tvpF3 = tvpF4 = null;
         tvCH1 = tvCH2 = tvCH3 = tvCH4 = null;
 
-        switch (tipoCableado) {
+        switch (meteringTypeConfig) {
             case 0: buildTable_1PH_2W_4LOADS(); break;
             case 1: buildTable_1PH_3W_2LOADS(); break;
             default: buildTable_3PH_4W_1LOAD(); break;
@@ -2678,7 +2759,7 @@ public class FasoresActivity extends AppCompatActivity {
         LinearLayout colsRow = new LinearLayout(this);
         colsRow.setOrientation(LinearLayout.HORIZONTAL);
         colsRow.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 
         LinearLayout col1 = makeDataColumn(Color.parseColor("#424242"));
         tvV1  = addValueCell(col1, "0.00 V");
@@ -2702,55 +2783,69 @@ public class FasoresActivity extends AppCompatActivity {
         tvpF3 = addValueCell(col3, "0°");
 
         LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
         colLp.setMargins(0, 0, dp(2), 0);
         colsRow.addView(col1, colLp);
         LinearLayout.LayoutParams colLp2 = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
         colLp2.setMargins(dp(1), 0, dp(1), 0);
         colsRow.addView(col2, colLp2);
         colsRow.addView(col3, new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                0, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
         measurementTableLayout.addView(colsRow);
     }
 
-    /** 1PH-3W-2LOADS: 2 columnas L1(oscuro) y L2(rojo), sin L3 */
+    /** 1PH-3W-2LOADS: 2 cargas, cada una con sus 2 sensores (CT-0/CT-1 y CT-2/CT-3) */
     private void buildTable_1PH_3W_2LOADS() {
-        // Encabezados
+        int oscuro = Color.parseColor("#424242");
+        int rojo   = Color.parseColor("#FF0000");
+
+        // Encabezado: cada carga ocupa el ancho de sus dos sensores
         LinearLayout headerRow = new LinearLayout(this);
         headerRow.setOrientation(LinearLayout.HORIZONTAL);
         headerRow.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        headerRow.addView(makeColHeader("L1", Color.BLACK,             Color.WHITE));
-        headerRow.addView(makeColHeader("L2", Color.parseColor("#FF0000"), Color.WHITE));
+        headerRow.addView(makeColHeader("LOAD_0", Color.BLACK, Color.WHITE),
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f));
+        headerRow.addView(makeColHeader("LOAD_1", rojo, Color.WHITE),
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f));
         measurementTableLayout.addView(headerRow);
 
-        // Dos columnas
+        // Segun el diagrama: LOAD_0 mide con CT-0 y CT-2, LOAD_1 con CT-1 y CT-3.
+        // La columna i muestra el CT ctPorColumna[i] (indice directo del arreglo de datos).
+        int[] ctPorColumna = {0, 2, 1, 3};
+        int[] colores      = {oscuro, Color.parseColor("#616161"),
+                              rojo,   Color.parseColor("#C62828")};
+
         LinearLayout colsRow = new LinearLayout(this);
         colsRow.setOrientation(LinearLayout.HORIZONTAL);
         colsRow.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 
-        LinearLayout col1 = makeDataColumn(Color.parseColor("#424242"));
-        tvV1  = addValueCell(col1, "0.00 V");
-        tvA1  = addValueCell(col1, "0.000 A");
-        tvW1  = addValueCell(col1, "0.00 W");
-        tvHz1 = addValueCell(col1, "0.00 Hz");
-        tvpF1 = addValueCell(col1, "0°");
+        for (int i = 0; i < 4; i++) {
+            int ct = ctPorColumna[i];
+            LinearLayout col = makeDataColumn(colores[i]);
+            TextView tvCH = addChannelCell(col, "CT-" + ct);
+            TextView tvV  = addValueCell(col, "0.00 V");
+            TextView tvA  = addValueCell(col, "0.000 A");
+            TextView tvW  = addValueCell(col, "0.00 W");
+            TextView tvHz = addValueCell(col, "0.00 Hz");
+            TextView tvPF = addValueCell(col, "0°");
 
-        LinearLayout col2 = makeDataColumn(Color.parseColor("#FF0000"));
-        tvV2  = addValueCell(col2, "0.00 V");
-        tvA2  = addValueCell(col2, "0.000 A");
-        tvW2  = addValueCell(col2, "0.00 W");
-        tvHz2 = addValueCell(col2, "0.00 Hz");
-        tvpF2 = addValueCell(col2, "0°");
+            // Los tv*N siguen atados al canal N-1 del arreglo, no a la posicion visual
+            switch (ct) {
+                case 0: tvCH1=tvCH; tvV1=tvV; tvA1=tvA; tvW1=tvW; tvHz1=tvHz; tvpF1=tvPF; break;
+                case 1: tvCH2=tvCH; tvV2=tvV; tvA2=tvA; tvW2=tvW; tvHz2=tvHz; tvpF2=tvPF; break;
+                case 2: tvCH3=tvCH; tvV3=tvV; tvA3=tvA; tvW3=tvW; tvHz3=tvHz; tvpF3=tvPF; break;
+                case 3: tvCH4=tvCH; tvV4=tvV; tvA4=tvA; tvW4=tvW; tvHz4=tvHz; tvpF4=tvPF; break;
+            }
 
-        LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        colLp.setMargins(0, 0, dp(2), 0);
-        colsRow.addView(col1, colLp);
-        colsRow.addView(col2, new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+            // separacion mayor entre cargas que entre los sensores de una misma carga
+            colLp.setMargins(0, 0, i == 1 ? dp(6) : (i < 3 ? dp(1) : 0), 0);
+            colsRow.addView(col, colLp);
+        }
         measurementTableLayout.addView(colsRow);
     }
 
@@ -2847,16 +2942,21 @@ public class FasoresActivity extends AppCompatActivity {
 
     /** Celda de valor eléctrico dentro de una columna */
     private TextView addValueCell(LinearLayout col, String defaultText) {
-        TextView tv = new TextView(this);
+        // AppCompat + autosize: con 4 columnas "134.00 V" no entra a 10sp y se partia
+        // en dos renglones, lo que estiraba la tabla y cortaba la fila del angulo.
+        androidx.appcompat.widget.AppCompatTextView tv =
+                new androidx.appcompat.widget.AppCompatTextView(this);
         tv.setText(defaultText);
         tv.setTextColor(Color.WHITE);
-        tv.setTextSize(10f);
         tv.setTypeface(null, Typeface.BOLD);
         tv.setGravity(Gravity.CENTER);
         tv.setBackgroundColor(0xAA000000);
+        tv.setSingleLine(true);
         tv.setPadding(dp(2), dp(4), dp(2), dp(4));
+        androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                tv, 7, 10, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
         lp.setMargins(0, dp(1), 0, 0);
         tv.setLayoutParams(lp);
         col.addView(tv);
@@ -2978,12 +3078,13 @@ public class FasoresActivity extends AppCompatActivity {
             if (btnDeviceId != null) btnDeviceId.setEnabled(enabled);
             if (btnConfigWifi != null) btnConfigWifi.setEnabled(enabled);
             if (btnConfigSub1g != null) btnConfigSub1g.setEnabled(enabled);
+            if (btnMemoria != null) btnMemoria.setEnabled(enabled);
         });
     }
 
     private void setSpinnersEnabled(boolean enabled) {
         handler.post(() -> {
-            if (spinnerCableado != null) spinnerCableado.setEnabled(enabled); // ✅ Ya no es siempre false
+            if (spinnerCableado != null) spinnerCableado.setEnabled(enabled); //  Ya no es siempre false
             if (spinnerAmperes != null) spinnerAmperes.setEnabled(enabled);
         });
     }
@@ -3042,7 +3143,7 @@ public class FasoresActivity extends AppCompatActivity {
             hideDiagramModal();
         }
 
-        // ✅ Detener handlers
+        //  Detener handlers
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }
@@ -3051,10 +3152,10 @@ public class FasoresActivity extends AppCompatActivity {
             autoReadHandler.removeCallbacksAndMessages(null);
         }
 
-        // ✅ Desconectar socket
+        //  Desconectar socket
         disconnectFromDeviceInternal();
 
-        // ✅ Shutdown del executor con timeout
+        //  Shutdown del executor con timeout
         if (executor != null && !executor.isShutdown()) {
             executor.shutdown();
             try {

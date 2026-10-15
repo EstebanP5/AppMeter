@@ -149,7 +149,7 @@ public class OctoNetCommandEncoder {
     public static class DecodeState {
         public CmdState decodeState = CmdState.Start;
         public CmdSet type = CmdSet.TYPE_INVALID_ERROR;
-        public byte[] data = new byte[512]; // ✅ INCREMENTADO para WiFi (247 bytes)
+        public byte[] data = new byte[512]; //  INCREMENTADO para WiFi (247 bytes)
         public int ind = 0;                 // Índice en el buffer de datos
         public int tcpIndex = 0;           // Índice en el buffer TCP
         public long checksum = 0;          // Checksum calculado
@@ -316,7 +316,7 @@ public class OctoNetCommandEncoder {
             // Almacena el número de bytes que vienen en el área de datos
             decode.dataBytes = currentByte & 0xFF;
 
-            // ✅ CORRECCIÓN: Solo NODE_CURRENT usa +1, otros comandos usan el tamaño exacto
+            //  CORRECCIÓN: Solo NODE_CURRENT usa +1, otros comandos usan el tamaño exacto
             if (decode.data[2] == CMD_NODE_CURRENT) {
                 decode.byteCounter = decode.dataBytes + 1; // Solo NODE_CURRENT
             } else {
@@ -462,7 +462,7 @@ public class OctoNetCommandEncoder {
     }
 
     /**
-     * ✅ MÉTODO PÚBLICO para codificar comandos (incluyendo WiFi)
+     *  MÉTODO PÚBLICO para codificar comandos (incluyendo WiFi)
      */
     public static byte[] encodeCommand(byte type, byte command, byte[] data) {
         ArrayList<Byte> cmdList = new ArrayList<>();
@@ -482,11 +482,11 @@ public class OctoNetCommandEncoder {
             cmdList.add((byte)0x00);  // SIZE = 0
             cmdList.add((byte)0x00);  // DATA = 0x00
         } else {
-            // ✅ CORRECCIÓN: Para comandos WRITE: SIZE = data.length - 1
+            //  CORRECCIÓN: Para comandos WRITE: SIZE = data.length - 1
             int dataSize = (data != null) ? data.length : 0;
 
             if (dataSize > 0) {
-                // ✅ AQUÍ ESTÁ LA CORRECCIÓN: Restamos 1 al tamaño pero enviamos todos los datos
+
                 cmdList.add((byte)(dataSize - 1));  // SIZE = data.length - 1
 
                 // Agregar TODOS los datos (sin quitar ningún byte)
@@ -603,6 +603,9 @@ public class OctoNetCommandEncoder {
         return cmd;
     }
 
+    /** Unico PERIOD soportado por el equipo (Tabla 11: 01h - 5 minutos) */
+    public static final int PERIOD_5_MIN = 0x01;
+
     public static byte[] createNodeSettingsWriteCommand(boolean recording, int period, int sensorAmps, int meteringType) {
         // Array de 12 bytes según TABLA 11 - METER_SETTINGS_STRC
         byte[] settingsData = new byte[12];
@@ -612,8 +615,8 @@ public class OctoNetCommandEncoder {
         // Byte 0: ID (0xEA - Identificador de Ajustes)
         settingsData[index++] = (byte)0xEA;
 
-        // Byte 1: FW_VER (2 dígitos más significativos del FW)
-        settingsData[index++] = (byte)0x01;  // Versión 1 por defecto
+        // Byte 1: DUMMY - la Tabla 11 lo define en 00h (antes se mandaba 0x01 como FW_VER)
+        settingsData[index++] = (byte)0x00;
 
         // Bytes 2-4: YY/MM/DD (Fecha de último cambio de Ajustes)
         java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -637,25 +640,13 @@ public class OctoNetCommandEncoder {
         // Byte 8: REC_ON/OFF
         settingsData[index++] = recording ? (byte)0x01 : (byte)0x00;
 
-        // Byte 9: PERIOD
-        switch (period) {
-            case 0:  settingsData[index++] = (byte)0x00; break;  // 1 minuto
-            case 1:  settingsData[index++] = (byte)0x01; break;  // 5 minutos
-            case 2:  settingsData[index++] = (byte)0x02; break;  // 10 minutos
-            case 3:  settingsData[index++] = (byte)0x03; break;  // 15 minutos
-            default: settingsData[index++] = (byte)0x01; break;  // Default 5 minutos
-        }
+        // Byte 9: PERIOD. La tabla lista 00h/02h/03h pero el equipo solo admite
+        // 01h (5 minutos); cualquier otro valor se corrige antes de mandarlo.
+        settingsData[index++] = (byte) (period == PERIOD_5_MIN ? period : PERIOD_5_MIN);
 
-        // Byte 10: SENSORS
-        switch (sensorAmps) {
-            case 0:   settingsData[index++] = (byte)0x00; break;  // Shunt-20A
-            case 1:   settingsData[index++] = (byte)0x01; break;  // CT-50A
-            case 2:   settingsData[index++] = (byte)0x02; break;  // CT-200A
-            case 3:   settingsData[index++] = (byte)0x03; break;  // CT-400A
-            case 4:   settingsData[index++] = (byte)0x04; break;  // RoGo-1000A
-            case 5:   settingsData[index++] = (byte)0x05; break;  // RoGo-3000A
-            default:  settingsData[index++] = (byte)0x02; break;  // Default CT-200A
-        }
+        // Byte 10: SENSORS (01h CT-50A, 02h CT-200A, 03h CT-1000A, 04h RoGo-2000A, 05h RoGo-4000A)
+        // ponytail: el valor ya es el byte, sólo se valida el rango. Default CT-200A.
+        settingsData[index++] = (byte) ((sensorAmps >= 1 && sensorAmps <= 5) ? sensorAmps : 0x02);
 
         // Byte 11: WIRING_SET (Tipo de cableado)
         switch (meteringType) {
@@ -663,17 +654,17 @@ public class OctoNetCommandEncoder {
             case 1: settingsData[index++] = (byte)0x01; break;  // 1PH_3W_2LOAD
             case 2: settingsData[index++] = (byte)0x02; break;  // 3PH_4W_1LOAD
             case 3: settingsData[index++] = (byte)0x03; break;  // 3PH_4W_N_1LOAD
-            default: settingsData[index++] = (byte)0x02; break; // ✅ Default cambia a 3PH_4W_1LOAD
+            default: settingsData[index++] = (byte)0x02; break; // Default cambia a 3PH_4W_1LOAD
         }
 
         byte[] cmd = encodeCommand(CMD_WRITE, CMD_NODE_SETTINGS, settingsData);
 
-        // ✅ LOGS MEJORADOS Y DETALLADOS
+        //  LOGS MEJORADOS Y DETALLADOS
         System.out.println("🔍 METER_SETTINGS write generado (Tabla 11):");
         System.out.println("   📦 Comando HEX: " + bytesToHexString(cmd));
         System.out.println("   ⚙️  Configuración:");
         System.out.println("      • ID: 0xEA (Identificador de Ajustes)");
-        System.out.println("      • FW_VER: 0x01");
+        System.out.println("      • DUMMY: 0x00");
         System.out.println("      • REC: " + (recording ? "ON (0x01)" : "PAUSA (0x00)"));
         System.out.println("      • PERIOD: " + getPeriodName(period) + " (0x0" + period + ")");
         System.out.println("      • SENSORS: " + getSensorName(sensorAmps) + " (0x0" + sensorAmps + ")");
@@ -684,7 +675,7 @@ public class OctoNetCommandEncoder {
         return cmd;
     }
 
-    // ✅ MÉTODOS HELPER PARA LOGS DESCRIPTIVOS
+    //  MÉTODOS HELPER PARA LOGS DESCRIPTIVOS
     private static String getPeriodName(int period) {
         switch (period) {
             case 0: return "1 minuto";
@@ -699,10 +690,10 @@ public class OctoNetCommandEncoder {
         switch (sensor) {
             case 0: return "Shunt-20A";
             case 1: return "CT-50A";
-            case 2: return "CT-200A ✅";
-            case 3: return "CT-400A";
-            case 4: return "RoGo-1000A ✅";
-            case 5: return "RoGo-3000A ✅";
+            case 2: return "CT-200A";
+            case 3: return "CT-1000A";
+            case 4: return "RoGo-2000A";
+            case 5: return "RoGo-4000A";
             default: return "Desconocido";
         }
     }
@@ -814,7 +805,7 @@ public class OctoNetCommandEncoder {
         return cmd;
     }
 
-    // ✅ MÉTODO SIMPLIFICADO para WiFi solo con SSID y PASSWORD
+    // MÉTODO SIMPLIFICADO para WiFi solo con SSID y PASSWORD
     public static byte[] createWiFiSettingsWriteCommand(String ssid, String password) {
         return createWiFiSettingsWriteCommand(ssid, password, "", "", "", "", "", "", "", 0);
     }
@@ -1046,8 +1037,7 @@ public class OctoNetCommandEncoder {
     }
 
     /**
-     * Procesa respuesta ENERGY_3PHA_PAGE_STRC con todos los canales
-     * MEJORADO con corrección de SIZE+1
+     * Procesa respuesta ENERGY_3PHA_PAGE_STRC con todos los canales y sus datos.
      */
     public static void processEnergy3PhaResponse(byte[] energyData,
                                                  float[] voltajes, float[] corrientes, float[] potencias,
@@ -1070,7 +1060,7 @@ public class OctoNetCommandEncoder {
             return;
         }
 
-        // Procesar información básica
+        // Procesar información básica 
         if (energyData.length > 0) {
             int id = energyData[0] & 0xFF;
             String sourceType = (id == 0xF3) ? "Fuente Trifásica" :
@@ -1078,7 +1068,7 @@ public class OctoNetCommandEncoder {
             System.out.println("   ID: " + sourceType);
         }
 
-        // Procesar canales según offsets EXACTOS de la Tabla 19
+        // Procesar canales según offsets EXACTOS de la Tabla 19 
         // CH1: Bytes 28-39
         if (energyData.length >= 40) {
             processChannelDataCorrected(energyData, 28, 1, voltajes, corrientes, potencias, frecuencias, angulos);
@@ -1097,7 +1087,7 @@ public class OctoNetCommandEncoder {
         System.out.println("✅ Procesamiento ENERGY_3PHA completado");
     }
 
-    // ✅ NUEVO: Procesa respuesta de configuración WiFi
+    //Procesa respuesta de configuración WiFi
     public static WiFiSettings processWiFiSettingsResponse(byte[] wifiData) {
         WiFiSettings settings = new WiFiSettings();
 
@@ -1163,7 +1153,7 @@ public class OctoNetCommandEncoder {
             System.arraycopy(wifiData, offset, dnsTrdBytes, 0, 16);
             settings.dnsTrd = new String(dnsTrdBytes).trim().replaceAll("\0", "");
 
-            System.out.println("✅ Configuración WiFi procesada:");
+            System.out.println("  Configuración WiFi procesada:");
             System.out.println("   SSID: " + settings.ssid);
             System.out.println("   IP: " + settings.ip);
             System.out.println("   Gateway: " + settings.gateway);
@@ -1209,7 +1199,7 @@ public class OctoNetCommandEncoder {
         }
     }
 
-    // ✅ NUEVA: Clase para configuración WiFi
+    //Clase para configuración WiFi
     public static class WiFiSettings {
         public String ssid = "";
         public String mac = "";
@@ -1228,7 +1218,7 @@ public class OctoNetCommandEncoder {
         }
     }
 
-    // ✅ NUEVA: Clase para configuración Sub-1G (Tabla 23)
+    //Clase para configuración Sub-1G 
     public static class Sub1gSettings {
         public int id = 0;
         public int modem = 0;          // 00h GFSK / 01h LoRa
@@ -1260,7 +1250,6 @@ public class OctoNetCommandEncoder {
             throw new IllegalArgumentException("Los datos de tiempo deben tener exactamente 6 bytes");
         }
 
-        // Decodificación EXACTA según C#
         int yearTwoDigits = timeData[0] & 0xFF;
         int year = 2000 + yearTwoDigits;
 
@@ -1426,7 +1415,6 @@ public class OctoNetCommandEncoder {
 
             System.out.println("⚡ Procesando energías totales según C# original:");
 
-            // Según C# original - energías están en bytes 12-27
             // EnergyLifetime (Int32) - Bytes 12-15
             if (data.length >= 16) {
                 long energyLifetime = readInt32(data, 12);
@@ -1445,7 +1433,7 @@ public class OctoNetCommandEncoder {
                 System.out.printf("   Energy Day: %d%n", energyDay);
             }
 
-            // Bytes 24-27 podrían ser otra energía según C# original
+         
             if (data.length >= 28) {
                 long extraEnergy = readInt32(data, 24);
                 System.out.printf("   Extra Energy: %d%n", extraEnergy);
@@ -1503,9 +1491,7 @@ public class OctoNetCommandEncoder {
 
 
 
-    /**
-     * Valida estructura de comando según C# original
-     */
+
     public static boolean validateCommandStructure(byte[] command) {
         if (command == null || command.length < 7) {
             return false;
@@ -1552,9 +1538,7 @@ public class OctoNetCommandEncoder {
         System.out.println("================================");
     }
 
-    /**
-     * ✅ MÉTODO PARA TESTING - Verifica comandos generados
-     */
+ 
     public static void testCommands() {
         System.out.println("=== TESTING COMANDOS CORREGIDOS ===");
 
@@ -1563,21 +1547,21 @@ public class OctoNetCommandEncoder {
         byte[] deviceTime = createDeviceTimeReadCommand();
         byte[] nodeSettings = createNodeSettingsReadCommand();
         byte[] nodeCurrent = createNodeCurrentReadCommand();
-        byte[] wifiSettings = createWiFiSettingsReadCommand(); // ✅ NUEVO
+        byte[] wifiSettings = createWiFiSettingsReadCommand(); 
 
         System.out.println("Comandos READ generados:");
         System.out.println("DEVICE_ID: " + debugCommand(deviceId, "DEVICE_ID_READ"));
         System.out.println("DEVICE_TIME: " + debugCommand(deviceTime, "DEVICE_TIME_READ"));
         System.out.println("NODE_SETTINGS: " + debugCommand(nodeSettings, "NODE_SETTINGS_READ"));
         System.out.println("NODE_CURRENT: " + debugCommand(nodeCurrent, "NODE_CURRENT_READ"));
-        System.out.println("WIFI_SETTINGS: " + debugCommand(wifiSettings, "WIFI_SETTINGS_READ")); // ✅ NUEVO
+        System.out.println("WIFI_SETTINGS: " + debugCommand(wifiSettings, "WIFI_SETTINGS_READ")); 
 
         // Test WRITE commands
         byte[] writeSettings = createNodeSettingsWriteCommand(true, 1, 1, 3);
-        byte[] writeWifi = createWiFiSettingsWriteCommand("TestSSID", "TestPassword"); // ✅ NUEVO
+        byte[] writeWifi = createWiFiSettingsWriteCommand("TestSSID", "TestPassword"); 
 
         System.out.println("NODE_SETTINGS_WRITE: " + debugCommand(writeSettings, "NODE_SETTINGS_WRITE"));
-        System.out.println("WIFI_SETTINGS_WRITE: " + debugCommand(writeWifi, "WIFI_SETTINGS_WRITE")); // ✅ NUEVO
+        System.out.println("WIFI_SETTINGS_WRITE: " + debugCommand(writeWifi, "WIFI_SETTINGS_WRITE")); 
 
         System.out.println("=== FIN TESTING ===");
     }

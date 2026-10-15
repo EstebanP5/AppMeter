@@ -1,8 +1,7 @@
 <!-- app/src/main/AndroidManifest.xml -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="de.kai_morich.simple_bluetooth_terminal">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- ✅ PERMISOS WIFI AGREGADOS -->
+    <!-- WiFi -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -10,19 +9,19 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-
-    <!-- Para Android 10+ -->
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <!-- Para Android 13+ -->
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
-    <!-- Permisos existentes -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <!-- Bluetooth (legacy hasta Android 11, SCAN/CONNECT desde Android 12) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Servicio en primer plano (conexión Bluetooth activa) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <!-- Características -->
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
@@ -39,7 +38,7 @@
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
-            android:label="App Meter"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,15 +49,15 @@
         <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <!-- ✅ NUEVA: WiFiSetupActivity -->
+        <!-- WiFiSetupActivity -->
         <activity
             android:name=".WiFiSetupActivity"
             android:exported="false"
-            android:label="App Meter - WiFi Setup"
+            android:label="AppMeter - WiFi Setup"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
@@ -69,29 +68,14 @@
         <!-- Servicio Serial -->
         <service
             android:name=".SerialService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
-        <!-- Otras actividades existentes -->
         <activity
             android:name=".FasoresActivity"
             android:theme="@style/Theme.MaterialComponents.Light.DarkActionBar"
-            android:exported="false" />..
-        <activity
-            android:name=".TcpClientActivity"
-            android:exported="false"
-            android:label="App Meter - Cliente TCP"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
+            android:exported="false" />
 
-        <activity
-            android:name=".ActivityDevicesBluetooth"
-            android:label="App Meter - Dispositivos Bluetooth" />
-
-        <!-- NUEVAS ACTIVIDADES -->
         <activity
             android:name=".activities.MisDispositivosActivity"
             android:exported="false"

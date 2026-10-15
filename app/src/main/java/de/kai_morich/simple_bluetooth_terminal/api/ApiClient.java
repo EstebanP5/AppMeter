@@ -47,9 +47,11 @@ public class ApiClient {
      * Crea la instancia de Retrofit con toda la configuración necesaria
      */
     private static Retrofit createRetrofitInstance() {
-        // Configurar logging interceptor para debug
+        // Logging solo en debug: en release imprimir el body filtra contraseñas y tokens
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        logging.setLevel(de.kai_morich.simple_bluetooth_terminal.BuildConfig.DEBUG
+                ? HttpLoggingInterceptor.Level.BODY
+                : HttpLoggingInterceptor.Level.NONE);
 
         // Crear interceptor de autenticación
         AuthInterceptor authInterceptor = new AuthInterceptor();

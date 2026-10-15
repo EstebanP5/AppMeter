@@ -4,3 +4,8 @@
 /local.properties
 /app/build/
 /build/
+
+# Firma de release (NUNCA subir a git ni compartir)
+keystore.properties
+*.jks
+*.keystore

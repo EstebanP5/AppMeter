@@ -12,5 +12,18 @@ class Constants {
     // values have to be unique within each app
     static final int NOTIFY_MANAGER_START_FOREGROUND_SERVICE = 1001;
 
+    // Prefijos del AP que levanta el medidor: los equipos viejos son ESP*, los nuevos METER*
+    private static final String[] METER_AP_PREFIXES = {"ESP", "METER"};
+
+    /** true si el SSID corresponde al access point del medidor */
+    static boolean isMeterAp(String ssid) {
+        if (ssid == null) return false;
+        String s = ssid.trim().toUpperCase();
+        for (String prefix : METER_AP_PREFIXES) {
+            if (s.startsWith(prefix)) return true;
+        }
+        return false;
+    }
+
     private Constants() {}
 }

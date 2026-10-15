@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- ========== NOMBRES Y TÍTULOS PRINCIPALES ========== -->
-    <string name="app_name">App Meter</string>
+    <string name="app_name">AppMeter</string>
 
     <!-- ========== TÍTULOS DE SECCIONES ========== -->
     <string name="section_dashboard_title">Dashboard</string>
@@ -128,14 +128,6 @@
         <item>5</item>
         <item>10</item>
         <item>15</item>
-    </string-array>
-
-    <!-- Opciones para el Spinner de amperaje -->
-    <string-array name="amperes_options">
-        <item>50 A</item>
-        <item>200 A</item>
-        <item>1000 A</item>
-        <item>3000 A</item>
     </string-array>
 
     <!-- ========== NUEVAS PANTALLAS ========== -->

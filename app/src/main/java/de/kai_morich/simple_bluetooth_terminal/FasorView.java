@@ -16,37 +16,41 @@ public class FasorView extends View {
     private float[] angles = {0f, 120f, 240f}; // Ángulos en grados
     private int[] colors = {Color.RED, Color.YELLOW, Color.GREEN};
 
-    // ===== NUEVAS VARIABLES PARA 3 EJES =====
+    // ===== EJES INDEPENDIENTES (2, 3 o 4 canales) =====
     private boolean useThreeAxisMode = false; // Modo nuevo activable
-    private static final float[] AXIS_ANGLES = {0f, 120f, 240f}; // Ejes fijos
-    private static final String[] AXIS_LABELS = {"L1", "L2", "L3"};
+    private static final int MAX_CANALES = 4;
+    private int channelCount = 3;
+    // Los ejes se reparten en partes iguales: 3 canales -> 0/120/240, 4 -> 0/90/180/270
+    private float[] axisAngles = {0f, 120f, 240f, 0f};
+    private String[] axisLabels = {"L1", "L2", "L3", "L4"};
 
     // ✅ COLORES ACTUALIZADOS SEGÚN ESPECIFICACIONES
     private static final int[] AXIS_COLORS = {
             Color.rgb(150, 150, 150), // CH1 - Gris claro
             Color.rgb(120, 120, 120), // CH2 - Gris medio
-            Color.rgb(100, 100, 100)  // CH3 - Gris oscuro
+            Color.rgb(100, 100, 100), // CH3 - Gris oscuro
+            Color.rgb(85, 85, 85)     // CH4 - Gris más oscuro
     };
 
+    // Mismo orden en ambos: canal 1..4 (igual que las columnas de la tabla)
     private static final int[] VOLTAGE_COLORS = {
-            Color.WHITE,
-            Color.BLUE,
-            Color.RED  // L1 (0°)   → BLANCO
-                // L3 (240°) → AZUL
-                 // L2 (120°) → ROJO
-
+            Color.WHITE,              // CH1 - Blanco
+            Color.rgb(255, 60, 60),   // CH2 - Rojo
+            Color.rgb(30, 100, 255),  // CH3 - Azul
+            Color.rgb(60, 220, 120)   // CH4 - Verde
     };
     private static final int[] CURRENT_COLORS = {
             Color.WHITE,              // CH1 - Blanco (con contorno oscuro)
             Color.rgb(255, 60, 60),   // CH2 - Rojo
-            Color.rgb(30, 100, 255)   // CH3 - Azul fuerte
+            Color.rgb(30, 100, 255),  // CH3 - Azul fuerte
+            Color.rgb(60, 220, 120)   // CH4 - Verde
     };
 
 
 
     // Arrays para datos independientes
-    private float[] individualMagnitudes = {0.0f, 0.0f, 0.0f};
-    private float[] individualAngles = {0.0f, 120.0f, 240.0f};
+    private float[] individualMagnitudes = new float[MAX_CANALES];
+    private float[] individualAngles = new float[MAX_CANALES];
     private String unit = "V";
     private String title = "Fasores";
     private float maxMagnitude = 100.0f; // Escala automática
@@ -131,24 +135,24 @@ public class FasorView extends View {
 
     // ===== ✅ MÉTODOS REQUERIDOS POR FasoresActivity =====
 
-    /**
-     * Establece las magnitudes de los 3 fasores
-     */
-    public void setMagnitudes(float mag1, float mag2, float mag3) {
-        this.individualMagnitudes[0] = mag1;
-        this.individualMagnitudes[1] = mag2;
-        this.individualMagnitudes[2] = mag3;
-        invalidate(); // Redibujar
+    /** Cuántos fasores se dibujan (2, 3 o 4). Reparte los ejes en partes iguales. */
+    public void setChannelCount(int count) {
+        count = Math.max(1, Math.min(MAX_CANALES, count));
+        if (count == channelCount) return;
+        channelCount = count;
+        for (int i = 0; i < MAX_CANALES; i++) {
+            axisAngles[i] = 360f * i / channelCount;
+        }
+        invalidate();
     }
 
-    /**
-     * Establece los ángulos de los 3 fasores
-     */
-    public void setAngles(float ang1, float ang2, float ang3) {
-        this.individualAngles[0] = ang1;
-        this.individualAngles[1] = ang2;
-        this.individualAngles[2] = ang3;
-        invalidate(); // Redibujar
+    /** Magnitudes y ángulos de cada canal; se leen los primeros channelCount. */
+    public void setValues(float[] mags, float[] angs) {
+        for (int i = 0; i < MAX_CANALES; i++) {
+            individualMagnitudes[i] = (mags != null && i < mags.length) ? mags[i] : 0f;
+            individualAngles[i]     = (angs != null && i < angs.length) ? angs[i] : 0f;
+        }
+        invalidate();
     }
 
     // ===== NUEVOS MÉTODOS PÚBLICOS PARA 3 EJES =====
@@ -159,17 +163,6 @@ public class FasorView extends View {
     public void setThreeAxisMode(boolean enabled) {
         this.useThreeAxisMode = enabled;
         invalidate();
-    }
-
-    /**
-     * Establece valores para modo 3 ejes
-     */
-    public void setPhasorValues(float[] magnitudes, float[] angles) {
-        if (magnitudes.length >= 3 && angles.length >= 3) {
-            System.arraycopy(magnitudes, 0, this.individualMagnitudes, 0, 3);
-            System.arraycopy(angles, 0, this.individualAngles, 0, 3);
-            invalidate();
-        }
     }
 
     /**
@@ -344,9 +337,9 @@ public class FasorView extends View {
     }
 
     private void drawThreeAxesCorrected(Canvas canvas, float centerX, float centerY, float radius) {
-        Paint[] axisPaints = new Paint[3];
+        Paint[] axisPaints = new Paint[channelCount];
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < channelCount; i++) {
             axisPaints[i] = new Paint();
             axisPaints[i].setColor(AXIS_COLORS[i]);
             axisPaints[i].setStrokeWidth(4f); // Más grueso
@@ -355,7 +348,7 @@ public class FasorView extends View {
             axisPaints[i].setShadowLayer(2f, 1f, 1f, Color.BLACK); // Sombra
 
             // ✅ ÁNGULOS CORRECTOS: 0°, 120°, 240°
-            float axisAngleRad = (float) Math.toRadians(AXIS_ANGLES[i] - 90); // -90 para que 0° esté arriba
+            float axisAngleRad = (float) Math.toRadians(axisAngles[i] - 90); // -90 para que 0° esté arriba
 
             // Calcular puntos del eje (línea completa)
             float endX = centerX + radius * (float) Math.cos(axisAngleRad);
@@ -376,7 +369,7 @@ public class FasorView extends View {
 
             float labelX = centerX + (radius + 40) * (float) Math.cos(axisAngleRad);
             float labelY = centerY + (radius + 40) * (float) Math.sin(axisAngleRad) + 8;
-            canvas.drawText(AXIS_LABELS[i] + " (" + (int)AXIS_ANGLES[i] + "°)", labelX, labelY, labelPaint);
+            canvas.drawText(axisLabels[i] + " (" + (int)axisAngles[i] + "°)", labelX, labelY, labelPaint);
         }
     }
 
@@ -393,14 +386,14 @@ public class FasorView extends View {
         // ✅ SELECCIONAR ARRAY DE COLORES SEGÚN EL TIPO DE FASOR
         int[] colors = isVoltage ? VOLTAGE_COLORS : CURRENT_COLORS;
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < channelCount; i++) {
             float rawMagnitude = individualMagnitudes[i];
             boolean isNegative = rawMagnitude < 0;
             float absMagnitude = Math.abs(rawMagnitude);
 
             if (absMagnitude < 0.001f) continue;
 
-            float baseAngle = AXIS_ANGLES[i];
+            float baseAngle = axisAngles[i];
             float deviceAngle = individualAngles[i];
             float angleOffset = isNegative ? 180f : 0f;
             float normalizedDeviceAngle = deviceAngle % 360f;
@@ -498,7 +491,7 @@ public class FasorView extends View {
     private void drawProjectionLineToBase(Canvas canvas, float centerX, float centerY,
                                           float phasorX, float phasorY, int channelIndex, float radius) {
         // Línea punteada desde la punta del fasor hacia su eje base
-        float baseAngleRad = (float) Math.toRadians(AXIS_ANGLES[channelIndex] - 90);
+        float baseAngleRad = (float) Math.toRadians(axisAngles[channelIndex] - 90);
         float baseX = centerX + radius * 0.9f * (float) Math.cos(baseAngleRad);
         float baseY = centerY + radius * 0.9f * (float) Math.sin(baseAngleRad);
 
@@ -515,7 +508,7 @@ public class FasorView extends View {
 
     // ✅ CAMBIO SIMPLE: Solo mostrar ángulos negativos correctamente
     private void drawEnhancedValueLabels(Canvas canvas) {
-        float startY = getHeight() - 100f;
+        float startY = getHeight() - (channelCount * 22f + 34f);
 
         // Fondo con gradiente más compacto
         Paint bgPaint = new Paint();
@@ -523,7 +516,7 @@ public class FasorView extends View {
                 Color.argb(200, 0, 0, 0), Color.argb(150, 20, 20, 20), Shader.TileMode.CLAMP));
         canvas.drawRoundRect(10f, startY - 30f, getWidth() - 10f, getHeight() - 10f, 8f, 8f, bgPaint);
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < channelCount; i++) {
             float y = startY + i * 22f;
 
             // Color del texto igual al fasor
@@ -552,7 +545,7 @@ public class FasorView extends View {
             }
 
             String label = String.format("%s: %s%s ∠%.1f°",
-                    AXIS_LABELS[i], magnitudeStr, unit, deviceAngle);
+                    axisLabels[i], magnitudeStr, unit, deviceAngle);
             canvas.drawText(label, 15f, y, labelPaint);
         }
     }
@@ -582,8 +575,8 @@ public class FasorView extends View {
     private void updateScaleImproved() {
         // ✅ Encontrar la magnitud máxima ABSOLUTA
         float max = 0;
-        for (float mag : individualMagnitudes) {
-            float absMag = Math.abs(mag);
+        for (int i = 0; i < channelCount; i++) {
+            float absMag = Math.abs(individualMagnitudes[i]);
             if (absMag > max) max = absMag;
         }
 

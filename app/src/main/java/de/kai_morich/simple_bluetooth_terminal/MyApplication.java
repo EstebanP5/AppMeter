@@ -1,8 +1,8 @@
 package de.kai_morich.simple_bluetooth_terminal;
 
-import androidx.multidex.MultiDexApplication;
+import android.app.Application;
 
-public class MyApplication extends MultiDexApplication {
+public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
