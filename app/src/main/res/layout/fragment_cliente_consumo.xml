@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- K2 · Consumo por período -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:text="Consumo"
+            android:textColor="@color/am_ink"
+            android:textSize="20sp" />
+
+        <!-- Segmentado Día · Semana · Mes -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/am_seg_bg"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <TextView
+                android:id="@+id/segDia"
+                style="@style/AmSeg"
+                android:text="Día" />
+
+            <TextView
+                android:id="@+id/segSemana"
+                style="@style/AmSeg"
+                android:text="Semana" />
+
+            <TextView
+                android:id="@+id/segMes"
+                style="@style/AmSeg"
+                android:text="Mes" />
+        </LinearLayout>
+
+        <!-- Navegador de período -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnPrev"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:text="‹"
+                android:textColor="#999999"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/tvRange"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:textColor="@color/am_ink"
+                android:textSize="14sp"
+                tools:text="9 – 15 oct 2026" />
+
+            <TextView
+                android:id="@+id/btnNext"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="›"
+                android:textColor="#CCCCCC"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <!-- Tarjeta principal -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="bottom"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvTotalLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/am_t666"
+                        android:textSize="12sp"
+                        tools:text="Total semana" />
+
+                    <TextView
+                        android:id="@+id/tvTotal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:text="--"
+                        android:textColor="@color/am_ink"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        tools:text="41,870 kWh" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/chipDelta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/am_badge_ok"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="9dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="9dp"
+                    android:paddingBottom="3dp"
+                    android:textColor="@color/am_ok_text"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    tools:text="↓ 6% vs anterior" />
+            </LinearLayout>
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.StackedBarsView
+                android:id="@+id/bars"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="10dp" />
+
+            <TextView
+                android:id="@+id/tvTip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/am_t555"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:text="Vie 10 · Sol 1,234 · CFE 3,456 · Total 4,690 kWh" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/AmLegend"
+                    android:text="■ Solar"
+                    android:textColor="@color/am_solar" />
+
+                <TextView
+                    style="@style/AmLegend"
+                    android:layout_marginStart="14dp"
+                    android:text="■ CFE"
+                    android:textColor="@color/am_cfe" />
+
+                <TextView
+                    android:id="@+id/tvLiveNote"
+                    style="@style/AmLegend"
+                    android:layout_marginStart="14dp"
+                    android:text="Hoy en curso"
+                    android:textColor="#999999" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Desglose -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical">
+
+            <LinearLayout style="@style/AmRow">
+
+                <TextView
+                    style="@style/AmRowLabel"
+                    android:text="Del sol" />
+
+                <TextView
+                    android:id="@+id/tvBrSolar"
+                    style="@style/AmRowValue"
+                    android:text="--" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/am_line" />
+
+            <LinearLayout style="@style/AmRow">
+
+                <TextView
+                    style="@style/AmRowLabel"
+                    android:text="De CFE" />
+
+                <TextView
+                    android:id="@+id/tvBrCfe"
+                    style="@style/AmRowValue"
+                    android:text="--" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/am_line" />
+
+            <LinearLayout style="@style/AmRow">
+
+                <TextView
+                    android:id="@+id/tvBrMaxLabel"
+                    style="@style/AmRowLabel"
+                    android:text="Día con más consumo" />
+
+                <TextView
+                    android:id="@+id/tvBrMax"
+                    style="@style/AmRowValue"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="--" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

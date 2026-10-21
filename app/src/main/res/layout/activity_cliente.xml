@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vista Cliente: sin header oscuro; cada pantalla pone su título en el cuerpo. Barra inferior de 4 destinos -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cliente_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/cliente_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:id="@+id/cliente_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/am_line2" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:id="@+id/tab_inicio"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_home" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Inicio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tab_consumo"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_chart" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Consumo" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tab_medidores"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_memory" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Medidores" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tab_cuenta"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_person" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Cuenta" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
