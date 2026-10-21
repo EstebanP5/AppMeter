@@ -183,6 +183,43 @@
 
     <!-- Estados -->
 
-
+    <!-- Rediseño Admin (handoff AppMeter) -->
+    <color name="am_ink">#161616</color>
+    <color name="am_ink2">#2A2A2A</color>
+    <color name="am_bg">#F4F4F2</color>
+    <color name="am_line">#EEEEEE</color>
+    <color name="am_line2">#DDDDDD</color>
+    <color name="am_t555">#555555</color>
+    <color name="am_t666">#666666</color>
+    <color name="am_t777">#777777</color>
+    <color name="am_t888">#888888</color>
+    <color name="am_tAAA">#AAAAAA</color>
+    <color name="am_accent">#F28C28</color>
+    <color name="am_accent_dark">#B85F00</color>
+    <color name="am_solar">#F2B01E</color>
+    <color name="am_solar_bg">#FFF7E3</color>
+    <color name="am_solar_area">#FFF1CC</color>
+    <color name="am_solar_border">#F2D27A</color>
+    <color name="am_solar_text">#8A6200</color>
+    <color name="am_cfe">#1E7BFF</color>
+    <color name="am_cfe_bg">#EAF2FF</color>
+    <color name="am_cfe_border">#A9C8F5</color>
+    <color name="am_cfe_text">#1E5BBF</color>
+    <color name="am_ok">#1F9D4C</color>
+    <color name="am_ok_text">#157A3A</color>
+    <color name="am_ok_bg">#E8F6EE</color>
+    <color name="am_live">#3DDC84</color>
+    <color name="am_err">#D23B2B</color>
+    <color name="am_err_text">#A32020</color>
+    <color name="am_err_bg">#FDECEC</color>
+    <color name="am_virtual">#B07A00</color>
+    <color name="am_scrim">#73000000</color>
+    <!-- Vista Cliente -->
+    <color name="am_seg">#E6E5E1</color>
+    <color name="am_cfe_area">#E3EEFF</color>
+    <color name="am_cfe_on_dark">#5AA0FF</color>
+    <color name="am_err_border">#F3C2C2</color>
+    <color name="am_gray_box">#F1F1EF</color>
+    <color name="am_ph_l2">#E00000</color>
 
 </resources>
