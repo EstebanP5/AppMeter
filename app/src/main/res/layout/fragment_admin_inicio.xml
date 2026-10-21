@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A1 · Inicio (admin): consumo de la planta ahora, flujo CFE → Planta ← Solar, curva del día y quién consume -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:orientation="vertical">
+
+    <include layout="@layout/include_admin_header" />
+
+    <TextView
+        android:id="@+id/tvOffline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFF1D6"
+        android:paddingStart="14dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="6dp"
+        android:textColor="#7A4B00"
+        android:textSize="12sp"
+        android:visibility="gone"
+        tools:text="Sin conexión · mostrando último dato de 13:02" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:gravity="center"
+                android:text="Elige un cliente para ver su energía"
+                android:textColor="@color/am_t777"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <!-- Consumo ahora + flujo + curva -->
+            <LinearLayout
+                android:id="@+id/cardNow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/am_card14"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Consumo ahora"
+                        android:textColor="@color/am_t666"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvVsY"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/am_badge_err"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingStart="9dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="9dp"
+                        android:paddingBottom="3dp"
+                        android:textColor="@color/am_err_text"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        tools:text="↑ 2% vs ayer" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvNow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="monospace"
+                    android:text="--"
+                    android:textColor="@color/am_ink"
+                    android:textSize="42sp"
+                    android:textStyle="bold"
+                    tools:text="744.6 kW" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/boxCfe"
+                        style="@style/AmFlowBox"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvLblCfe"
+                            style="@style/AmFlowLabel"
+                            android:text="CFE" />
+
+                        <TextView
+                            android:id="@+id/tvFlowCfe"
+                            style="@style/AmFlowValue"
+                            android:text="--" />
+                    </LinearLayout>
+
+                    <TextView
+                        style="@style/AmFlowArrow"
+                        android:text="→" />
+
+                    <LinearLayout
+                        android:id="@+id/boxPlant"
+                        style="@style/AmFlowBox"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvLblPlant"
+                            style="@style/AmFlowLabel"
+                            android:text="Planta" />
+
+                        <TextView
+                            android:id="@+id/tvFlowPlant"
+                            style="@style/AmFlowValue"
+                            android:text="--" />
+                    </LinearLayout>
+
+                    <TextView
+                        style="@style/AmFlowArrow"
+                        android:text="←" />
+
+                    <LinearLayout
+                        android:id="@+id/boxSolar"
+                        style="@style/AmFlowBox"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvLblSolar"
+                            style="@style/AmFlowLabel"
+                            android:text="Solar" />
+
+                        <TextView
+                            android:id="@+id/tvFlowSolar"
+                            style="@style/AmFlowValue"
+                            android:text="--" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Batería e inyección, sólo si existen -->
+                <LinearLayout
+                    android:id="@+id/rowExtras"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/chipBattery"
+                        style="@style/AmExtraChip"
+                        android:visibility="gone"
+                        tools:text="Batería 28 W · cargando" />
+
+                    <TextView
+                        android:id="@+id/chipInjection"
+                        style="@style/AmExtraChip"
+                        android:visibility="gone"
+                        tools:text="Inyectando 28.8 kW" />
+                </LinearLayout>
+
+                <de.kai_morich.simple_bluetooth_terminal.ui.charts.DarkChartView
+                    android:id="@+id/chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_marginTop="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="— Hoy"
+                        android:textColor="@color/am_cfe"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:text="┄ Ayer"
+                        android:textColor="@color/am_t777"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Energía hoy / Pico / FP -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    style="@style/AmStatCard"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        style="@style/AmStatLabel"
+                        android:text="Energía hoy" />
+
+                    <TextView
+                        android:id="@+id/tvEnergy"
+                        style="@style/AmStatValue"
+                        android:text="--" />
+
+                    <TextView
+                        android:id="@+id/tvEnergySub"
+                        style="@style/AmStatUnit"
+                        android:text="kWh" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/AmStatCard"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        style="@style/AmStatLabel"
+                        android:text="Pico hoy" />
+
+                    <TextView
+                        android:id="@+id/tvPeak"
+                        style="@style/AmStatValue"
+                        android:text="--" />
+
+                    <TextView
+                        android:id="@+id/tvPeakSub"
+                        style="@style/AmStatUnit"
+                        android:text="kW" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/AmStatCard"
+                    android:layout_marginStart="4dp">
+
+                    <TextView
+                        style="@style/AmStatLabel"
+                        android:text="FP planta" />
+
+                    <TextView
+                        android:id="@+id/tvFp"
+                        style="@style/AmStatValue"
+                        android:text="--" />
+
+                    <TextView
+                        android:id="@+id/tvFpSub"
+                        style="@style/AmStatUnit"
+                        android:text="promedio" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Quién consume ahora -->
+            <LinearLayout
+                android:id="@+id/cardLoads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/am_card14"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Quién consume ahora"
+                        android:textColor="@color/am_ink"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvLoadsBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/am_badge_ok"
+                        android:fontFamily="monospace"
+                        android:paddingStart="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="2dp"
+                        android:textColor="@color/am_ok_text"
+                        android:textSize="11sp"
+                        tools:text="5/5 en línea" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/loadsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/tvLoadsFoot"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/am_t777"
+                    android:textSize="11.5sp"
+                    tools:text="Suma de cargas 745 kW · ITM Principal 744.6 kW" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

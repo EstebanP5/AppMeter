@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A5 · Nodo · Energía día: barras por hora / día contra ayer, resumen y los últimos 7 días -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <include layout="@layout/include_date_seg" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:id="@+id/tvLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/am_t666"
+                android:textSize="13sp"
+                tools:text="Energía hasta las 10:38" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvTotal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="monospace"
+                    android:text="--"
+                    android:textColor="@color/am_ink"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    tools:text="3,491.6 kWh" />
+
+                <TextView
+                    android:id="@+id/tvVs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/am_badge_ok"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="9dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="9dp"
+                    android:paddingBottom="3dp"
+                    android:textColor="@color/am_ok_text"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    tools:text="↓ 2% vs ayer" />
+            </LinearLayout>
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.EnergyBarsView
+                android:id="@+id/bars"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="10dp" />
+
+            <LinearLayout
+                android:id="@+id/legend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvLegMain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="■ Hoy"
+                    android:textColor="@color/am_cfe"
+                    android:textSize="11.5sp" />
+
+                <TextView
+                    android:id="@+id/tvLegGhost"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="■ Ayer"
+                    android:textColor="#BDBDBD"
+                    android:textSize="11.5sp" />
+
+                <TextView
+                    android:id="@+id/tvLegNow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="■ hora en curso"
+                    android:textColor="#8FB8FF"
+                    android:textSize="11.5sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical">
+
+            <LinearLayout style="@style/AmRow">
+
+                <TextView
+                    android:id="@+id/tvR1L"
+                    style="@style/AmRowLabel" />
+
+                <TextView
+                    android:id="@+id/tvR1V"
+                    style="@style/AmRowValue" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/am_line" />
+
+            <LinearLayout style="@style/AmRow">
+
+                <TextView
+                    android:id="@+id/tvR2L"
+                    style="@style/AmRowLabel" />
+
+                <TextView
+                    android:id="@+id/tvR2V"
+                    style="@style/AmRowValue" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/line3"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/am_line" />
+
+            <LinearLayout
+                android:id="@+id/row3"
+                style="@style/AmRow">
+
+                <TextView
+                    android:id="@+id/tvR3L"
+                    style="@style/AmRowLabel" />
+
+                <TextView
+                    android:id="@+id/tvR3V"
+                    style="@style/AmRowValue" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Últimos 7 días"
+                    android:textColor="@color/am_ink"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="kWh"
+                    android:textColor="@color/am_t777"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.EnergyBarsView
+                android:id="@+id/bars7"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

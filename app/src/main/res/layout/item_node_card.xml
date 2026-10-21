@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fila de nodo (A2): icono o % del total, nombre, tipo · serie · hace cuánto, mini curva y potencia -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <FrameLayout
+        android:id="@+id/iconBox"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/am_gray_rounded">
+
+        <TextView
+            android:id="@+id/tvPct"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:textColor="@color/am_ink"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="36%" />
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:textColor="@color/am_ink"
+            android:textSize="15sp"
+            tools:text="Molino A" />
+
+        <TextView
+            android:id="@+id/tvSub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/am_t777"
+            android:textSize="11.5sp"
+            tools:text="LOAD · …0204 · 44 s" />
+    </LinearLayout>
+
+    <de.kai_morich.simple_bluetooth_terminal.ui.charts.SparklineView
+        android:id="@+id/spark"
+        android:layout_width="64dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="6dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:gravity="end"
+        android:minWidth="58dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvVal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textColor="@color/am_ink"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="268.0" />
+
+        <TextView
+            android:id="@+id/tvUnit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="kW"
+            android:textColor="@color/am_t777"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

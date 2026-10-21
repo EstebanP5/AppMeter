@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A4 · Nodo · Potencia día: curva (5 min / 15 min / 1 h) contra ayer, máx / prom / mín y el detalle por hora -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <include layout="@layout/include_date_seg" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:id="@+id/tvNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:textColor="@color/am_t777"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.DarkChartView
+                android:id="@+id/chart"
+                android:layout_width="match_parent"
+                android:layout_height="170dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="— Hoy"
+                    android:textColor="@color/am_cfe"
+                    android:textSize="11.5sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="┄ Ayer"
+                    android:textColor="@color/am_t777"
+                    android:textSize="11.5sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="● caídas"
+                    android:textColor="#D32F2F"
+                    android:textSize="11.5sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                style="@style/AmStatCard"
+                android:layout_marginEnd="4dp">
+
+                <TextView
+                    style="@style/AmStatLabel"
+                    android:text="Máx" />
+
+                <TextView
+                    android:id="@+id/tvMax"
+                    style="@style/AmStatValue"
+                    android:text="--" />
+
+                <TextView
+                    android:id="@+id/tvMaxSub"
+                    style="@style/AmStatUnit"
+                    android:text="kW" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/AmStatCard"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp">
+
+                <TextView
+                    style="@style/AmStatLabel"
+                    android:text="Prom" />
+
+                <TextView
+                    android:id="@+id/tvAvg"
+                    style="@style/AmStatValue"
+                    android:text="--" />
+
+                <TextView
+                    android:id="@+id/tvAvgSub"
+                    style="@style/AmStatUnit"
+                    android:text="kW" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/AmStatCard"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/am_card12_err">
+
+                <TextView
+                    style="@style/AmStatLabel"
+                    android:text="Mín" />
+
+                <TextView
+                    android:id="@+id/tvMin"
+                    style="@style/AmStatValue"
+                    android:text="--"
+                    android:textColor="@color/am_err_text" />
+
+                <TextView
+                    android:id="@+id/tvMinSub"
+                    style="@style/AmStatUnit"
+                    android:text="kW" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/hoursList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical"
+            android:padding="14dp" />
+    </LinearLayout>
+</ScrollView>

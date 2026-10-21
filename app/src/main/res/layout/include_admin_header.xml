@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Encabezado oscuro del admin (Inicio y Mediciones): título, estado y tarjeta de cliente / localidad -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/am_ink"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="14dp"
+    android:paddingBottom="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvHeaderTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            tools:text="Inicio" />
+
+        <TextView
+            android:id="@+id/tvLive"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textColor="#3DDC84"
+            android:textSize="11sp"
+            tools:text="● en vivo · 10:38" />
+
+        <TextView
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/am_btn_logout"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="6dp"
+            android:text="Salir"
+            android:textColor="#E8E8E8"
+            android:textSize="12.5sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ctxCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/am_ctx_card"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/tvCtxAvatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/am_avatar"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="?"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvCtxCustomer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="Selecciona cliente"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvCtxLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="—"
+                android:textColor="@color/am_tAAA"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="Cambiar ▾"
+            android:textColor="@color/am_accent"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

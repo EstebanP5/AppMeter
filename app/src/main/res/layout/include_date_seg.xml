@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Selector de fecha (‹ Hoy · 21 oct ›) y control segmentado de tres opciones (A4 / A5) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/btnPrev"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="‹"
+        android:textColor="@color/am_accent"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:textColor="@color/am_ink"
+        android:textSize="14sp"
+        tools:text="Hoy · 21 oct" />
+
+    <TextView
+        android:id="@+id/btnNext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="›"
+        android:textColor="@color/am_accent"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/am_seg_bg"
+        android:orientation="horizontal"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/seg0"
+            style="@style/AmSegItem" />
+
+        <TextView
+            android:id="@+id/seg1"
+            style="@style/AmSegItem" />
+
+        <TextView
+            android:id="@+id/seg2"
+            style="@style/AmSegItem" />
+    </LinearLayout>
+</LinearLayout>
