@@ -1,56 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
+<!-- Contenedor raíz: cada pantalla dibuja su propio header oscuro; abajo, barra fija de 3 destinos -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/am_ink"
+    android:orientation="vertical">
 
-    <!-- Contenedor principal: Toolbar + FrameLayout -->
-    <LinearLayout
-        android:orientation="vertical"
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/am_bg" />
 
-        <!-- Toolbar personalizada con botón de logout -->
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+    <LinearLayout
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="vertical">
+
+        <View
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/web_surface"
-            android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
-            app:titleTextColor="@color/web_text_primary">
+            android:layout_height="1dp"
+            android:background="@color/am_line2" />
 
-            <!-- Botón de logout alineado a la derecha -->
-            <ImageButton
-                android:id="@+id/btnLogout"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="end"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Cerrar sesión"
-                android:src="@drawable/ic_logout"
-                android:tint="@color/web_text_primary" />
-        </com.google.android.material.appbar.MaterialToolbar>
-
-        <!-- Aquí se cargarán los fragments -->
-        <FrameLayout
-            android:id="@+id/fragment_container"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:id="@+id/nav_inicio"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_home" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Inicio" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/nav_mediciones"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_analytics" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Mediciones" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/nav_configurar"
+                style="@style/AmNavItem">
+
+                <ImageView
+                    style="@style/AmNavIcon"
+                    android:src="@drawable/ic_settings" />
+
+                <TextView
+                    style="@style/AmNavLabel"
+                    android:text="Configurar" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
-
-    <!-- NavigationView para el Drawer -->
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@color/web_surface"
-        android:fitsSystemWindows="true"
-        app:itemBackground="@drawable/nav_item_background"
-        app:itemIconTint="@color/nav_item_tint"
-        app:itemTextColor="@color/nav_item_tint"
-        app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/drawer_menu"/>
-</androidx.drawerlayout.widget.DrawerLayout>
+</LinearLayout>

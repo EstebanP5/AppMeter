@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Confirmación de formateo de memoria: hay que escribir BORRAR -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/am_sheet_bg"
+    android:orientation="vertical"
+    android:paddingStart="18dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="22dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/am_handle" />
+
+    <TextView
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/am_icon_errsoft"
+        android:gravity="center"
+        android:text="!"
+        android:textColor="@color/am_err"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="¿Borrar toda la memoria?"
+        android:textColor="@color/am_ink"
+        android:textSize="18sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:lineSpacingMultiplier="1.15"
+        android:text="Se eliminan todas las mediciones guardadas en el medidor. Úsalo solo en instalaciones nuevas."
+        android:textColor="#444444"
+        android:textSize="13.5sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Escribe BORRAR para confirmar"
+        android:textColor="@color/am_t666"
+        android:textSize="13sp" />
+
+    <EditText
+        android:id="@+id/etConfirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/am_input"
+        android:fontFamily="monospace"
+        android:hint="BORRAR"
+        android:inputType="textCapCharacters|textNoSuggestions"
+        android:padding="10dp"
+        android:textColor="@color/am_ink"
+        android:textColorHint="#AAAAAA"
+        android:textSize="15sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnCancelErase"
+            style="@style/AmBtnOutline"
+            android:layout_marginEnd="5dp"
+            android:text="Cancelar" />
+
+        <TextView
+            android:id="@+id/btnConfirmErase"
+            style="@style/AmBtnOutline"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/am_btn_err"
+            android:text="Borrar"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A3 · Nodo · Ahora: potencia, energía de hoy y FP, tabla por fase, desbalances y la curva de hoy -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/am_card14"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.2"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvPowerLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Potencia"
+                    android:textColor="@color/am_t666"
+                    android:textSize="12.5sp" />
+
+                <TextView
+                    android:id="@+id/tvPower"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="monospace"
+                    android:text="--"
+                    android:textColor="@color/am_ink"
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    tools:text="37.7 kW" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="10dp"
+                android:background="@color/am_line" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Energía hoy"
+                    android:textColor="@color/am_t666"
+                    android:textSize="12.5sp" />
+
+                <TextView
+                    android:id="@+id/tvEnergy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="monospace"
+                    android:text="--"
+                    android:textColor="@color/am_ink"
+                    android:textSize="19sp"
+                    android:textStyle="bold"
+                    tools:text="3,491.6" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="kWh"
+                    android:textColor="@color/am_t777"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="10dp"
+                android:background="@color/am_line" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.7"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FP"
+                    android:textColor="@color/am_t666"
+                    android:textSize="12.5sp" />
+
+                <TextView
+                    android:id="@+id/tvFp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="monospace"
+                    android:text="--"
+                    android:textColor="@color/am_ok_text"
+                    android:textSize="19sp"
+                    android:textStyle="bold"
+                    tools:text="0.95" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <de.kai_morich.simple_bluetooth_terminal.ui.charts.PhaseTableView
+            android:id="@+id/phases"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                style="@style/AmStatCard"
+                android:layout_marginEnd="4dp">
+
+                <TextView
+                    style="@style/AmStatLabel"
+                    android:text="Desbalance corriente" />
+
+                <TextView
+                    android:id="@+id/tvImbA"
+                    style="@style/AmStatValue"
+                    android:text="--"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/AmStatCard"
+                android:layout_marginStart="4dp">
+
+                <TextView
+                    style="@style/AmStatLabel"
+                    android:text="Desbalance voltaje" />
+
+                <TextView
+                    android:id="@+id/tvImbV"
+                    style="@style/AmStatValue"
+                    android:text="--"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Potencia hoy -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/am_card14"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Potencia hoy"
+                    android:textColor="@color/am_ink"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/btnVerDia"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:padding="4dp"
+                    android:text="Ver día ›"
+                    android:textColor="@color/am_accent"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.DarkChartView
+                android:id="@+id/chart"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_marginTop="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvMax"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/am_t666"
+                    android:textSize="12.5sp"
+                    tools:text="Máx 38.7" />
+
+                <TextView
+                    android:id="@+id/tvAvg"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="@color/am_t666"
+                    android:textSize="12.5sp"
+                    tools:text="Prom 34.2" />
+
+                <TextView
+                    android:id="@+id/tvMin"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:textColor="@color/am_err_text"
+                    android:textSize="12.5sp"
+                    tools:text="Mín 18.3" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

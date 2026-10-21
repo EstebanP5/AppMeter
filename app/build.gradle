@@ -15,8 +15,8 @@ android {
         vectorDrawables.useSupportLibrary true
 
         applicationId "com.ergosolar.appmeter"
-        versionCode 6
-        versionName "2.0.5"
+        versionCode 7
+        versionName "2.1.0"
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -37,7 +37,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true      // R8: reduce y ofusca (Play pide más de 25 % de optimización de código)
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             if (keystorePropsFile.exists()) {
                 signingConfig signingConfigs.release

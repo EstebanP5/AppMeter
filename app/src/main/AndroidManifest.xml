@@ -36,10 +36,10 @@
 
         <!-- LoginActivity -->
         <activity
-            android:name=".activities.LoginActivity"
+            android:name=".ui.login.LoginActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -48,78 +48,101 @@
 
         <!-- MainActivity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.admin.MainActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- ClienteActivity: vista del cliente (usuario normal / sub-usuario) -->
+        <activity
+            android:name=".ui.cliente.ClienteActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <!-- NodoActivity: detalle de un nodo (Ahora · Potencia día · Energía día) -->
+        <activity
+            android:name=".ui.admin.NodoActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
+
         <!-- WiFiSetupActivity -->
         <activity
-            android:name=".WiFiSetupActivity"
+            android:name=".ui.medidor.WiFiSetupActivity"
             android:exported="false"
             android:label="AppMeter - WiFi Setup"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".ui.admin.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".ui.admin.MainActivity" />
         </activity>
 
         <!-- Servicio Serial -->
         <service
-            android:name=".SerialService"
+            android:name=".serial.SerialService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
 
         <activity
-            android:name=".FasoresActivity"
-            android:theme="@style/Theme.MaterialComponents.Light.DarkActionBar"
+            android:name=".ui.medidor.FasoresActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:exported="false" />
 
         <activity
-            android:name=".activities.MisDispositivosActivity"
+            android:name=".legacy.MisDispositivosActivity"
             android:exported="false"
             android:label="Mis Dispositivos"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".ui.admin.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".ui.admin.MainActivity" />
         </activity>
 
         <activity
-            android:name=".activities.AdminMedicionesActivity"
+            android:name=".legacy.AdminMedicionesActivity"
             android:exported="false"
             android:label="Mediciones Admin"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".ui.admin.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".ui.admin.MainActivity" />
         </activity>
 
         <!-- MedicionesActivity -->
         <activity
-            android:name=".activities.MedicionesActivity"
+            android:name=".legacy.MedicionesActivity"
             android:exported="false"
             android:label="Mediciones"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".ui.admin.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value=".ui.admin.MainActivity" />
         </activity>
 
         <!-- HistoricoActivity -->
         <activity
-            android:name=".activities.HistoricoActivity"
+            android:name=".legacy.HistoricoActivity"
             android:exported="false"
             android:label="Histórico"
-            android:parentActivityName=".activities.MedicionesActivity"
+            android:parentActivityName=".legacy.MedicionesActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MedicionesActivity" />
+                android:value=".legacy.MedicionesActivity" />
         </activity>
 
     </application>

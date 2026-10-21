@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A2 · Mediciones (admin): resumen de la localidad, filtros por tipo y los nodos con su mini curva y potencia -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:orientation="vertical">
+
+    <include layout="@layout/include_admin_header" />
+
+    <TextView
+        android:id="@+id/tvOffline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFF1D6"
+        android:paddingStart="14dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="6dp"
+        android:textColor="#7A4B00"
+        android:textSize="12sp"
+        android:visibility="gone"
+        tools:text="Sin conexión · mostrando último dato de 13:02" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Resumen -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/am_card14"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Solar"
+                            android:textColor="@color/am_solar_text"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tvSumSolar"
+                            style="@style/AmSummaryValue"
+                            android:text="--" />
+
+                        <TextView
+                            android:id="@+id/tvSumSolarSub"
+                            style="@style/AmSummarySub" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CFE"
+                            android:textColor="@color/am_cfe"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tvSumCfe"
+                            style="@style/AmSummaryValue"
+                            android:text="--" />
+
+                        <TextView
+                            android:id="@+id/tvSumCfeSub"
+                            style="@style/AmSummarySub" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Consumo"
+                            android:textColor="@color/am_accent_dark"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/tvSumCons"
+                            style="@style/AmSummaryValue"
+                            android:text="--" />
+
+                        <TextView
+                            android:id="@+id/tvSumConsSub"
+                            style="@style/AmSummarySub" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Mezcla solar / CFE -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="7dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/am_bar_track"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/barSolar"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0"
+                        android:background="@drawable/am_bar_fill"
+                        android:backgroundTint="@color/am_solar" />
+
+                    <View
+                        android:id="@+id/barCfe"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/am_bar_fill"
+                        android:backgroundTint="@color/am_cfe" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Filtros por tipo -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/filters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:gravity="center"
+                android:text="Esta localidad no tiene nodos configurados"
+                android:textColor="@color/am_t777"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/nodesList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

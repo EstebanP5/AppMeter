@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Una carga en "Quién consume ahora": nombre, barra proporcional y kW -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="9dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="104dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/am_ink"
+        android:textSize="13sp"
+        tools:text="Molino A" />
+
+    <LinearLayout
+        android:id="@+id/track"
+        android:layout_width="0dp"
+        android:layout_height="9dp"
+        android:layout_weight="1"
+        android:background="@drawable/am_bar_track"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/fill"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            android:background="@drawable/am_bar_fill" />
+
+        <View
+            android:id="@+id/rest"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvVal"
+        android:layout_width="64dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="end"
+        android:maxLines="1"
+        android:textColor="@color/am_ink"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        tools:text="268 kW" />
+</LinearLayout>

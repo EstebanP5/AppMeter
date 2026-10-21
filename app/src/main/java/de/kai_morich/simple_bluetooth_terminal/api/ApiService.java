@@ -32,6 +32,10 @@ public interface ApiService {
         @GET("api/ergoems/customer/getCustomerInformation")
     Call<CustomerViewModel> getCustomerInformation(@Query("idCustomer") Integer idCustomer);
 
+    /** Cambio de contraseña propio: OldPassword, NewPassword, ConfirmNewPassword. */
+    @POST("api/ergoems/customer/changePassword")
+    Call<Void> changePassword(@Body Map<String, Object> payload);
+
         @POST("api/ergoems/customer/addNewCustomer")
     Call<Void> addNewCustomer(@Body CustomerViewModel customer);
 
@@ -65,6 +69,10 @@ public interface ApiService {
 
         @GET("api/ergoems/circuits/getCustomerCircuits")
     Call<List<CircuitsViewModel>> getCustomerCircuits(@Query("idCustomer") Integer idCustomer);
+
+    /** Circuitos de cualquier cliente (sólo instalador/admin). */
+    @GET("api/ergoems/circuits/getCustomerCircuitsForAdmin")
+    Call<List<CircuitsViewModel>> getCustomerCircuitsForAdmin(@Query("idCustomer") Integer idCustomer);
 
         @POST("api/ergoems/circuits/addNewCircuit")
     Call<Void> addNewCircuit(@Body CircuitsViewModel circuit);
@@ -112,6 +120,10 @@ public interface ApiService {
             @Query("idCustomer") Integer idCustomer
         );
 
+    /** Todos los dispositivos de todos los clientes (búsqueda por serie o nombre; sólo instalador/admin). */
+    @GET("api/ergoems/devices/getAllDevices")
+    Call<List<Map<String, Object>>> getAllDevices();
+
     @POST("api/ergoems/devices/registerDeviceSerial")
     Call<Void> registerDeviceSerial(@Body DevicesViewModel device);
 
@@ -132,8 +144,9 @@ public interface ApiService {
             @Query("debug") Boolean debug
     );
 
+    /** Responde {IsValid, Message, ...}: "Available", "SerialAlreadyLinked" o "SerialNotRegistered". */
     @GET("api/ergoems/devices/validateSerialForLink")
-    Call<Void> validateSerialForLink(
+    Call<de.kai_morich.simple_bluetooth_terminal.models.SerialValidation> validateSerialForLink(
             @Query("serie") String serie,
             @Query("deviceType") Integer deviceType,
             @Query("idCustomer") Integer idCustomer,
@@ -193,6 +206,31 @@ public interface ApiService {
     Call<List<GenConViewModel>> get5MPowerDay(
             @Query("idDevice") Integer idDevice,
             @Query("date") String date,
+            @Query("idCustomer") Integer idCustomer
+    );
+
+    /**
+     * Series cada 5 min de un nodo (K5): get5MPowerDay, get5MVoltageDay, get5MCurrentDay, get5MPowerFactorDay y
+     * get5MEnergyDay. Respuesta: { "W1C": { "M0000": v|null, ..., "M2355": v|null }, ... }.
+     * La ruta se pasa completa porque el doc no aclara si lleva "measurements/".
+     */
+    @GET
+    Call<java.util.Map<String, java.util.Map<String, Double>>> get5MSeries(
+            @retrofit2.http.Url String path,
+            @Query("idMeasure") Integer idMeasure,
+            @Query("date") String date,
+            @Query("idCustomer") Integer idCustomer
+    );
+
+    /** CSV crudo de un nodo (K5). Streaming: no se carga el archivo completo en memoria. */
+    @retrofit2.http.Streaming
+    @GET
+    Call<okhttp3.ResponseBody> downloadCsv(
+            @retrofit2.http.Url String path,
+            @Query("idMeasure") Integer idMeasure,
+            @Query("fechaInicio") String fechaInicio,
+            @Query("fechaFin") String fechaFin,
+            @Query("tipoDato") String tipoDato,
             @Query("idCustomer") Integer idCustomer
     );
 
@@ -267,6 +305,22 @@ public interface ApiService {
             @Query("idMeasure") Integer idMeasure,
             @Query("date") String date,
             @Query("idCustomer") Integer idCustomer
+    );
+
+    /** Potencia total de la localidad por hora (kW). date = yyyy-MM-dd. 400 "EmptyMeasurements" = sin datos. */
+    @GET("api/ergoems/measurements/getTotalPowerDay")
+    Call<de.kai_morich.simple_bluetooth_terminal.models.TotalSeriesResponse> getTotalPowerDay(
+            @Query("idCustomer") Integer idCustomer,
+            @Query("idLocation") Integer idLocation,
+            @Query("date") String date
+    );
+
+    /** Energía total de la localidad por día del mes (kWh). date = yyyy-MM para pedir un mes (clave exacta de la fila mensual). */
+    @GET("api/ergoems/measurements/getTotalEnergyMonth")
+    Call<de.kai_morich.simple_bluetooth_terminal.models.TotalSeriesResponse> getTotalEnergyMonth(
+            @Query("idCustomer") Integer idCustomer,
+            @Query("idLocation") Integer idLocation,
+            @Query("date") String date
     );
 
     /** Energía por hora del día. Respuesta: {"Generation":{...},"Consumption":{...}} */

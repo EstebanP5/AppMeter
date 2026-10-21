@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- K5 · Datos técnicos (5 minutales), horizontal: controles y lectura a la izquierda, gráficas anchas a la derecha -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:orientation="horizontal">
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.38">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="14dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="12dp"
+                android:text="←"
+                android:textColor="@color/am_ink"
+                android:textSize="20sp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Datos técnicos"
+                    android:textColor="@color/am_ink"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/tvSub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/am_t666"
+                    android:textSize="12sp"
+                    tools:text="Acometida CFE · cada 5 min" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnCsv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/am_btn_outline"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="14dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp"
+                android:text="⤓ CSV"
+                android:textColor="@color/am_ink"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnPrev"
+                style="@style/AmDateArrow"
+                android:text="‹" />
+
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/am_card12"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:textColor="@color/am_ink"
+                android:textSize="14sp"
+                tools:text="Hoy · 19 oct 2026" />
+
+            <TextView
+                android:id="@+id/btnNext"
+                style="@style/AmDateArrow"
+                android:text="›" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chipL1"
+                style="@style/AmPhaseChip"
+                android:text="● L1" />
+
+            <TextView
+                android:id="@+id/chipL2"
+                style="@style/AmPhaseChip"
+                android:text="● L2" />
+
+            <TextView
+                android:id="@+id/chipL3"
+                style="@style/AmPhaseChip"
+                android:text="● L3" />
+
+            <TextView
+                android:id="@+id/chipPf"
+                style="@style/AmPhaseChip"
+                android:text="FP" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/am_readout"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.ReadoutView
+                android:id="@+id/readout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="Desliza sobre las gráficas para mover la hora · gira el teléfono para ver más detalle."
+            android:textColor="@color/am_t777"
+            android:textSize="12sp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.62">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="6dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:background="@drawable/am_hero"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingTop="6dp"
+                android:paddingBottom="10dp"
+                android:text="Sin datos para este día"
+                android:textColor="@color/am_t888"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.TechChartView
+                android:id="@+id/chPower"
+                android:layout_width="match_parent"
+                android:layout_height="150dp" />
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.TechChartView
+                android:id="@+id/chVolt"
+                android:layout_width="match_parent"
+                android:layout_height="124dp" />
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.TechChartView
+                android:id="@+id/chAmp"
+                android:layout_width="match_parent"
+                android:layout_height="124dp" />
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.TechChartView
+                android:id="@+id/chPf"
+                android:layout_width="match_parent"
+                android:layout_height="124dp" />
+
+            <de.kai_morich.simple_bluetooth_terminal.ui.charts.TechChartView
+                android:id="@+id/chEnergy"
+                android:layout_width="match_parent"
+                android:layout_height="124dp" />
+        </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

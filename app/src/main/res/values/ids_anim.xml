@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Etiquetas para guardar el último valor mostrado y su animación en un TextView -->
+    <item name="tag_last_value" type="id" />
+    <item name="tag_value_anim" type="id" />
+</resources>

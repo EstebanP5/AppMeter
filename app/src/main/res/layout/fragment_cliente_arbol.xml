@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- C2 · Cliente: árbol editable Localidad → Circuito → Dispositivo -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/am_ink"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="14dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="12dp"
+                android:text="←"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                tools:text="Acafintex" />
+
+            <TextView
+                android:id="@+id/btnEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:padding="6dp"
+                android:text="Editar"
+                android:textColor="@color/am_accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:text="⋮"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:lineSpacingMultiplier="1.15"
+            android:textColor="@color/am_tAAA"
+            android:textSize="12.5sp"
+            tools:text="meter@acafintex.com · 2222241044 · Puebla" />
+
+        <TextView
+            android:id="@+id/tvIds"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textColor="@color/am_t777"
+            android:textSize="12.5sp"
+            tools:text="ID 43 · config 01011000" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Localidades / dispositivos / sin conexión -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    style="@style/AmStatCard"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:id="@+id/tvStatLoc"
+                        style="@style/AmStatValue"
+                        android:text="--" />
+
+                    <TextView
+                        style="@style/AmStatUnit"
+                        android:text="localidades" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/AmStatCard"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:id="@+id/tvStatDev"
+                        style="@style/AmStatValue"
+                        android:text="--" />
+
+                    <TextView
+                        style="@style/AmStatUnit"
+                        android:text="dispositivos" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/cardOff"
+                    style="@style/AmStatCard"
+                    android:layout_marginStart="4dp">
+
+                    <TextView
+                        android:id="@+id/tvStatOff"
+                        style="@style/AmStatValue"
+                        android:text="--" />
+
+                    <TextView
+                        android:id="@+id/tvStatOffLabel"
+                        style="@style/AmStatUnit"
+                        android:text="sin conexión" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/filters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <LinearLayout
+                android:id="@+id/tree"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/tvHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="4dp"
+                android:paddingTop="10dp"
+                android:text="Toca una localidad para abrirla. Toca un circuito o dispositivo para editarlo; mantén presionado para moverlo o eliminarlo."
+                android:textColor="@color/am_t777"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

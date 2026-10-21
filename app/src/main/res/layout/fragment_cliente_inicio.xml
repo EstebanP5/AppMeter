@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- K1 / K1b · Inicio del cliente (sólo kWh, sin tarifa) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/am_bg"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvOffline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFF1D6"
+        android:paddingStart="14dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="6dp"
+        android:textColor="#7A4B00"
+        android:textSize="12sp"
+        android:visibility="gone"
+        tools:text="Sin conexión · mostrando datos de 13:02" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="14dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="12dp">
+
+            <!-- Encabezado: saludo / en vivo y la tarjeta de localidad -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvHola"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Hola"
+                    android:textColor="@color/am_t777"
+                    android:textSize="13sp"
+                    tools:text="Hola, Cetesa" />
+
+                <View
+                    android:id="@+id/dotLive"
+                    android:layout_width="7dp"
+                    android:layout_height="7dp"
+                    android:background="@drawable/am_dot_ok" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:fontFamily="monospace"
+                    android:text="en vivo"
+                    android:textColor="@color/am_ok_text"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/locationPicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/am_card14"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/am_icon_loc">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_am_pin" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvLocCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.08"
+                        android:text="LOCALIDAD"
+                        android:textColor="@color/am_t777"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        tools:text="LOCALIDAD · 1 DE 3" />
+
+                    <TextView
+                        android:id="@+id/tvLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="2"
+                        android:text="—"
+                        android:textColor="@color/am_ink"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Planta Huejotzingo" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnChange"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/am_btn_accent"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="14dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="8dp"
+                    android:text="Cambiar ▾"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:gravity="center"
+                android:text="Aún no hay mediciones para esta localidad"
+                android:textColor="@color/am_t777"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Hero: consumo ahora + dona + curva del día -->
+                <LinearLayout
+                    android:id="@+id/cardHero"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/am_hero"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Consumiendo ahora"
+                                android:textColor="#BBBBBB"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/tvHeroKw"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="monospace"
+                                android:includeFontPadding="false"
+                                android:text="--"
+                                android:textColor="@color/white"
+                                android:textSize="40sp"
+                                android:textStyle="bold"
+                                tools:text="620 kW" />
+                        </LinearLayout>
+
+                        <de.kai_morich.simple_bluetooth_terminal.ui.charts.DonutView
+                            android:id="@+id/donut"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvLegSolar"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                tools:text="● Sol 219" />
+
+                            <TextView
+                                android:id="@+id/tvLegCfe"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                tools:text="● CFE 401" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <de.kai_morich.simple_bluetooth_terminal.ui.charts.DarkChartView
+                        android:id="@+id/heroChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="110dp"
+                        android:layout_marginTop="14dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/AmLegend"
+                            android:text="— Consumo"
+                            android:textColor="#9DBBFF" />
+
+                        <TextView
+                            style="@style/AmLegend"
+                            android:layout_marginStart="14dp"
+                            android:text="■ Solar"
+                            android:textColor="#E8B93A" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Consumo hoy · Solar hoy · Pico hoy -->
+                <LinearLayout
+                    android:id="@+id/rowCards"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        style="@style/AmStatCard"
+                        android:layout_marginEnd="4dp">
+
+                        <TextView
+                            style="@style/AmStatLabel"
+                            android:text="Consumo hoy" />
+
+                        <TextView
+                            android:id="@+id/tvToday"
+                            style="@style/AmStatValue"
+                            tools:text="6,290" />
+
+                        <TextView
+                            style="@style/AmStatUnit"
+                            android:text="kWh" />
+
+                        <TextView
+                            android:id="@+id/tvDelta"
+                            style="@style/AmStatExtra"
+                            tools:text="↓ 4% vs ayer" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/cardSolarToday"
+                        style="@style/AmStatCard"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/am_solar_card">
+
+                        <TextView
+                            style="@style/AmStatLabel"
+                            android:text="Solar hoy" />
+
+                        <TextView
+                            android:id="@+id/tvSolarToday"
+                            style="@style/AmStatValue"
+                            tools:text="759" />
+
+                        <TextView
+                            style="@style/AmStatUnit"
+                            android:text="kWh" />
+
+                        <TextView
+                            android:id="@+id/tvSolarShare"
+                            style="@style/AmStatExtra"
+                            android:textColor="@color/am_solar_text"
+                            tools:text="35% del total" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/AmStatCard"
+                        android:layout_marginStart="4dp">
+
+                        <TextView
+                            style="@style/AmStatLabel"
+                            android:text="Pico hoy" />
+
+                        <TextView
+                            android:id="@+id/tvPeak"
+                            style="@style/AmStatValue"
+                            tools:text="684" />
+
+                        <TextView
+                            style="@style/AmStatUnit"
+                            android:text="kW" />
+
+                        <TextView
+                            android:id="@+id/tvPeakAt"
+                            style="@style/AmStatUnit"
+                            tools:text="10:00" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Mes en curso (kWh, sin tarifa) -->
+                <LinearLayout
+                    android:id="@+id/cardMonth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/am_card14"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvMonthTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/am_ink"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            tools:text="Octubre, al día 19" />
+
+                        <TextView
+                            android:id="@+id/btnDetail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:padding="4dp"
+                            android:text="Detalle ›"
+                            android:textColor="@color/am_accent"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="bottom"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Consumo del mes"
+                                android:textColor="@color/am_t666"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvMonthCons"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="monospace"
+                                android:text="--"
+                                android:textColor="@color/am_ink"
+                                android:textSize="26sp"
+                                android:textStyle="bold"
+                                tools:text="118,240 kWh" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Del sol"
+                                android:textColor="@color/am_t666"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvMonthSolar"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="monospace"
+                                android:text="--"
+                                android:textColor="@color/am_solar_text"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                tools:text="13,570 kWh" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@color/am_line" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvVsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="vs mes anterior al mismo día"
+                            android:textColor="@color/am_t666"
+                            android:textSize="12.5sp" />
+
+                        <TextView
+                            android:id="@+id/tvVsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:text="--"
+                            android:textSize="12.5sp"
+                            android:textStyle="bold"
+                            tools:text="↓ 3% · −3,660 kWh" />
+                    </LinearLayout>
+
+                    <!-- Barras del mes actual y del anterior (solar abajo, CFE arriba, en proporción) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvBarCur"
+                            android:layout_width="30dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/am_t666"
+                            android:textSize="11sp"
+                            tools:text="Oct" />
+
+                        <LinearLayout
+                            android:id="@+id/barCurTrack"
+                            android:layout_width="0dp"
+                            android:layout_height="10dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/am_bar_track"
+                            android:clipToOutline="true"
+                            android:orientation="horizontal"
+                            android:weightSum="1">
+
+                            <View
+                                android:id="@+id/barCurSolar"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:background="@color/am_solar" />
+
+                            <View
+                                android:id="@+id/barCurCfe"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:background="@color/am_cfe" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvBarPrev"
+                            android:layout_width="30dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/am_t666"
+                            android:textSize="11sp"
+                            tools:text="Sep" />
+
+                        <LinearLayout
+                            android:id="@+id/barPrevTrack"
+                            android:layout_width="0dp"
+                            android:layout_height="10dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/am_bar_track"
+                            android:clipToOutline="true"
+                            android:orientation="horizontal"
+                            android:weightSum="1">
+
+                            <View
+                                android:id="@+id/barPrevSolar"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:background="#EBCB7A" />
+
+                            <View
+                                android:id="@+id/barPrevCfe"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:background="#7EB0F7" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Aviso de medidores sin conexión -->
+                <LinearLayout
+                    android:id="@+id/cardAlert"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/am_alert"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:background="@drawable/am_alert_dot"
+                        android:gravity="center"
+                        android:text="!"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvAlertTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/am_ink"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:text="2 medidores sin conexión" />
+
+                        <TextView
+                            android:id="@+id/tvAlertSub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#553333"
+                            android:textSize="13sp"
+                            tools:text="Los datos solares pueden estar incompletos." />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Ver"
+                        android:textColor="@color/am_err_text"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
